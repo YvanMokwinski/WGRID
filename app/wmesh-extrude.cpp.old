@@ -1,0 +1,164 @@
+#include "wmesh.h"
+#include "wmesh_bspline.h"
+#include "WCOMMON/cmdline.hpp"
+
+#include <math.h>
+#include <stdlib.h>
+
+
+
+int main(int 		argc,
+	  char** 	argv)
+{
+  wmesh_t* 		mesh = nullptr;
+  wmesh_t* 		refined_mesh = nullptr;
+  wmesh_status_t 	status;
+
+  //
+  // Parameters.
+  //
+  WCOMMON::cmdline::str_t 	ofilename;
+  const char * 			ifilename 	= nullptr;
+  bool 				verbose 	= false;
+  wmesh_int_t
+    iface = 0,
+    nbRotations = 0;
+  
+  WCOMMON::cmdline cmd(argc,
+		       argv);
+  //
+  // Get verbose.
+  //
+  verbose = cmd.option("-v");
+  
+  //
+  // Get the number of partitions.
+  //
+  if (false == cmd.option("-f", &iface))
+    {
+      fprintf(stderr,"missing face option, '-f <integer>' option.\n");
+      return WMESH_STATUS_INVALID_ARGUMENT;
+    }
+
+  if (false == cmd.option("-n", &nbRotations))
+    {
+      fprintf(stderr,"missing face option, '-n <integer>' option.\n");
+      return WMESH_STATUS_INVALID_ARGUMENT;
+    }
+
+  //
+  // Get output filename.
+  //
+  if (false == cmd.option("-o", ofilename))
+    {
+      fprintf(stderr,"missing output file, '-o' option.\n");
+      return WMESH_STATUS_INVALID_ARGUMENT;
+    }
+  
+  if (cmd.get_nargs() == 1)
+    {
+      fprintf(stderr,"no file found.\n");
+      return WMESH_STATUS_INVALID_ARGUMENT;
+    }
+  
+  ifilename = cmd.get_arg(1);
+  
+  const double ctrlpts[] = {-2.0,-0.5,-1.0,
+			    -1.0,0.5,0.0,
+			    0.0625,0.6,0.0,
+			    0.0625,4.3,0.0,
+			    0.75,2.8,2.0,
+			    2.0,0.5,2.0,
+			    2.0,-0.5,2.0,
+			    3.0,-1.5,4.0,
+			    4.0,2.5,4.0,
+			    5.0,1.0,4.0,
+			    7.0,0.0,7.0};
+  
+  wmesh_bspline_t* spline;
+  wmesh_bspline_ddef(&spline,
+		     3,
+		     11,
+		     ctrlpts,
+		     3);
+  
+  wmesh_bspline_write_medit(spline,"testcurve.mesh");
+  
+  /*    wmesh_int_t nxy[2]   = {431,11};  */
+  
+  static const wmesh_int_t 	n1d 		= 6;
+  static const double 		x1d[] 		= {((double)0.0),((double)0.2),((double)0.4),((double)0.6),((double)0.8),((double)1.0)};
+  static const wmesh_int_t 	nbRotations1d 	= 83;
+
+
+  wmesh_t * face;
+  status = wmesh_def_polar_extrusion(&face,
+				     3,
+				     &n1d,
+				     x1d,
+				     &nbRotations1d);
+  WMESH_STATUS_CHECK(status);
+  status = wmesh_write_medit(face,ofilename);
+  WMESH_STATUS_CHECK(status);
+
+
+  wmesh_t * x;
+  wmesh_int_t N = 700;
+  double dz[3] = {1.0/((double)N),2.0,3.0};
+  status =  wmesh_extrusion	(&x,
+				 face,
+				 N,
+				 1,
+				 dz);
+  WMESH_STATUS_CHECK(status);
+
+#if 1
+  status = wmesh_spline_extrusion(x,face,spline);
+  WMESH_STATUS_CHECK(status);
+#endif
+
+
+  status = wmesh_write_medit(x,"extrude.mesh");
+  WMESH_STATUS_CHECK(status);
+
+#if 0
+  
+  { pMeshNode meshNode = MeshVolume_get_geometry(mesh3D);      
+    BSplineReadOnly_transform_coordinates(spline,meshNode,&offset_node); }
+  const double dtheta_value = 0.0125/8.0;
+  
+  const wmesh_int_t offset_node = face->m_num_nodes;  
+
+  pMeshVolume mesh3D = MeshVolumeBuilder_extrusion	(meshFace,
+							 nbRotations,
+							 1,
+							 &dtheta_value,
+							 &memcontext,
+							 __ePrecision_DOUBLE);
+  
+  
+  Writer_write_MeshVolume	(0,
+				 mesh3D,
+				 "roger.vtk");
+  
+#if 0
+  pMeshVolume mesh3D = MeshVolumeBuilder_extrusionAxisymetric(meshFace,
+							      nbRotations,
+							      1,
+							      &dtheta_value,
+								&memcontext,
+							      __ePrecision_DOUBLE);
+#endif
+
+
+
+  
+  
+  
+  Writer_write_MeshVolume	(0,
+				 mesh3D,
+				 ofilename);  
+}
+#endif  
+return 0;
+}

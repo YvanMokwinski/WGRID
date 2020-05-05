@@ -1,0 +1,19 @@
+//
+// Prism first order.
+//
+MeshVersionFormatted
+1
+Dimension
+3
+Vertices
+6
+0 0 0 1
+1 0 0 2
+0 1 0 3
+0 0 1 4
+1 0 1 5
+0 1 1 6
+Prisms
+1
+1 2 3 4 5 6 0
+End

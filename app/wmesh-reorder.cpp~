@@ -1,0 +1,32 @@
+#include "wmesh.h"
+
+int main(int argc, char ** argv)
+{  
+  wmesh_t* mesh;
+  wmesh_status_t status;
+  const char * filename = argv[1];
+  const char * ofilename = (argc > 2) ? argv[2] : nullptr;
+
+  //
+  // Read the mesh.
+  //
+  status = wmesh_read(&mesh,
+		      filename);
+  WMESH_STATUS_CHECK(status);
+
+  //
+  // Mesh analysis.
+  //  
+  status = wmesh_analysis(mesh);
+  WMESH_STATUS_CHECK(status);
+  
+  //
+  // Create the mesh.
+  //
+
+  status = wmesh_write_medit(mesh,
+			     ofilename);
+  WMESH_STATUS_CHECK(status);
+  
+  return WMESH_STATUS_SUCCESS;
+}

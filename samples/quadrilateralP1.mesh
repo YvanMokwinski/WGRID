@@ -1,0 +1,17 @@
+//
+// Quadrilateral first order.
+//
+MeshVersionFormatted
+1
+Dimension
+3
+Vertices
+4
+0 0 0 1
+1 0 0 2
+1 1 0 3
+0 1 0 4
+Quadrilaterals
+1
+ 1 2 3 4 100
+End
