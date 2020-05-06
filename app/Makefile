@@ -1,7 +1,7 @@
 VPATH=$(DISTRIB)/app
 
-INCLUDES= -DWMESH_ILP64=1  -I$(DISTRIB)/include -I$(DISTRIB)/../WCOMMON/include
-LIBS=-L$(DISTRIB)/lib -lwmesh-$(CC)$(DEBUG) -lMeshb.7   -lmkl_intel_ilp64 -lmkl_intel_ilp64 -lmkl_lapack95_ilp64  -lmkl_sequential -lmkl_core   -lpthread
+INCLUDES= -DWMESH_ILP64=0  -I$(DISTRIB)/include -I$(DISTRIB)/../WCOMMON/include
+LIBS=-L$(DISTRIB)/lib -lwmesh-$(CC)$(DEBUG) -lMeshb.7 -L/usr/lib/openblas/lib -lopenblas #  -lmkl_intel_ilp64 -lmkl_intel_ilp64 -lmkl_lapack95_ilp64  -lmkl_sequential -lmkl_core   -lpthread
 
 cpp_source_lib=$(wildcard $(VPATH)/*.cpp)
 CPP_OBJ=$(notdir $(cpp_source_lib:%.cpp=%.cpp.o))

@@ -1,5 +1,5 @@
 #include "wmesh.h"
-#include "WCOMMON/cmdline.hpp"
+#include "cmdline.hpp"
 
 int main(int argc, char ** argv)
 {  
@@ -56,11 +56,7 @@ int main(int argc, char ** argv)
   status = wmesh_read	(&mesh,
 			 ifilename);
   WMESH_STATUS_CHECK(status);
-  
-  //
-  // Mark boundary.
-  //
-  
+
   //
   // Refine the mesh.
   //

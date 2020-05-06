@@ -10,8 +10,20 @@
 #include "wmesh_utils.hpp"
 #include "wmesh_bspline.h"
 #include <math.h>
+
+#include </usr/lib/openblas/include/f77blas.h>
+//#include </usr/lib/openblas/include/lapacke.h>
+#define BLAS_dcopy dcopy_
+#define BLAS_dgemm dgemm_
+#define BLAS_ddot ddot_
+
+#if 0
+
 #define MKL_ILP64 1
 #include "mkl.h"
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -463,7 +475,7 @@ void FiniteElementSegmentHermite_EvalDDt(const char*			transpose_,
     for (idim = 0;idim<dim_;++idim)
       {
     
-    dcopy(&numPoints_,&ctrlpts_[idim],&ctrlptsoff_,&self->m_ctrlpts[idim],&dimension);
+	BLAS_dcopy(&numPoints_,(double*)&ctrlpts_[idim],&ctrlptsoff_,&self->m_ctrlpts[idim],(wmesh_int_p)&dimension);
   } }
   
   /*########################################################################*/
@@ -1112,7 +1124,7 @@ wmesh_status_t wmesh_bspline_ddef(wmesh_bspline_t**		self__,
     { wmesh_int_t  idim =0;
       for (idim =0;idim<dim_;++idim)
 	{
-	  dcopy(&numPoints_,&ctrlpts_[idim],&ctrlptsoff_,&self_->m_ctrlpts[idim],&dimension);
+	  BLAS_dcopy(&numPoints_,(double*)&ctrlpts_[idim],&ctrlptsoff_,&self_->m_ctrlpts[idim],(wmesh_int_p)&dimension);
 	} }
     
     /*########################################################################*/
@@ -1198,41 +1210,41 @@ wmesh_status_t wmesh_bspline_ddef(wmesh_bspline_t**		self__,
   { wmesh_int_t  idim =0;
     for (idim =0;idim<dim_;++idim)
       {
-	dcopy(&numEdges,&self_->m_pts[idim],&dimension,dofValues+0+idim*4,&nequal4);
+	BLAS_dcopy((wmesh_int_p)&numEdges,&self_->m_pts[idim],(wmesh_int_p)&dimension,dofValues+0+idim*4,(wmesh_int_p)&nequal4);
       } }
   
   { wmesh_int_t  idim =0;
     for (idim =0;idim<dim_;++idim)
       {
-	dcopy(&numEdges,&self_->m_pts[dim_+idim],&dimension,dofValues+1+idim*4,&nequal4);
+	BLAS_dcopy((wmesh_int_p)&numEdges,&self_->m_pts[dim_+idim],(wmesh_int_p)&dimension,dofValues+1+idim*4,(wmesh_int_p)&nequal4);
       } }
   
   { wmesh_int_t  idim =0;
     for (idim =0;idim<dim_;++idim)
       {
-	dcopy(&numEdges,&self_->m_derivatives[idim],&dimension,dofValues+2+idim*4,&nequal4);
+	BLAS_dcopy((wmesh_int_p)&numEdges,&self_->m_derivatives[idim],(wmesh_int_p)&dimension,dofValues+2+idim*4,(wmesh_int_p)&nequal4);
       } }
 
   { wmesh_int_t  idim =0;
     for (idim =0;idim<dim_;++idim)
       {
-	dcopy(&numEdges,&self_->m_derivatives[dim_+idim],&dimension,dofValues+3+idim*4,&nequal4);
+	BLAS_dcopy((wmesh_int_p)&numEdges,&self_->m_derivatives[dim_+idim],(wmesh_int_p)&dimension,dofValues+3+idim*4,(wmesh_int_p)&nequal4);
       } }
 
-
-    dgemm("N",
-	  "N",
-	  &nbCubaturePoints,
-	  &numEdges_X_dim,
-	  &nequal4,
-	  &requal1,
-	  evalDtHermite,
-	  &nbCubaturePoints,
-	  dofValues,
-	  &nequal4,
-	  &requal0,
-	  evalCurve,
-	  &nbCubaturePoints);
+  
+  BLAS_dgemm("N",
+	     "N",
+	     (wmesh_int_p)&nbCubaturePoints,
+	     (wmesh_int_p)&numEdges_X_dim,
+	     (wmesh_int_p)&nequal4,
+	     (double*)&requal1,
+	     evalDtHermite,
+	     (wmesh_int_p)&nbCubaturePoints,
+	     dofValues,
+	     (wmesh_int_p)&nequal4,
+	     (double*)&requal0,
+	     evalCurve,
+	     (wmesh_int_p)&nbCubaturePoints);
 #if 0
   Matrix_MM		(evalDtHermite,
 			 &requal1,
@@ -1266,7 +1278,7 @@ wmesh_status_t wmesh_bspline_ddef(wmesh_bspline_t**		self__,
 		tmp[i] = sqrt(s);
 	      }
 	    } 
-	  const double iedge_length 			= ddot(&nbCubaturePoints,w1d,&nequal1,tmp,&nequal1);
+	  const double iedge_length 			= BLAS_ddot((wmesh_int_p)&nbCubaturePoints,w1d,(wmesh_int_p)&nequal1,tmp,(wmesh_int_p)&nequal1);
 	  length 				+= iedge_length*((double)0.5);
 	  self_->m_normalized_length[iedge+1] 	= length;
 	}
@@ -1416,14 +1428,14 @@ wmesh_status_t wmesh_bspline_ddef(wmesh_bspline_t**		self__,
 	printf("AVANT %e %e\n",c1,c2);
       } }
 
-  dgesv(&numPoints_,
-	&nequal3,
+  dgesv_((wmesh_int_p)&numPoints_,
+	(wmesh_int_p)&nequal3,
 	A,
-	&numPoints_,
+	(wmesh_int_p)&numPoints_,
 	perm,
 	B,
-	&numPoints_,
-	&info_lapack);   
+	(wmesh_int_p)&numPoints_,
+	(wmesh_int_p)&info_lapack);   
 
   //  printf("info lapack "ifmt"\n",info_lapack);
 
@@ -1559,11 +1571,11 @@ void wmesh_bspline_t_defInterpolatory(pwmesh_bspline_t 	const	self_,
   { wmesh_int_t  idim =0;
     for (idim =0;idim<dim_;++idim)
       {
-	dcopy(&numPoints_,&ctrlpts_[idim],&ctrlptsoff_,&self_->m_ctrlpts[idim],&dimension);
+	BLAS_dcopy((wmesh_int_p)&numPoints_,&ctrlpts_[idim],&ctrlptsoff_,&self_->m_ctrlpts[idim],(wmesh_int_p)&dimension);
       } }
   
   { I arrayLength = numPoints_ * dim_;
-    dcopy(&arrayLength,self_->m_ctrlpts,&nequal1,self_->m_pts,&nequal1); } 
+    BLAS_dcopy(&arrayLength,self_->m_ctrlpts,&nequal1,self_->m_pts,&nequal1); } 
   
   /*########################################################################*/
   double * __restrict__ A = calloc(numPoints_*numPoints_,sizeof(R));
@@ -1602,7 +1614,7 @@ void wmesh_bspline_t_defInterpolatory(pwmesh_bspline_t 	const	self_,
       } }
 
   I info_lapack;
-  dgesv(&numPoints_,
+  dgesv_((wmesh_int_p)&numPoints_,
 	&nequal3,
 	A,
 	&numPoints_,

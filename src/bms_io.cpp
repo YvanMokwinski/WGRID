@@ -54,10 +54,6 @@ extern "C"
 				      self_->m_n_c.v,
 				      self_->m_n_c.ld);
     WMESH_STATUS_CHECK(status);
-    GmfSetKwd(inm,
-	      GmfTetrahedra,
-	      8);
-
 
     status = bms_write_medit_topology(inm,
 

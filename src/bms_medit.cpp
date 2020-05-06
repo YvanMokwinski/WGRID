@@ -14,11 +14,18 @@
 namespace Medit
 {
   template<typename _int_t> static int GmfType();
+  template<typename _int_t> static int GmfVecType();
   template<> int GmfType<int>()		{return GmfInt;};
   template<> int GmfType<long>()	{return GmfLong;};
   template<> int GmfType<long long>()	{return GmfLong;};
   template<> int GmfType<double>()	{return GmfDouble;};
   template<> int GmfType<float>()	{return GmfFloat;};
+
+  template<> int GmfVecType<int>()		{return GmfIntVec;};
+  template<> int GmfVecType<long>()		{return GmfLongVec;};
+  template<> int GmfVecType<long long>()	{return GmfLongVec;};
+  template<> int GmfVecType<double>()		{return GmfDoubleVec;};
+  template<> int GmfVecType<float>()		{return GmfFloatVec;};
 };
 
 #ifdef GMF_CHECK_STATUS
@@ -215,117 +222,17 @@ extern "C"
 	    GmfSetKwd(inm_,
 		      gmf_type,
 		      num_cells);
-	    
-	    switch(c2n_m[itype])
-	      {
-	      case 2:
-		{
-		  GmfSetBlock(inm_,
-			      gmf_type,
-			      1,
-			      num_cells,
-			      0,
-			      NULL,
-			      NULL,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 0, c2n_last + 0,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 1, c2n_last + 1,			  
-			      Medit::GmfType<wmesh_int_t>(), c_c_first, c_c_last);
-		  break;
-		}
-	      case 3:
-		{
-		  GmfSetBlock(inm_,
-			      gmf_type,
-			      1,
-			      num_cells,
-			      0,
-			      NULL,
-			      NULL,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 0, c2n_last + 0,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 1, c2n_last + 1,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 2, c2n_last + 2,
-			      Medit::GmfType<wmesh_int_t>(), c_c_first, c_c_last);
-		  break;
-		}
-	      case 4:
-		{
-		  GmfSetBlock(inm_,
-			      gmf_type,
-			      1,
-			      num_cells,
-			      0,
-			      NULL,
-			      NULL,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 0, c2n_last + 0,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 1, c2n_last + 1,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 2, c2n_last + 2,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 3, c2n_last + 3,
-			      Medit::GmfType<wmesh_int_t>(), c_c_first, c_c_last);
 
-		  break;
-		}
-		
-	      case 5:	    
-		{
-		  GmfSetBlock(inm_,
-			      gmf_type,
-			      1,
-			      num_cells,
-			      0,
-			      NULL,
-			      NULL,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 0, c2n_last + 0,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 1, c2n_last + 1,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 2, c2n_last + 2,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 3, c2n_last + 3,
-			      Medit::GmfType<wmesh_int_t>(), c2n_first + 4, c2n_last + 4,
-			      Medit::GmfType<wmesh_int_t>(), c_c_first, c_c_last);
-		  break;
-		}
-	  case 6:
-	    {
-	      GmfSetBlock(inm_,
-			  gmf_type,
-			  1,
-			  num_cells,
+	    GmfSetBlock(inm_,
+			gmf_type,
+			1,
+			num_cells,
 			  0,
-			  NULL,
-			  NULL,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 0, c2n_last + 0,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 1, c2n_last + 1,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 2, c2n_last + 2,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 3, c2n_last + 3,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 4, c2n_last + 4,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 5, c2n_last + 5,
-			  Medit::GmfType<wmesh_int_t>(), c_c_first, c_c_last);
-	      break;
-	    }
-	  case 8:
-	    {
-	      GmfSetBlock(inm_,
-			  gmf_type,
-			  1,
-			  num_cells,
-			  0,
-			  NULL,
-			  NULL,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 0, c2n_last + 0,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 1, c2n_last + 1,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 2, c2n_last + 2,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 3, c2n_last + 3,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 4, c2n_last + 4,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 5, c2n_last + 5,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 6, c2n_last + 6,
-			  Medit::GmfType<wmesh_int_t>(), c2n_first + 7, c2n_last + 7,
-			  Medit::GmfType<wmesh_int_t>(), c_c_first, c_c_last);
-	      break;
-	    }
-	  default:
-	    {
-	      WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_CONFIG);
-	      break;
-	    }
-	  }
+			NULL,
+			NULL,
+			
+			Medit::GmfVecType<wmesh_int_t>(), c2n_m[itype],c2n_first + 0, c2n_last + 0,
+			Medit::GmfType<wmesh_int_t>(), c_c_first, c_c_last);
 	  }
       }
     return WMESH_STATUS_SUCCESS;  

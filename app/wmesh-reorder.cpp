@@ -1,5 +1,5 @@
 #include "wmesh.h"
-#include "WCOMMON/cmdline.hpp"
+#include "cmdline.hpp"
 
 int main(int argc, char ** argv)
 {

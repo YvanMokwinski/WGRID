@@ -1,5 +1,5 @@
 VPATH=$(DISTRIB)/src
-HEADERS= -DWMESH_ILP64=1 \
+HEADERS= -DWMESH_ILP64=0 \
 	-I$(DISTRIB)/include \
 	-I$(DISTRIB)/src/include
 
