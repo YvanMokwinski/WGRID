@@ -1,13 +1,6 @@
 VPATH=$(DISTRIB)/src
-HEADERS= -DWMESH_ILP64=0 \
-	-I$(DISTRIB)/include \
-	-I$(DISTRIB)/src/include
 
-
-#	-I$(DISTRIB)/../WFE/src \
-#	-I$(DISTRIB)/../WFE/include \
-
-#	-I$(DISTRIB)/../WCOMMON/include
+HEADERS= -I$(DISTRIB)/include -I$(DISTRIB)/src/include
 
 
 source_lib=$(wildcard $(VPATH)/*.cpp)

@@ -123,4 +123,23 @@ extern "C"
 #endif
 
   };
+
+  struct wmeshspace_t
+  {
+    wmesh_t * 			m_mesh;
+    wmesh_int_t 		m_degree;
+    wmesh_t * 			m_patterns[4];
+
+    wmesh_int_sparsemat_t 	m_c2d;
+    wmesh_int_sparsemat_t 	m_c2d_n;
+    wmesh_int_sparsemat_t 	m_c2d_e;
+    wmesh_int_sparsemat_t 	m_c2d_t;
+    wmesh_int_sparsemat_t 	m_c2d_q;
+    wmesh_int_sparsemat_t 	m_c2d_i;
+    wmesh_int_t 		m_ndofs;
+    
+    //    double* 		m_coo_dofs;
+    //    wmesh_int_t		m_coo_dofs_ld;
+  };
+
 };

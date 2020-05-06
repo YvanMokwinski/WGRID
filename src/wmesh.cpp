@@ -158,7 +158,27 @@ extern "C"
       {
 	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
       }
-    
+
+    wmesh_int_t dimension = (c2n_size_==4) ? 3 : ( (c2n_size_==2) ? 2 : 1 );
+    if (dimension > 1)
+      {
+	wmesh_status_t status = wmesh_build_s_e2n(&self_->m_s_e2n, dimension);
+	WMESH_STATUS_CHECK(status);
+	if (dimension > 2)
+	  {
+	    //
+	    // 1.b/ Local triangles to nodes.
+	    //
+	    status  = wmesh_build_s_t2n(&self_->m_s_t2n, dimension);
+	    WMESH_STATUS_CHECK(status);
+	    
+	    //
+	    // 1.c/ Local quadrilaterals to nodes.
+	    //
+	    status = wmesh_build_s_q2n(&self_->m_s_q2n, dimension);
+	    WMESH_STATUS_CHECK(status);	    
+	  }
+      }
     return WMESH_STATUS_SUCCESS;
   }
 
@@ -234,6 +254,33 @@ extern "C"
     self_->m_flag_cells = (wmesh_int_p)calloc(num_cells,sizeof(wmesh_int_t));
 #endif
     self_->m_num_cells  = num_cells;
+
+    //
+    // 1/ Initialize the reference shape edges to nodes.
+    //    
+    //
+    // 1.a/ Local edges to nodes.
+    //
+    wmesh_int_t dimension = (ntypes_==4) ? 3 : ( (ntypes_==2) ? 2 : 1 );
+    if (dimension > 1)
+      {
+	wmesh_status_t status  = wmesh_build_s_e2n(&self_->m_s_e2n, dimension);
+	WMESH_STATUS_CHECK(status);
+	if (dimension > 2)
+	  {
+	    //
+	    // 1.b/ Local triangles to nodes.
+	    //
+	    status  = wmesh_build_s_t2n(&self_->m_s_t2n, dimension);
+	    WMESH_STATUS_CHECK(status);
+	    
+	    //
+	    // 1.c/ Local quadrilaterals to nodes.
+	    //
+	    status = wmesh_build_s_q2n(&self_->m_s_q2n, dimension);
+	    WMESH_STATUS_CHECK(status);	    
+	  }
+      }
     return WMESH_STATUS_SUCCESS;
   }
 

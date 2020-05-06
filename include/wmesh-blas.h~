@@ -1,0 +1,19 @@
+
+#ifdef WMESH_OPEN_BLAS
+#include </usr/lib/openblas/include/f77blas.h>
+#define BLAS_dcopy dcopy_
+#define BLAS_dgemm dgemm_
+#define BLAS_ddot ddot_
+#else
+
+#ifdef WMESH_MKL_BLAS
+#define MKL_ILP64 1
+#include "mkl.h"
+#define BLAS_dcopy dcopy
+#define BLAS_dgemm dgemm
+#define BLAS_ddot ddot
+#else
+#error choose WMESH_MKL_BLAS or WMESH_OPEN_BLAS
+#endif
+
+#endif

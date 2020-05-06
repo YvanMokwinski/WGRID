@@ -60,19 +60,28 @@ int main(int argc, char ** argv)
   //
   // Refine the mesh.
   //
-  status = wmesh_refine(mesh,
-			degree,
-			&refined_mesh);
+  status = wmesh_analysis(mesh,degree);
+
+  wmeshspace_t * space;
+  status = wmeshspace_def(&space,
+			  degree,
+			  mesh);
   
+  WMESH_STATUS_CHECK(status);
+
+  //
+  // Build the sublinear mesh.
+  //
+  status = wmeshspace_sublinearmesh	(space,
+					 &refined_mesh);
   WMESH_STATUS_CHECK(status);
   
   //
   // Write the refined mesh.
   //
-  status = wmesh_write(refined_mesh,
-		       ofilename);
+  status = wmesh_write			(refined_mesh,
+					 ofilename);
   WMESH_STATUS_CHECK(status);
-
   
   return WMESH_STATUS_SUCCESS;
 }

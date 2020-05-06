@@ -4,6 +4,8 @@ OPTIMIZE_FLAGS=-O3 -DNDEBUG #-Wall -Werror
 DEBUG_FLAGS=-g #-Wall -Werror
 
 install: 
+	mkdir -p bin
+	mkdir -p lib
 
 # OPTIMIZED VERSION
 	mkdir -p $(PLATFORM)-$(CC)

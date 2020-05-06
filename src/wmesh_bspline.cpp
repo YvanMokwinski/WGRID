@@ -11,18 +11,7 @@
 #include "wmesh_bspline.h"
 #include <math.h>
 
-#include </usr/lib/openblas/include/f77blas.h>
-//#include </usr/lib/openblas/include/lapacke.h>
-#define BLAS_dcopy dcopy_
-#define BLAS_dgemm dgemm_
-#define BLAS_ddot ddot_
-
-#if 0
-
-#define MKL_ILP64 1
-#include "mkl.h"
-#endif
-
+#include "wmesh-blas.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1428,15 +1417,15 @@ wmesh_status_t wmesh_bspline_ddef(wmesh_bspline_t**		self__,
 	printf("AVANT %e %e\n",c1,c2);
       } }
 
-  dgesv_((wmesh_int_p)&numPoints_,
-	(wmesh_int_p)&nequal3,
-	A,
-	(wmesh_int_p)&numPoints_,
-	perm,
-	B,
-	(wmesh_int_p)&numPoints_,
-	(wmesh_int_p)&info_lapack);   
-
+  LAPACK_dgesv((wmesh_int_p)&numPoints_,
+	       (wmesh_int_p)&nequal3,
+	       A,
+	       (wmesh_int_p)&numPoints_,
+	       perm,
+	       B,
+	       (wmesh_int_p)&numPoints_,
+	       (wmesh_int_p)&info_lapack);   
+  
   //  printf("info lapack "ifmt"\n",info_lapack);
 
   { wmesh_int_t i;

@@ -10,9 +10,20 @@ extern "C"
 #endif
   
   struct wmesh_t;
+  struct wmeshspace_t;
   struct wmesh_bspline_t;
 
-  wmesh_status_t wmesh_extract_boundary(wmesh_t* self_);
+  
+
+  wmesh_status_t wmeshspace_def			(wmeshspace_t ** 	self__,
+						 wmesh_int_t 		degree_,
+						 wmesh_t * 		mesh_);
+  
+  wmesh_status_t wmeshspace_sublinearmesh	(wmeshspace_t * 	self_,
+						 wmesh_t ** 		mesh__);
+  
+
+  wmesh_status_t wmesh_extract_boundary		(wmesh_t* self_);
   wmesh_status_t wmesh_kill			(wmesh_t* self_);
   wmesh_status_t wmesh_def_polar_extrusion	(wmesh_t ** self_,
 						 wmesh_int_t 		dim_,
@@ -20,12 +31,12 @@ extern "C"
 						 const double * 	x_,
 						 const_wmesh_int_p  	nbRotations_);
   
-  wmesh_status_t wmesh_extrusion	(wmesh_t ** 			self_,
-					 const wmesh_t * 		surface_,
-					 wmesh_int_t 			nz_,
-					 wmesh_int_t 			ndz_,
-					 const double*__restrict__	dz_,
-					 const_wmesh_int_p		bfaces_ids);
+  wmesh_status_t wmesh_extrusion		(wmesh_t ** 			self_,
+						 const wmesh_t * 		surface_,
+						 wmesh_int_t 			nz_,
+						 wmesh_int_t 			ndz_,
+						 const double*__restrict__	dz_,
+						 const_wmesh_int_p		bfaces_ids);
   
   wmesh_status_t  wmesh_spline_extrusion(wmesh_t *x,
 					 const wmesh_t *	surface_,

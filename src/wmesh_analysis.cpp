@@ -444,15 +444,15 @@ extern "C"
   }
 
   
-#if 1
-  wmesh_status_t wmesh_analysis_space(wmesh_t*		self_,
+#if 0
+  wmesh_status_t wmeshspace_analysis(wmesh_t*		self_,
 				      wmesh_int_t 	degree_)
   {
     wmesh_status_t status;
 
 #ifndef NDEBUG
       std::cerr
-	<< "//wmesh.verbose: wmesh_analysis_space ..."
+	<< "//wmesh.verbose: wmeshspace_analysis ..."
 	<< std::endl;
 #endif
       const wmesh_int_t num_dofs_per_node 		= (degree_ > 0) ? 1 : 0;      
@@ -470,7 +470,7 @@ extern "C"
 
 #ifndef NDEBUG
       std::cerr
-	<< "//wmesh.verbose: wmesh_analysis_space nodes [ndofs="
+	<< "//wmesh.verbose: wmeshspace_analysis nodes [ndofs="
 	<< num_dofs_per_node
 	<< ", idx="
 	<< dof_idx
@@ -491,7 +491,7 @@ extern "C"
 
 #ifndef NDEBUG
       std::cerr
-	<< "//wmesh.verbose: wmesh_analysis_space edges [ndofs="
+	<< "//wmesh.verbose: wmeshspace_analysis edges [ndofs="
 	<< num_dofs_per_edge
 	<< ", idx="
 	<< dof_idx
@@ -516,7 +516,7 @@ extern "C"
 //      exit(1);
 #ifndef NDEBUG
       std::cerr
-	<< "//wmesh.verbose: wmesh_analysis_space triangles [ndofs="
+	<< "//wmesh.verbose: wmeshspace_analysis triangles [ndofs="
 	<< num_dofs_per_triangle
 	<< ", idx="
 	<< dof_idx
@@ -540,7 +540,7 @@ extern "C"
 
 #ifndef NDEBUG
       std::cerr
-	<< "//wmesh.verbose: wmesh_analysis_space quadrilateral [ndofs="
+	<< "//wmesh.verbose: wmeshspace_analysis quadrilateral [ndofs="
 	<< num_dofs_per_quadrilateral
 	<< ", idx="
 	<< dof_idx
@@ -565,7 +565,7 @@ extern "C"
       
 #ifndef NDEBUG
       std::cerr
-	<< "//wmesh.verbose: wmesh_analysis_space interior [ndofs="
+	<< "//wmesh.verbose: wmeshspace_analysis interior [ndofs="
 	<< "x"
 	<< ", idx="
 	<< dof_idx
@@ -579,7 +579,7 @@ extern "C"
       
 #ifndef NDEBUG
       std::cerr
-	<< "//wmesh.verbose: wmesh_analysis_space done [idx="
+	<< "//wmesh.verbose: wmeshspace_analysis done [idx="
 	<< dof_idx
 	<< "]"
 	<< std::endl;
@@ -1123,12 +1123,18 @@ extern "C"
 
 
 
-  wmesh_status_t wmesh_create_space(wmesh_t*		self_,
-				    wmesh_int_t		degree_,
-				    wmesh_t**		refined_mesh_)
+  wmesh_status_t wmesh_refine(wmesh_t*		self_,
+			      wmesh_int_t	degree_,
+			      wmesh_t**		refined_mesh_)
   {
     wmesh_status_t status;
-
+#if 0
+    wmeshspace_t *meshspace;
+    wmeshspace_def(&meshspace,
+		   degree_,
+		   self_);
+#endif
+    
 #ifndef NDEBUG
       std::cerr
 	<< "//wmesh.verbose: wmesh_analysis_space ..."
@@ -1300,7 +1306,7 @@ extern "C"
 	      WMESH_STATUS_CHECK(status);
 
 
-	      wmesh_write_medit(refmeshes[l],"ahaha.mesh");
+	      //wmesh_write_medit(refmeshes[l],"ahaha.mesh");
 	      
 	      if (l==0)
 		{
@@ -1327,7 +1333,6 @@ extern "C"
 		  // Build the shape functions.
 		  //
 		  double * b = (double*)malloc(sizeof(double)*refmeshes[l]->m_num_nodes*5);
-		  //		  std::cout << " " << std::endl;
 		  for (wmesh_int_t k=0;k<refmeshes[l]->m_num_nodes;++k)
 		    {
 		      double r = refmeshes[l]->m_coo[3*k+0];
@@ -1799,6 +1804,687 @@ extern "C"
       }
       return WMESH_STATUS_SUCCESS;
   }
+
+
+  wmesh_status_t wmeshspace_sublinearmesh(wmeshspace_t * 	self_,
+					  wmesh_t ** 		mesh__)
+  {
+    std::cout << "gggggggggggggggggg   " << self_->m_ndofs << std::endl;
+    wmesh_status_t status;
+    wmesh_int_t degree_ = self_->m_degree;
+    double * refevals[4];
+    for (wmesh_int_t l=0;l<4;++l)
+      {
+
+	refevals[l]	= nullptr;
+	if (self_->m_mesh->m_c2n.m_n[l]>0)
+	  {
+#ifndef NDEBUG
+	    std::cerr << "// wmesh.ndebug.verbose: wmesh_analysis, refmesh celltype_=" << l << ", degree_ " << degree_ << std::endl;
+#endif
+	    //wmesh_write_medit(self_->m_patterns[l],"ahaha.mesh");
+	    
+	    if (l==0)
+	      {
+		//
+		// Build the shape functions.
+		//
+		double * b = (double*)malloc(sizeof(double)*self_->m_patterns[l]->m_num_nodes*4);
+		for (wmesh_int_t k=0;k<self_->m_patterns[l]->m_num_nodes;++k)
+		  {
+		    double r = self_->m_patterns[l]->m_coo[3*k+0];
+		    double s = self_->m_patterns[l]->m_coo[3*k+1];
+		    double t = self_->m_patterns[l]->m_coo[3*k+2];
+		    b[k*4+0] = ((double)1.0)-(r+s+t);
+		    b[k*4+1] = r;
+		    b[k*4+2] = s;
+		    b[k*4+3] = t;
+		  }		  
+		refevals[l] = b;		  
+	      }
+
+	    if (l==1)
+	      {
+		//
+		// Build the shape functions.
+		//
+		double * b = (double*)malloc(sizeof(double)*self_->m_patterns[l]->m_num_nodes*5);
+		for (wmesh_int_t k=0;k<self_->m_patterns[l]->m_num_nodes;++k)
+		  {
+		    double r = self_->m_patterns[l]->m_coo[3*k+0];
+		    double s = self_->m_patterns[l]->m_coo[3*k+1];
+		    double t = self_->m_patterns[l]->m_coo[3*k+2];
+		    // std::cout << "rst = " << r << " " << s << " " << t << " " << std::endl;
+
+#if 0
+		    double one = 1.0;
+		    b[k*5+0] = ( one - r )* ( one - s ) * ( one - t );
+		    b[k*5+1] = ( ( r )* ( one - s ) * ( one - t ) );
+		    b[k*5+2] = ( ( r )* ( s ) * ( one - t ) );
+		    b[k*5+3] = ( one - r )* ( s ) * ( one - t );
+		    b[k*5+4] = ( one - r )* ( one - s ) * ( t ) +
+		      ( r )* ( one - s ) * ( t ) +
+		      ( r )* ( s ) * ( t ) +
+		      ( one - r )* ( s ) * ( t );
+#endif
+
+#if 0
+		    r = 2.0*r-1.0;
+		    s = 2.0*s-1.0;
+		    t = 2.0*t-1.0;
+		    double hr = (1.0+r)*( (1.0-t) / 2.0 ) -1.0;
+		    double hs = (1.0+s)*( (1.0-t) / 2.0 ) -1.0;
+		    double ht = t;
+#endif
+		    if (t<1.0)
+		      {
+			  
+			double h = 1.0-t;
+			  
+			double phir0 = (h-r)/h;
+			double phir1 = r/h;
+		      
+			double phis0 = (h-s)/h;
+			double phis1 = s/h;
+			  
+			b[k*5+0] = phir0 * phis0 * (1.0-t);
+			b[k*5+1] = phir1 * phis0 * (1.0-t);
+			b[k*5+2] = phir1 * phis1 * (1.0-t);
+			b[k*5+3] = phir0 * phis1 * (1.0-t);
+			b[k*5+4] = t;
+
+			b[k*5+0] = (1.0 - t  - r) * (1.0-t-s) / (1.0-t);
+			b[k*5+1] = (r * (1.0-t-s)) / (1.0-t);
+			b[k*5+2] = (r * s) / (1.0-t);
+			b[k*5+3] = ((1.0 - t - r) * s) / (1.0-t);
+			b[k*5+4] = t;
+			  
+#if 0
+			r = 2.0*r-1.0;
+			s = 2.0*s-1.0;
+			t = 2.0*t-1.0;
+			double c = (1.0-t)/2.0;
+			b[k*5+0] = ( (c-t) * (c-s) ) / 4.0 / c/c * (1.0-t) / (2.0);
+			b[k*5+1] = ( (c+t) * (c-s) ) / 4.0 / c/c * (1.0-t) / (2.0);
+			b[k*5+2] = ( (c+t) * (c+s) ) / 4.0 / c/c * (1.0-t) / (2.0);
+			b[k*5+3] = ( (c-t) * (c+s) ) / 4.0 / c/c * (1.0-t) / (2.0);
+			b[k*5+4] = (t+1.0)/2.0;
+			  
+
+#else
+			b[k*5+0] = (1.0 - t  - r) * (1.0-t-s) / (1.0-t);
+			b[k*5+1] = (r * (1.0-t-s)) / (1.0-t);
+			b[k*5+2] = (r * s) / (1.0-t);
+			b[k*5+3] = ((1.0 - t - r) * s) / (1.0-t);
+			b[k*5+4] = t;
+#endif
+		      }
+		    else
+		      {
+			b[k*5+0] = 0.0;
+			b[k*5+1] = 0.0;
+			b[k*5+2] = 0.0;
+			b[k*5+3] = 0.0;
+			b[k*5+4] = 1.0;			  
+		      }
+		      
+		    //
+		    // Split into tetrahedra.
+		    //
+		    // 4
+		    //
+		    // 3 2
+		    // 0 1
+		    //
+#if 0
+		    if (r > s)
+		      {
+			b[k*5+0] = (1.0-r-s-t);
+			b[k*5+1] = r;
+			b[k*5+2] = s;
+			b[k*5+3] = 0.0;
+			b[k*5+4] = t;
+		      }
+		    else
+		      {
+			b[k*5+0] = (1.0-r-s-t);
+			b[k*5+1] = 0.0;
+			b[k*5+2] = r;
+			b[k*5+3] = s;
+			b[k*5+4] = t;
+		      }
+#endif
+		      
+		      
+#if 0
+		    b[k*5+0] = ((r+t)*(s+t))/(2.0*(1.0-t));
+		    b[k*5+1] = -((r+t)*(s+1.0))/(2.0*(1.0-t));
+		    b[k*5+2] = -((r+t)*(s+t))/(2.0*(1.0-t));
+		    b[k*5+3] = ((r+1.0)*(s+1.0))/(2.0*(1.0-t));
+		    b[k*5+4] = (1.0+t)/2.0;
+		    r=hr;
+		    s=hs;
+		    t=ht;
+		    b[k*5+0] = ((r+t)*(s+t))/(2.0*(1.0-t));
+		    b[k*5+1] = -((r+t)*(s+1.0))/(2.0*(1.0-t));
+		    b[k*5+2] = -((r+t)*(s+t))/(2.0*(1.0-t));
+		    b[k*5+3] = ((r+1.0)*(s+1.0))/(2.0*(1.0-t));
+		    b[k*5+4] = (1.0+t)/2.0;
+		    b[k*5+0] = (1.0-r) * (1.0-s) * (1.0-t);
+		    b[k*5+1] = (r) * (1.0-s) * (1.0-t);
+		    b[k*5+2] = (r) * s * (1.0-t);
+		    b[k*5+3] = (1.0-r) * s * (1.0-t);
+		    b[k*5+4] = t;
+#endif
+
+#if 0
+		    b[k*5+5] = ( one - r -t  )* ( one - s -t ) / (4.0 * (1-t));
+		    b[k*5+1] = 
+		      b[k*5+2] = ( ( r )* ( s ) * ( one - t ) );
+		    b[k*5+3] = ( one - r )* ( s ) * ( one - t );
+		    b[k*5+4] = ( one - r )* ( one - s ) * ( t );
+#endif
+		  }
+
+		refevals[l] = b;		  
+#if 0
+		//
+		// Build the shape functions.
+		//
+		double * b = (double*)malloc(sizeof(double)*self_->m_patterns[l]->m_num_nodes*6);
+		for (wmesh_int_t k=0;k<self_->m_patterns[l]->m_num_nodes;++k)
+		  {
+		    double r = self_->m_patterns[l]->m_coo[3*k+0];
+		    double s = self_->m_patterns[l]->m_coo[3*k+1];
+		    double t = self_->m_patterns[l]->m_coo[3*k+2];
+		    double one=1.0;
+		    b[k*8+0] = ( one - r - s) * ( one - t );
+		    b[k*8+1] = r * ( one - t );
+		    b[k*8+2] = s * ( one - t );
+		    b[k*8+4] = ( one - r - s) * ( t );
+		    b[k*8+5] = r * ( t );
+		  }		  
+		refevals[l] = b;
+#endif
+	      }
+	      
+	    if (l==2)
+	      {
+		//
+		// Build the shape functions.
+		//
+		double * b = (double*)malloc(sizeof(double)*self_->m_patterns[l]->m_num_nodes*6);
+		for (wmesh_int_t k=0;k<self_->m_patterns[l]->m_num_nodes;++k)
+		  {
+		    double r = self_->m_patterns[l]->m_coo[3*k+0];
+		    double s = self_->m_patterns[l]->m_coo[3*k+1];
+		    double t = self_->m_patterns[l]->m_coo[3*k+2];
+		    double one=1.0;
+		    b[k*6+0] = ( one - r - s) * ( one - t );
+		    b[k*6+1] = r * ( one - t );
+		    b[k*6+2] = s * ( one - t );
+		    b[k*6+3] = ( one - r - s) * ( t );
+		    b[k*6+4] = r * ( t );
+		    b[k*6+5] = s * ( t );
+		  }		  
+		refevals[l] = b;		  
+	      }
+
+	    if (l==3)
+	      {
+		//
+		// Build the shape functions.
+		//
+		double * b = (double*)malloc(sizeof(double)*self_->m_patterns[l]->m_num_nodes*8);
+		//		  std::cout << " " << std::endl;
+		for (wmesh_int_t k=0;k<self_->m_patterns[l]->m_num_nodes;++k)
+		  {
+		    double r = self_->m_patterns[l]->m_coo[3*k+0];
+		    double s = self_->m_patterns[l]->m_coo[3*k+1];
+		    double t = self_->m_patterns[l]->m_coo[3*k+2];
+		    //		      std::cout << "rst = " << r << " " << s << " " << t << " " << std::endl;
+		    double one=1.0;
+		    b[k*8+0] = ( one - r )* ( one - s ) * ( one - t );
+		    b[k*8+1] = ( ( r )* ( one - s ) * ( one - t ) );
+		    b[k*8+2] = ( ( r )* ( s ) * ( one - t ) );
+		    b[k*8+3] = ( one - r )* ( s ) * ( one - t );
+		    b[k*8+4] = ( one - r )* ( one - s ) * ( t );
+		    b[k*8+5] = ( ( r )* ( one - s ) * ( t ) );
+		    b[k*8+6] = ( ( r )* ( s ) * ( t ) );
+		    b[k*8+7] = ( one - r )* ( s ) * ( t );
+		  }
+
+		refevals[l] = b;		  
+	      }
+	      
+	  }
+
+      }
+
+#if 1
+    
+    double * coo_dofs = (double*)malloc(3*sizeof(double)*self_->m_ndofs);
+    
+    {
+      double cell_xyz[32];
+      wmesh_int_t cell_ld=3;
+      // double * 	c_xyz 	= (double*)malloc(sizeof(double)*2048);
+      // wmesh_int_p 	c_dofs 	= (wmesh_int_p)malloc(sizeof(wmesh_int_t)*2048);
+      for (wmesh_int_t l=0;l<self_->m_c2d.m_size;++l)
+	{
+	  double * 	refeval = refevals[l];
+
+	    //
+	    // Local c2d.
+	    //	    
+	    // wmesh_int_t c2d_n	= self_->m_c2d.m_n[l];
+	    wmesh_int_t c2d_m 		= self_->m_c2d.m_m[l];
+	    wmesh_int_t c2d_ld 		= self_->m_c2d.m_ld[l];
+	    wmesh_int_p c2d_v 		= self_->m_c2d.m_data + self_->m_c2d.m_ptr[l];
+
+	    //
+	    // Local c2n.
+	    //
+	    wmesh_int_t c2n_n 		= self_->m_mesh->m_c2n.m_n[l];
+	    wmesh_int_t c2n_m 		= self_->m_mesh->m_c2n.m_m[l];
+	    wmesh_int_t c2n_ld		= self_->m_mesh->m_c2n.m_ld[l];
+	    wmesh_int_p c2n_v 		= self_->m_mesh->m_c2n.m_data + self_->m_mesh->m_c2n.m_ptr[l];
+	    
+	    for (wmesh_int_t j=0;j<c2n_n;++j)
+	      {
+		
+		//
+		// Get the coordinates of the cell.
+		//		
+		for (wmesh_int_t i=0;i<c2n_m;++i)
+		  {
+		    wmesh_int_t idx = c2n_v[c2n_ld * j + i] - 1;
+		    for (wmesh_int_t k=0;k<3;++k)
+		      {
+			cell_xyz[cell_ld * i + k] = self_->m_mesh->m_coo[3 * idx + k];
+		      }
+		  }
+		
+		
+		//
+		// Get the physical coordinates of the dofs.
+		//
+		//		std::cout << "c2d_m " << c2d_m << std::endl;
+		for (wmesh_int_t i=0;i<c2d_m;++i)
+		  {
+		    double x = 0.0, y =0.0, z = 0.0;
+		    for (wmesh_int_t k=0;k<c2n_m;++k)
+		      x += refeval[c2n_m * i + k] * cell_xyz[cell_ld * k + 0];		    
+		    for (wmesh_int_t k=0;k<c2n_m;++k)
+		      y += refeval[c2n_m * i + k] * cell_xyz[cell_ld * k + 1];		    
+		    for (wmesh_int_t k=0;k<c2n_m;++k)
+		      z += refeval[c2n_m * i + k] * cell_xyz[cell_ld * k + 2];		    
+
+		    wmesh_int_t idx = c2d_v[c2d_ld * j + i] - 1;
+		    // std::cout << "idx " << idx << std::endl;
+		    coo_dofs[3 * idx + 0] = x;
+		    coo_dofs[3 * idx + 1] = y;
+		    coo_dofs[3 * idx + 2] = z;
+		  }
+	      }
+	  }
+      }
+
+      printf("generate codes.\n");
+
+      wmesh_int_p dofs_cod = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*self_->m_ndofs);      
+      for (wmesh_int_t i=0;i<self_->m_mesh->m_num_nodes;++i)
+	{
+	  dofs_cod[i] = self_->m_mesh->m_n_c.v[i];
+	}
+      for (wmesh_int_t i=self_->m_mesh->m_num_nodes;i<self_->m_ndofs;++i)
+	{
+	  dofs_cod[i] = 1001;
+	}
+
+
+
+      printf("generate sublinear connectivity.\n");
+      {
+	
+	wmesh_int_t c2n_size = 4;
+	wmesh_int_t c2n_m[4]{4,5,6,8};
+	wmesh_int_t c2n_ld[4]{4,5,6,8};
+	wmesh_int_t c2n_n[4]{0,0,0,0};	
+
+	for (int i=0;i<4;++i)
+	  {
+	    if (self_->m_patterns[i]!=nullptr)
+	      {
+		if (i==1)
+		  {
+		    c2n_n[0] += self_->m_mesh->m_c2n.m_n[i] * self_->m_patterns[i]->m_c2n.m_n[0];
+		    c2n_n[1] += self_->m_mesh->m_c2n.m_n[i] * self_->m_patterns[i]->m_c2n.m_n[1];
+		  }
+		else
+		  {
+		    c2n_n[i] = self_->m_mesh->m_c2n.m_n[i] * self_->m_patterns[i]->m_num_cells;
+		  }
+	      }
+	  }
+	
+
+	wmesh_int_t c2n_ptr[5];
+	c2n_ptr[0]=0;
+	for (int i=0;i<4;++i)
+	  {
+	    //	    std::cout << c2n_ptr[i] << std::endl;
+	    c2n_ptr[i+1] = c2n_ptr[i] + c2n_ld[i] * c2n_n[i];
+	  }
+	//	    std::cout << c2n_ptr[4] << std::endl;
+	
+	wmesh_int_p c2n_v = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*c2n_ptr[4]);
+	
+	wmesh_int_t mxdofs = 0;
+	for (int i=0;i<4;++i)
+	  //	  if (c2n_n[i] > 0) mxdofs = (self_->m_patterns[i]->m_num_nodes > mxdofs) ? self_->m_patterns[i]->m_num_nodes : mxdofs;
+	  if (self_->m_patterns[i])
+	  mxdofs = (self_->m_patterns[i]->m_num_nodes > mxdofs) ? self_->m_patterns[i]->m_num_nodes : mxdofs;
+	wmesh_int_p dofs = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*mxdofs);
+	wmesh_int_p lidx = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*mxdofs);
+
+	printf("generate connectivity.\n");
+	wmesh_int_t idx[4]{0,0,0,0};
+	for (wmesh_int_t l=0;l<4;++l)
+	  {
+	    auto ref_c2n = &self_->m_patterns[l]->m_c2n;
+
+	    wmesh_int_t ncells = self_->m_c2d.m_n[l];
+	    for (wmesh_int_t j=0;j<ncells;++j)
+	      {
+		
+		//
+		// extract dofs.
+		//
+		for (wmesh_int_t i=0;i<self_->m_c2d.m_m[l];++i)
+		  {
+		    dofs[i] = self_->m_c2d.m_data[self_->m_c2d.m_ptr[l] + j * self_->m_c2d.m_ld[l] + i];
+		  }
+
+		
+		//
+		// For each.
+		//
+		for (wmesh_int_t ref_cell_type=0;ref_cell_type<ref_c2n->m_size;++ref_cell_type)
+		  {
+		    wmesh_int_t ref_ncells = ref_c2n->m_n[ref_cell_type];
+		    wmesh_int_t ref_nnodes_per_cell = ref_c2n->m_m[ref_cell_type];
+		    for (wmesh_int_t sj=0;sj<ref_ncells;++sj)
+		      {
+			
+			for (wmesh_int_t si=0;si<ref_nnodes_per_cell;++si)
+			  {
+			    lidx[si] = ref_c2n->m_data[ref_c2n->m_ptr[ref_cell_type] + sj * ref_c2n->m_ld[ref_cell_type]  + si ] - 1;
+			  }
+			
+			for (wmesh_int_t si=0;si<ref_c2n->m_m[ref_cell_type];++si)
+			  {
+			    c2n_v[ c2n_ptr[ref_cell_type] + c2n_ld[ref_cell_type] * idx[ref_cell_type] + si] = dofs[lidx[si]];
+			  }
+			++idx[ref_cell_type];		       
+		      }
+		  }
+	      }
+	  }
+      printf("generate connectivity done.\n");
+
+      status =  wmesh_def(mesh__,
+			  self_->m_ndofs,
+			  c2n_size,
+			  c2n_ptr,
+			  c2n_m,
+			  c2n_n,
+			  c2n_v,
+			  c2n_ld,
+			  coo_dofs,
+			  3);
+      
+      for (wmesh_int_t i=0;i<self_->m_ndofs;++i)
+	{
+	  mesh__[0]->m_n_c.v[i] = dofs_cod[i];
+	}
+      
+      WMESH_STATUS_CHECK(status);
+      //	printf("write mesh.\n");
+      
+      //	wmesh_write(space_sublinear,"roger.mesh");
+      //	printf("write mesh done.\n");
+      }
+#endif
+      return WMESH_STATUS_SUCCESS;
+  }
+
+  
+  
+  
+  static wmesh_status_t wmeshspace_compute(wmeshspace_t * 	space_)
+  {
+    wmesh_t*		self_ 	= space_->m_mesh;    
+    wmesh_int_t		degree_ = space_->m_degree;    
+    wmesh_status_t 	status;
+    const wmesh_int_t num_dofs_per_node 		= (degree_ > 0) ? 1 : 0;      
+    const wmesh_int_t num_dofs_per_edge 		= (degree_>0) ? degree_-1 : 0;
+    const wmesh_int_t num_dofs_per_triangle		= (degree_>0) ? ((degree_-1)*(degree_-2))/2 : 0;
+    const wmesh_int_t num_dofs_per_quadrilateral 	= (degree_>0) ? (degree_-1)*(degree_-1) : 0;    
+    wmesh_int_t	dof_idx = 1;
+    if (num_dofs_per_node > 0)
+      {
+	status = wmesh_space_indexing_nodes(self_->m_c2n.m_size,
+					    WINT_SPARSE_MAT_PARAMS(self_->m_c2n),
+					    WINT_SPARSE_MAT_PARAMS(space_->m_c2d_n),
+					    self_->m_num_nodes,
+					    num_dofs_per_node,
+					    dof_idx);
+	WMESH_STATUS_CHECK(status);
+	dof_idx += self_->m_num_nodes * num_dofs_per_node;	  
+      }
+
+    if (num_dofs_per_edge > 0)
+      {
+	status =  wmesh_space_indexing_edges(self_->m_c2n.m_size,
+					     WINT_SPARSE_MAT_PARAMS(self_->m_c2n),
+					     WINT_SPARSE_MAT_PARAMS(self_->m_c2e),
+					     WINT_SPARSE_MAT_PARAMS(space_->m_c2d_e),
+					     WINT_SPARSE_MAT_PARAMS(self_->m_s_e2n),
+					     self_->m_num_edges,
+					     num_dofs_per_edge,
+					     dof_idx);
+	WMESH_STATUS_CHECK(status);
+	dof_idx += self_->m_num_edges * num_dofs_per_edge;
+      }
+
+    if (num_dofs_per_triangle > 0)
+      {
+	status =  wmesh_space_indexing_triangles(self_->m_c2n.m_size,
+						 WINT_SPARSE_MAT_PARAMS(self_->m_c2n),
+						 WINT_SPARSE_MAT_PARAMS(self_->m_c2f_t),
+						 WINT_SPARSE_MAT_PARAMS(space_->m_c2d_t),
+						 WINT_SPARSE_MAT_PARAMS(self_->m_s_t2n),
+						 self_->m_num_triangles,
+						 degree_,
+						 num_dofs_per_triangle,
+						 dof_idx);
+	WMESH_STATUS_CHECK(status);
+	dof_idx += self_->m_num_triangles * num_dofs_per_triangle;
+      }
+
+    if (num_dofs_per_quadrilateral > 0)
+      {
+	status = wmesh_space_indexing_quadrilaterals(self_->m_c2n.m_size,
+						     WINT_SPARSE_MAT_PARAMS(self_->m_c2n),
+						     WINT_SPARSE_MAT_PARAMS(self_->m_c2f_q),
+						     WINT_SPARSE_MAT_PARAMS(space_->m_c2d_q),
+						     WINT_SPARSE_MAT_PARAMS(self_->m_s_q2n),
+						     self_->m_num_quadrilaterals,
+						     degree_,
+						     num_dofs_per_quadrilateral,
+						     dof_idx);
+	WMESH_STATUS_CHECK(status);
+	dof_idx += self_->m_num_quadrilaterals * num_dofs_per_quadrilateral;
+      }
+
+    status =  wmesh_space_indexing_interior(self_->m_c2n.m_size,
+					    WINT_SPARSE_MAT_PARAMS(space_->m_c2d_i),
+					    &dof_idx);
+    WMESH_STATUS_CHECK(status);
+
+    space_->m_ndofs 	= dof_idx - 1;
+    printf("generate dofs " WMESH_INT_FORMAT "\n",
+	   space_->m_ndofs);      
+    
+    return WMESH_STATUS_SUCCESS;
+  }
+  
+  wmesh_status_t wmeshspace_def(wmeshspace_t ** self__,
+				wmesh_int_t 	degree_,
+				wmesh_t * 	mesh_)
+  {
+    self__[0] = (wmeshspace_t*)calloc(1,sizeof(wmeshspace_t));
+    if (!self__[0])
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
+      }
+    
+    wmeshspace_t * self_ 	= self__[0];
+    self_->m_mesh 		= mesh_;
+    self_->m_degree 		= degree_;
+    
+    wmesh_int_t work_n;
+    wmesh_int_t ref_num_entities[32];
+    wmesh_int_p work;
+    
+    wmesh_status_t status;
+    if (mesh_->m_c2n.m_size == 4)
+      {
+	for (wmesh_int_t l=0;l<mesh_->m_c2n.m_size;++l)
+	  {
+	    status = wmesh_treilli_buffer_size(l,
+					       degree_,
+					       &work_n,
+					       ref_num_entities);
+	    WMESH_STATUS_CHECK(status);
+	    
+	    work = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*work_n);
+	    if (!work)
+	      {
+		WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
+	      }	    
+	    status = wmesh_treilli(&self_->m_patterns[l],
+				   l,
+				   degree_,
+				   work_n,
+				   work);
+	    free(work);	    
+	    WMESH_STATUS_CHECK(status);
+	  }
+      }
+    else if (mesh_->m_c2n.m_size == 2)
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_CONFIG);
+      }
+    WMESH_STATUS_CHECK(status);
+
+
+    wmesh_int_t degree = degree_;
+    wmesh_int_t ndofs[4]= { ((degree+1)*(degree+2)*(degree+3)) / 6,
+			    ((degree+2)*(degree+1)*(2*degree+3)) / 6,
+			    ((degree+1)*(degree+1)*(degree+2)) / 2,
+			    (degree+1)*(degree+1)*(degree+1)};
+      
+      
+    wmesh_int_t ndofs_n[4] = {1,1,1,1};
+    wmesh_int_t ndofs_e[4] = {degree-1,degree-1,degree-1,degree-1};
+
+    wmesh_int_t ndofs_t[4] = {(degree>2) ? ((degree-1)*(degree-2))/2 : 0,
+			      (degree>2) ? ((degree-1)*(degree-2))/2 : 0,
+			      (degree>2) ? ((degree-1)*(degree-2))/2 : 0,
+			      (degree>2) ? ((degree-1)*(degree-2))/2 : 0};
+
+    wmesh_int_t ndofs_q[4] = {(degree>1) ? (degree-1)*(degree-1) : 0,
+			      (degree>1) ? (degree-1)*(degree-1) : 0,
+			      (degree>1) ? (degree-1)*(degree-1) : 0,
+			      (degree>1) ? (degree-1)*(degree-1) : 0};
+            
+    wmesh_int_t ndofs_i[4] = { (degree>0) ? ((degree-1)*(degree-2)*(degree-3)) / 6 : 1,
+			       (degree>0) ? ( (degree-2)*(degree-1)*(2*degree-3) ) / 6 : 1,
+			       (degree>0) ? ((degree-1)*(degree-1)*(degree-2)) / 2 : 1, //				 (degree>2) ? (degree-2)*(degree-1) : 0,
+			       (degree>0) ? (degree-1)*(degree-1)*(degree-1) : 1 };
+
+    //
+    // cells to dofs.
+    //
+    {
+      wmesh_status_t status;
+      
+      //
+      // Use c2f since this is the same layout.
+      //
+      wmesh_int_t shifts[4] = {0,0,0,0};
+      
+      status = wmesh_init_c2d	(&self_->m_mesh->m_c2n,
+				 &self_->m_c2d,
+				 ndofs,
+				 ndofs);
+      WMESH_STATUS_CHECK(status);
+
+      //
+      // Node-based dofs.
+      //
+      status = wmesh_init_c2d_n	(&self_->m_c2d,
+				 &self_->m_c2d_n,
+				 ndofs_n,
+				 shifts);
+      WMESH_STATUS_CHECK(status);
+
+      //
+      // edge-based dofs.
+      //
+      status = wmesh_init_c2d_e	(&self_->m_c2d,
+				 &self_->m_c2d_e,
+				 ndofs_e,
+				 shifts);
+      WMESH_STATUS_CHECK(status);
+
+      //
+      // triangle-based dofs.
+      //
+      status = wmesh_init_c2d_t	(&self_->m_c2d,
+				 &self_->m_c2d_t,
+				 ndofs_t,
+				 shifts);
+      WMESH_STATUS_CHECK(status);
+      
+      //
+      // quadrilateral-based dofs.
+      //
+      status = wmesh_init_c2d_q	(&self_->m_c2d,
+				 &self_->m_c2d_q,
+				 ndofs_q,
+				 shifts);
+      WMESH_STATUS_CHECK(status);      
+      
+      //
+      // cell-based dofs.
+      //
+      status = wmesh_init_c2d_i(&self_->m_c2d,
+				&self_->m_c2d_i,
+				ndofs_i,
+				shifts);
+      WMESH_STATUS_CHECK(status);
+    }
+
+
+    std::cout << "gggggggggggggggggg   " << self_->m_ndofs << std::endl;
+    status = wmeshspace_compute(self_);
+    std::cout << "gggggggggggggggggg after   " << self_->m_ndofs << std::endl;
+    WMESH_STATUS_CHECK(status);
+    return WMESH_STATUS_SUCCESS;
+  };
 
   wmesh_status_t wmesh_refine_calculate(wmesh_t*		self_,
 					wmesh_int_t 		degree_,
@@ -2618,28 +3304,6 @@ extern "C"
     //
     // 1/ Initialize the reference shape edges to nodes.
     //    
-    {
-      wmesh_int_t dimension = 3;
-      wmesh_status_t status;
-
-      //
-      // 1.a/ Local edges to nodes.
-      //
-      status  = wmesh_build_s_e2n(&self_->m_s_e2n, dimension);
-      WMESH_STATUS_CHECK(status);
-
-      //
-      // 1.b/ Local triangles to nodes.
-      //
-      status  = wmesh_build_s_t2n(&self_->m_s_t2n, dimension);
-      WMESH_STATUS_CHECK(status);
-
-      //
-      // 1.c/ Local quadrilaterals to nodes.
-      //
-      status = wmesh_build_s_q2n(&self_->m_s_q2n, dimension);
-      WMESH_STATUS_CHECK(status);
-    }
 
     
     //
@@ -2760,6 +3424,11 @@ extern "C"
     
     std::cout << "total num edges:  " << self_->m_num_edges  << std::endl;
 
+
+
+
+#if 0
+    
     wmesh_int_t ndofs[4]= { ((degree+1)*(degree+2)*(degree+3)) / 6,
 			    ((degree+2)*(degree+1)*(2*degree+3)) / 6,
 			    ((degree+1)*(degree+1)*(degree+2)) / 2,
@@ -2847,11 +3516,11 @@ extern "C"
       WMESH_STATUS_CHECK(status);
     }
 #endif
-#if 1
+#if 0
     {
       auto start = timing_start();      
-      wmesh_status_t status = wmesh_analysis_space(self_,
-						   degree);
+      wmesh_status_t status = wmeshspace_analysis(self_,
+						  degree);
       auto stop = timing_stop();
       std::cout << "analysis space, elapsed " << timing_seconds(start,stop) << std::endl;
       WMESH_STATUS_CHECK(status);
@@ -2873,7 +3542,7 @@ extern "C"
     }
 
 
-
+#if 0
     {
       for (wmesh_int_t degree = 2;degree<=11;++degree)
 	{
@@ -2930,6 +3599,8 @@ extern "C"
 	}
       
     }
+#endif
+#endif
     return WMESH_STATUS_SUCCESS;
   }
 
@@ -3035,26 +3706,6 @@ static  inline void get_q2n(const_wmesh_int_p	c2n_,
     wmesh_int_t    	num_faces[2];
     wmesh_int_t    	num_bfaces[2];
 
-    //
-    // 1/ Initialize the reference shape edges to nodes.
-    //    
-    //
-    // 1.a/ Local edges to nodes.
-    //
-    status  = wmesh_build_s_e2n(&self_->m_s_e2n, dimension);
-    WMESH_STATUS_CHECK(status);
-    
-    //
-    // 1.b/ Local triangles to nodes.
-    //
-    status  = wmesh_build_s_t2n(&self_->m_s_t2n, dimension);
-    WMESH_STATUS_CHECK(status);
-      
-    //
-    // 1.c/ Local quadrilaterals to nodes.
-    //
-    status = wmesh_build_s_q2n(&self_->m_s_q2n, dimension);
-    WMESH_STATUS_CHECK(status);
     
     
     //
@@ -3331,7 +3982,7 @@ static  inline void get_q2n(const_wmesh_int_p	c2n_,
     return WMESH_STATUS_SUCCESS;
   }
   
-  wmesh_status_t wmesh_refine(wmesh_t*    self_,			      
+  wmesh_status_t wmesh_refine_dev(wmesh_t*    self_,			      
 			      wmesh_int_t degree,
 			      wmesh_t**   refined_mesh_)
   {
@@ -3339,33 +3990,6 @@ static  inline void get_q2n(const_wmesh_int_p	c2n_,
     // wmesh_int_t degree = 4;
     wmesh_int_t num_faces[2];
     wmesh_int_t num_bfaces[2];
-
-    //
-    // 1/ Initialize the reference shape edges to nodes.
-    //    
-    {
-      wmesh_int_t dimension = 3;
-      wmesh_status_t status;
-
-      //
-      // 1.a/ Local edges to nodes.
-      //
-      status  = wmesh_build_s_e2n(&self_->m_s_e2n, dimension);
-      WMESH_STATUS_CHECK(status);
-
-      //
-      // 1.b/ Local triangles to nodes.
-      //
-      status  = wmesh_build_s_t2n(&self_->m_s_t2n, dimension);
-      WMESH_STATUS_CHECK(status);
-
-      //
-      // 1.c/ Local quadrilaterals to nodes.
-      //
-      status = wmesh_build_s_q2n(&self_->m_s_q2n, dimension);
-      WMESH_STATUS_CHECK(status);
-    }
-
     
     //
     // 2/ Create the cells to cells.
