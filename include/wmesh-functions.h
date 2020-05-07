@@ -31,12 +31,14 @@ extern "C"
    const_wmesh_int_p 	c2n_v_,
    const_wmesh_int_p 	c2n_ld_,
 				       
+   wmesh_int_t		c2e_size_,   
    const_wmesh_int_p 	c2e_ptr_,
    const_wmesh_int_p 	c2e_m_,
    const_wmesh_int_p 	c2e_n_,
    wmesh_int_p 		c2e_v_,
    const_wmesh_int_p 	c2e_ld_,
 				       
+   wmesh_int_t		s_e2n_size_,   
    const_wmesh_int_p	s_e2n_ptr_,
    const_wmesh_int_p	s_e2n_m_,
    const_wmesh_int_p	s_e2n_n_,
@@ -69,12 +71,14 @@ extern "C"
    const_wmesh_int_p 	c2n_v_,
    const_wmesh_int_p 	c2n_ld_,
 						 
+   wmesh_int_t		c2t_size_,   
    const_wmesh_int_p 	c2t_ptr_,
    const_wmesh_int_p 	c2t_m_,
    const_wmesh_int_p 	c2t_n_,
    wmesh_int_p 		c2t_v_,
    const_wmesh_int_p 	c2t_ld_,
 						 
+   wmesh_int_t		s_t2n_size_,   
    const_wmesh_int_p	s_t2n_ptr_,
    const_wmesh_int_p	s_t2n_m_,
    const_wmesh_int_p	s_t2n_n_,
@@ -107,12 +111,14 @@ extern "C"
    const_wmesh_int_p 	c2n_v_,
    const_wmesh_int_p 	c2n_ld_,
    
+   wmesh_int_t		c2q_size_,   
    const_wmesh_int_p 	c2q_ptr_,
    const_wmesh_int_p 	c2q_m_,
    const_wmesh_int_p 	c2q_n_,
    wmesh_int_p 		c2q_v_,
    const_wmesh_int_p 	c2q_ld_,
    
+   wmesh_int_t		s_q2n_size_,   
    const_wmesh_int_p 	s_q2n_ptr_,
    const_wmesh_int_p	s_q2n_m_,
    const_wmesh_int_p	s_q2n_n_,
@@ -123,123 +129,121 @@ extern "C"
    wmesh_int_t		work_n_,
    wmesh_int_p		work_);
   
-
-
-  wmesh_status_t
-  wmesh_space_indexing_nodes
-  (wmesh_int_t 		c2n_size_,
-   const_wmesh_int_p 	c2n_ptr_,
-   const_wmesh_int_p 	c2n_m_,
-   const_wmesh_int_p 	c2n_n_,
-   const_wmesh_int_p 	c2n_v_,
-   const_wmesh_int_p 	c2n_ld_,
-						 
-   const_wmesh_int_p 	c2d_n_ptr_,
-   const_wmesh_int_p 	c2d_n_m_,
-   const_wmesh_int_p 	c2d_n_n_,
-   wmesh_int_p 		c2d_n_v_,
-   const_wmesh_int_p 	c2d_n_ld_,
-						 
-   wmesh_int_t 		num_nodes_,
-   wmesh_int_t 		num_dofs_per_node_,
-   wmesh_int_t 		dof_idx_origin_);
   
-  wmesh_status_t
-  wmesh_space_indexing_edges
-  (wmesh_int_t 		c2n_size_,					     
-   const_wmesh_int_p 	c2n_ptr_,
-   const_wmesh_int_p 	c2n_m_,
-   const_wmesh_int_p 	c2n_n_,
-   const_wmesh_int_p 	c2n_v_,
-   const_wmesh_int_p 	c2n_ld_,
+  wmesh_status_t  wmesh_space_indexing_nodes(wmesh_int_t 	c2n_size_,
+					     const_wmesh_int_p 	c2n_ptr_,
+					     const_wmesh_int_p 	c2n_m_,
+					     const_wmesh_int_p 	c2n_n_,
+					     const_wmesh_int_p 	c2n_v_,
+					     const_wmesh_int_p 	c2n_ld_,
 					     
-   const_wmesh_int_p 	c2e_ptr_,
-   const_wmesh_int_p 	c2e_m_,
-   const_wmesh_int_p 	c2e_n_,
-   const_wmesh_int_p 	c2e_v_,
-   const_wmesh_int_p 	c2e_ld_,
+					     wmesh_int_t 	c2d_n_size_,
+					     const_wmesh_int_p 	c2d_n_ptr_,
+					     const_wmesh_int_p 	c2d_n_m_,
+					     const_wmesh_int_p 	c2d_n_n_,
+					     wmesh_int_p 	c2d_n_v_,
+					     const_wmesh_int_p 	c2d_n_ld_,
 					     
-   const_wmesh_int_p 	c2d_e_ptr_,
-   const_wmesh_int_p 	c2d_e_m_,
-   const_wmesh_int_p 	c2d_e_n_,
-   wmesh_int_p 		c2d_e_v_,
-   const_wmesh_int_p 	c2d_e_ld_,
+					     wmesh_int_t 	num_nodes_,
+					     wmesh_int_t 	num_dofs_per_node_,
+					     wmesh_int_t 	dof_idx_origin_);
 
-   const_wmesh_int_p 	s_e2n_ptr_,
-   const_wmesh_int_p	s_e2n_m_,
-   const_wmesh_int_p	s_e2n_n_,
-   const_wmesh_int_p 	s_e2n_v_,
-   const_wmesh_int_p	s_e2n_ld_,
+  wmesh_status_t  wmesh_space_indexing_edges(wmesh_int_t 	c2n_size_,
+					     const_wmesh_int_p 	c2n_ptr_,
+					     const_wmesh_int_p 	c2n_m_,
+					     const_wmesh_int_p 	c2n_n_,
+					     const_wmesh_int_p 	c2n_v_,
+					     const_wmesh_int_p 	c2n_ld_,
+					     
+					     wmesh_int_t 	c2e_size_,
+					     const_wmesh_int_p 	c2e_ptr_,
+					     const_wmesh_int_p 	c2e_m_,
+					     const_wmesh_int_p 	c2e_n_,
+					     const_wmesh_int_p 	c2e_v_,
+					     const_wmesh_int_p 	c2e_ld_,
+					     
+					     wmesh_int_t 	c2d_e_size_,
+					     const_wmesh_int_p 	c2d_e_ptr_,
+					     const_wmesh_int_p 	c2d_e_m_,
+					     const_wmesh_int_p 	c2d_e_n_,
+					     wmesh_int_p 	c2d_e_v_,
+					     const_wmesh_int_p 	c2d_e_ld_,
 
-   wmesh_int_t 		num_edges_,
-   wmesh_int_t 		num_dofs_per_edge_,
-   wmesh_int_t 		dof_idx_origin_);
-  
-  wmesh_status_t
-  wmesh_space_indexing_triangles
-  (wmesh_int_t 		c2n_size_,   
-   const_wmesh_int_p 	c2n_ptr_,
-   const_wmesh_int_p 	c2n_m_,
-   const_wmesh_int_p 	c2n_n_,
-   const_wmesh_int_p 	c2n_v_,
-   const_wmesh_int_p 	c2n_ld_,
+					     wmesh_int_t 	s_e2n_size_,
+					     const_wmesh_int_p 	s_e2n_ptr_,
+					     const_wmesh_int_p	s_e2n_m_,
+					     const_wmesh_int_p	s_e2n_n_,
+					     const_wmesh_int_p 	s_e2n_v_,
+					     const_wmesh_int_p	s_e2n_ld_,
+					     
+					     wmesh_int_t 	num_edges_,
+					     wmesh_int_t 	num_dofs_per_edge_,
+					       wmesh_int_t 	dof_idx_origin_);
+    wmesh_status_t  wmesh_space_indexing_triangles(wmesh_int_t 		c2n_size_,
+						 const_wmesh_int_p 	c2n_ptr_,
+						 const_wmesh_int_p 	c2n_m_,
+						 const_wmesh_int_p 	c2n_n_,
+						 const_wmesh_int_p 	c2n_v_,
+						 const_wmesh_int_p 	c2n_ld_,
 						 
-   const_wmesh_int_p 	c2f_t_ptr_,
-   const_wmesh_int_p 	c2f_t_m_,
-   const_wmesh_int_p 	c2f_t_n_,
-   const_wmesh_int_p 	c2f_t_v_,
-   const_wmesh_int_p 	c2f_t_ld_,
+						 wmesh_int_t 		c2f_t_size_,
+						 const_wmesh_int_p 	c2f_t_ptr_,
+						 const_wmesh_int_p 	c2f_t_m_,
+						 const_wmesh_int_p 	c2f_t_n_,
+						 const_wmesh_int_p 	c2f_t_v_,
+						 const_wmesh_int_p 	c2f_t_ld_,
 						 
-   const_wmesh_int_p 	c2d_t_ptr_,
-   const_wmesh_int_p 	c2d_t_m_,
-   const_wmesh_int_p 	c2d_t_n_,
-   wmesh_int_p 		c2d_t_v_,
-   const_wmesh_int_p 	c2d_t_ld_,
-						 
-   const_wmesh_int_p 	s_t2n_ptr_,
-   const_wmesh_int_p	s_t2n_m_,
-   const_wmesh_int_p	s_t2n_n_,
-   const_wmesh_int_p 	s_t2n_v_,
-   const_wmesh_int_p	s_t2n_ld_,
+						 wmesh_int_t 		c2d_t_size_,
+						 const_wmesh_int_p 	c2d_t_ptr_,
+						 const_wmesh_int_p 	c2d_t_m_,
+						 const_wmesh_int_p 	c2d_t_n_,
+						 wmesh_int_p 		c2d_t_v_,
+						 const_wmesh_int_p 	c2d_t_ld_,
+
+						 wmesh_int_t 		s_t2n_size_,
+						 const_wmesh_int_p 	s_t2n_ptr_,
+						 const_wmesh_int_p	s_t2n_m_,
+						 const_wmesh_int_p	s_t2n_n_,
+						 const_wmesh_int_p 	s_t2n_v_,
+						 const_wmesh_int_p	s_t2n_ld_,
 						      
-   wmesh_int_t 		num_triangles_,
-   wmesh_int_t 		degree_,
-   wmesh_int_t 		num_dofs_per_triangle_,
-   wmesh_int_t 		dof_idx_origin_);
+						 wmesh_int_t 		num_triangles_,
+						 wmesh_int_t 		degree_,
+						 wmesh_int_t 		num_dofs_per_triangle_,
+						   wmesh_int_t 		dof_idx_origin_);
 
-
-  wmesh_status_t
-  wmesh_space_indexing_quadrilaterals
-  (wmesh_int_t 		c2n_size_,							 
-   const_wmesh_int_p 	c2n_ptr_,
-   const_wmesh_int_p 	c2n_m_,
-   const_wmesh_int_p 	c2n_n_,
-   const_wmesh_int_p 	c2n_v_,
-   const_wmesh_int_p 	c2n_ld_,
-							 
-   const_wmesh_int_p 	c2f_q_ptr_,
-   const_wmesh_int_p 	c2f_q_m_,
-   const_wmesh_int_p 	c2f_q_n_,
-   const_wmesh_int_p 	c2f_q_v_,
-   const_wmesh_int_p 	c2f_q_ld_,
-							 
-   const_wmesh_int_p 	c2d_q_ptr_,
-   const_wmesh_int_p 	c2d_q_m_,
-   const_wmesh_int_p 	c2d_q_n_,
-   wmesh_int_p 		c2d_q_v_,
-   const_wmesh_int_p 	c2d_q_ld_,
-							 
-   const_wmesh_int_p 	s_q2n_ptr_,
-   const_wmesh_int_p	s_q2n_m_,
-   const_wmesh_int_p	s_q2n_n_,
-   const_wmesh_int_p 	s_q2n_v_,
-   const_wmesh_int_p	s_q2n_ld_,
-							 
-   wmesh_int_t 		num_quadrilaterals_,
-   wmesh_int_t 		degree_,
-   wmesh_int_t 		num_dofs_per_quadrilateral_,
-   wmesh_int_t 		dof_idx_origin_);
-  
+  wmesh_status_t  wmesh_space_indexing_quadrilaterals(wmesh_int_t 		c2n_size_,					     
+						      const_wmesh_int_p 	c2n_ptr_,
+						      const_wmesh_int_p 	c2n_m_,
+						      const_wmesh_int_p 	c2n_n_,
+						      const_wmesh_int_p 	c2n_v_,
+						      const_wmesh_int_p 	c2n_ld_,
+						 
+						      wmesh_int_t 		c2f_q_size_,					     
+						      const_wmesh_int_p 	c2f_q_ptr_,
+						      const_wmesh_int_p 	c2f_q_m_,
+						      const_wmesh_int_p 	c2f_q_n_,
+						      const_wmesh_int_p 	c2f_q_v_,
+						      const_wmesh_int_p 	c2f_q_ld_,
+						 
+						      wmesh_int_t 		c2d_q_size_,					     
+						      const_wmesh_int_p 	c2d_q_ptr_,
+						      const_wmesh_int_p 	c2d_q_m_,
+						      const_wmesh_int_p 	c2d_q_n_,
+						      wmesh_int_p 		c2d_q_v_,
+						      const_wmesh_int_p 	c2d_q_ld_,
+						 
+						      wmesh_int_t 		s_q2n_size_,					     
+						      const_wmesh_int_p 	s_q2n_ptr_,
+						      const_wmesh_int_p		s_q2n_m_,
+						      const_wmesh_int_p		s_q2n_n_,
+						      const_wmesh_int_p 	s_q2n_v_,
+						      const_wmesh_int_p		s_q2n_ld_,
+						      
+						      wmesh_int_t 		num_quadrilaterals_,
+						      wmesh_int_t 		degree_,
+						      wmesh_int_t 		num_dofs_per_quadrilateral_,
+						      wmesh_int_t 		dof_idx_origin_);  
   wmesh_status_t
   wmesh_space_indexing_interior
   (wmesh_int_t 		c2d_i_size_,						

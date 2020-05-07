@@ -49,30 +49,6 @@ static  inline void half_edge_decod(wmesh_int_t halfEdgeIndex_,
 };
 
 
-static  inline void get_c2n(wmesh_int_t 		numCellNodes_,
-			    const_wmesh_int_p 	cellsToNodes_,
-			    wmesh_int_t 			cellsToNodesLd_,
-			    wmesh_int_t 			cellIndex_,
-			    wmesh_int_p 	cnc_)
-{
-  for (wmesh_int_t localNodeIndex=0;localNodeIndex<numCellNodes_;++localNodeIndex)
-    {
-      cnc_[localNodeIndex] = cellsToNodes_[cellIndex_*cellsToNodesLd_+localNodeIndex];      
-    }
-}
-
-
-static  inline void get_e2n(const_wmesh_int_p	c2n_,
-			    const wmesh_int_t 			localEdgeIndex_,
-			    wmesh_int_p		e2n_,
-			    wmesh_int_t 			s_e2n_m_,
-			    wmesh_int_t 			s_e2n_n_,
-			    const_wmesh_int_p 	s_e2n_v_,
-			    wmesh_int_t 			s_e2n_ld_)		    
-{
-  e2n_[0] = c2n_[s_e2n_v_[s_e2n_ld_ * localEdgeIndex_+ 0]];
-  e2n_[1] = c2n_[s_e2n_v_[s_e2n_ld_ * localEdgeIndex_+ 1]];
-};
 
 
 wmesh_status_t wmesh_indexing_space_edge_hashing(wmesh_int_t 		ntypes_,

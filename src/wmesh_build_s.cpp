@@ -65,16 +65,13 @@ extern "C"
       
 	wmesh_int_t * __restrict__ s_e2n_v = (wmesh_int_t * __restrict__)malloc(sizeof(wmesh_int_t)*s_e2n_ptr[4]);
 	memcpy(s_e2n_v,v,sizeof(wmesh_int_t)*s_e2n_ptr[4]);
-	wmesh_int_sparsemat_def(self_,
-				4);
-	wmesh_int_sparsemat_set(self_,
-				s_e2n_m,
-				s_e2n_n,
-				s_e2n_ld,
-				s_e2n_ptr,
-				s_e2n_v);
-
-	return WMESH_STATUS_SUCCESS;
+	return wmesh_int_sparsemat_new(self_,
+				       4,
+				       s_e2n_ptr,
+				       s_e2n_m,
+				       s_e2n_n,
+				       s_e2n_v,
+				       s_e2n_ld);	
       }
     else if (dim_==2)
       {
@@ -86,17 +83,14 @@ extern "C"
 	wmesh_int_t * __restrict__ s_e2n_v = (wmesh_int_t * __restrict__)malloc(sizeof(wmesh_int_t)*s_e2n_ptr[2]);
 	memcpy(v,s_e2n_v,sizeof(wmesh_int_t)*s_e2n_ptr[2]);
 
-	wmesh_int_sparsemat_def(self_,
-				2);
+	return wmesh_int_sparsemat_new(self_,
+				       2,
+				       s_e2n_ptr,
+				       s_e2n_m,
+				       s_e2n_n,
+				       s_e2n_v,
+				       s_e2n_ld);
 	
-	wmesh_int_sparsemat_set(self_,
-				s_e2n_m,
-				s_e2n_n,
-				s_e2n_ld,
-				s_e2n_ptr,
-				s_e2n_v);
-	
-	return WMESH_STATUS_SUCCESS;
       }
     else if (dim_==1)
       {
@@ -108,15 +102,13 @@ extern "C"
 	wmesh_int_t * __restrict__ s_e2n_v = (wmesh_int_t * __restrict__)malloc(sizeof(wmesh_int_t)*s_e2n_ptr[1]);
 	memcpy(v,s_e2n_v,sizeof(wmesh_int_t)*s_e2n_ptr[1]);
 
-	wmesh_int_sparsemat_def(self_,
-				1);
-	
-	wmesh_int_sparsemat_set(self_,
-				s_e2n_m,
-				s_e2n_n,
-				s_e2n_ld,
-				s_e2n_ptr,
-				s_e2n_v);
+	return wmesh_int_sparsemat_new(self_,
+				       1,
+				       s_e2n_ptr,
+				       s_e2n_m,
+				       s_e2n_n,
+				       s_e2n_v,
+				       s_e2n_ld);
 	
 	return WMESH_STATUS_SUCCESS;
       }
@@ -155,15 +147,13 @@ extern "C"
 	
 	wmesh_int_t * __restrict__ s_q2n_v = (wmesh_int_t * __restrict__)malloc(sizeof(wmesh_int_t)*s_q2n_ptr[4]);
 	memcpy(s_q2n_v,v,sizeof(wmesh_int_t)*s_q2n_ptr[4]);
-	wmesh_int_sparsemat_def(self_,
-				4);
-	wmesh_int_sparsemat_set(self_,
-				s_q2n_m,
-				s_q2n_n,
-				s_q2n_ld,
-				s_q2n_ptr,
-				s_q2n_v);
-	return WMESH_STATUS_SUCCESS;
+	return wmesh_int_sparsemat_new(self_,
+				       4,
+				       s_q2n_ptr,
+				       s_q2n_m,
+				       s_q2n_n,
+				       s_q2n_v,				       
+				       s_q2n_ld);
       }
     else if (2==dim_)
       {
@@ -175,15 +165,13 @@ extern "C"
 	wmesh_int_t * __restrict__ s_e2n_v = (wmesh_int_t * __restrict__)malloc(sizeof(wmesh_int_t)*s_e2n_ptr[1]);
 	memcpy(v,s_e2n_v,sizeof(wmesh_int_t)*s_e2n_ptr[1]);
 
-	wmesh_int_sparsemat_def(self_,
-				1);
-	
-	wmesh_int_sparsemat_set(self_,
-				s_e2n_m,
-				s_e2n_n,
-				s_e2n_ld,
-				s_e2n_ptr,
-				s_e2n_v);
+	return wmesh_int_sparsemat_new(self_,
+				       1,
+				       s_e2n_ptr,
+				       s_e2n_m,
+				       s_e2n_n,
+				       s_e2n_v,
+				       s_e2n_ld);
 	
 	return WMESH_STATUS_SUCCESS;
       }
@@ -222,15 +210,13 @@ extern "C"
     
 	wmesh_int_p s_t2n_v = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*s_t2n_ptr[4]);
 	memcpy(s_t2n_v,v,sizeof(wmesh_int_t)*s_t2n_ptr[4]);
-	wmesh_int_sparsemat_def(self_,
-				4);
-	wmesh_int_sparsemat_set(self_,
-				s_t2n_m,
-				s_t2n_n,
-				s_t2n_ld,
-				s_t2n_ptr,
-				s_t2n_v);
-	return WMESH_STATUS_SUCCESS;
+	return wmesh_int_sparsemat_new(self_,
+				       4,
+				       s_t2n_ptr,
+				       s_t2n_m,
+				       s_t2n_n,
+				       s_t2n_v,
+				       s_t2n_ld);
       }
     else if (2 == dim_)
       {
@@ -242,15 +228,13 @@ extern "C"
 	wmesh_int_p s_e2n_v = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*s_e2n_ptr[1]);
 	memcpy(v,s_e2n_v,sizeof(wmesh_int_t)*s_e2n_ptr[1]);
 
-	wmesh_int_sparsemat_def(self_,
-				1);
-	
-	wmesh_int_sparsemat_set(self_,
-				s_e2n_m,
-				s_e2n_n,
-				s_e2n_ld,
-				s_e2n_ptr,
-				s_e2n_v);
+	return wmesh_int_sparsemat_new(self_,
+				       1,
+				       s_e2n_ptr,
+				       s_e2n_m,
+				       s_e2n_n,
+				       s_e2n_v,
+				       s_e2n_ld);
 	
 	return WMESH_STATUS_SUCCESS;
       }

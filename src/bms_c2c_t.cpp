@@ -69,32 +69,6 @@ static inline void half_triangle_decod(wmesh_int_t halfTriangleIndex_,
 };
 
 
-static inline void get_c2n(wmesh_int_t 		numCellNodes_,
-			   const_wmesh_int_p 	cellsToNodes_,
-			   wmesh_int_t 			cellsToNodesLd_,
-			   wmesh_int_t 			cellIndex_,
-			   wmesh_int_p 	cnc_)
-{
-  for (wmesh_int_t localNodeIndex=0;localNodeIndex<numCellNodes_;++localNodeIndex)
-    {
-      cnc_[localNodeIndex] = cellsToNodes_[cellIndex_*cellsToNodesLd_+localNodeIndex];      
-    }
-}
-
-
-static  inline void get_t2n(const_wmesh_int_p	c2n_,
-			    const wmesh_int_t 	t_lidx_,
-			    wmesh_int_p		t2n_,
-			    wmesh_int_t 		s_t2n_m_,
-			    wmesh_int_t 		s_t2n_n_,
-			    const_wmesh_int_p 	s_t2n_v_,
-			    wmesh_int_t 		s_t2n_ld_)		    
-{
-  t2n_[0] = c2n_[s_t2n_v_[s_t2n_ld_ * t_lidx_ + 0]];
-  t2n_[1] = c2n_[s_t2n_v_[s_t2n_ld_ * t_lidx_ + 1]];
-  t2n_[2] = c2n_[s_t2n_v_[s_t2n_ld_ * t_lidx_ + 2]];
-};
-
 static wmesh_status_t wmesh_c2c_t_hash(wmesh_int_t 		cell_type_,
 				       wmesh_int_t 		c2n_m_,
 				       wmesh_int_t 		c2n_n_,

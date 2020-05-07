@@ -46,14 +46,6 @@ extern "C"
 						 const wmesh_t *	surface_,
 						 const wmesh_t * 	curve_);
   
-  wmesh_status_t wmesh_build_s_e2n		(wmesh_int_sparsemat_t* 	self_,
-						 wmesh_int_t 			dim_);
-  
-  wmesh_status_t wmesh_build_s_t2n		(wmesh_int_sparsemat_t* 	self_,
-						 wmesh_int_t 			dim_);
-  
-  wmesh_status_t wmesh_build_s_q2n		(wmesh_int_sparsemat_t* 	self_,
-						 wmesh_int_t 			dim_);
   
   wmesh_status_t wmesh_treilli_buffer_size	(wmesh_int_t 	cell_type_,
 						 wmesh_int_t 	degree_,
@@ -126,6 +118,7 @@ extern "C"
 				 FILE * out_);
   
   wmesh_status_t wmesh_factory	(wmesh_t** 		self__,
+				 wmesh_int_t 		topology_dimension_,
 				 wmesh_int_t 		num_nodes_,
 
 				 wmesh_int_t 		c2n_size_,
@@ -168,6 +161,7 @@ extern "C"
   //! @brief Get the number of entities with a specific dimension.
   //!
   wmesh_status_t wmesh_def	(wmesh_t** 		self_,
+				 wmesh_int_t 		topology_dimension_,
 				 wmesh_int_t 		num_nodes_,
 				 wmesh_int_t 		ntypes_,
 				 const_wmesh_int_p 	c2n_ptr_,

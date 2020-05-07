@@ -163,17 +163,6 @@ static inline wmesh_int_t orientation_quadrilateral(const_wmesh_int_p icnc_,
 };
 
 
-static  inline void get_c2n(wmesh_int_t		numCellNodes_,
-			    const_wmesh_int_p 	cellsToNodes_,
-			    wmesh_int_t		cellsToNodesLd_,
-			    wmesh_int_t		cellIndex_,
-			    wmesh_int_p 	cnc_)
-{
-  for (wmesh_int_t localNodeIndex=0;localNodeIndex<numCellNodes_;++localNodeIndex)
-    {
-      cnc_[localNodeIndex] = cellsToNodes_[cellIndex_*cellsToNodesLd_+localNodeIndex];      
-    }
-};
 
 static  inline void get_c2q(wmesh_int_t 	m_,
 			    const_wmesh_int_p 	c2q_,
@@ -185,20 +174,6 @@ static  inline void get_c2q(wmesh_int_t 	m_,
     {
       cnc_[i] = c2q_[cell_idx_*c2q_ld_+i];      
     }
-};
-
-static  inline void get_q2n(const_wmesh_int_p	c2n_,
-			    const wmesh_int_t 	localQuadrilateralIndex_,
-			    wmesh_int_p		q2n_,
-			    wmesh_int_t 	s_q2n_m_,
-			    wmesh_int_t 	s_q2n_n_,
-			    const_wmesh_int_p 	s_q2n_v_,
-			    wmesh_int_t 	s_q2n_ld_)		    
-{
-  q2n_[0] = c2n_[s_q2n_v_[s_q2n_ld_ * localQuadrilateralIndex_+ 0]];
-  q2n_[1] = c2n_[s_q2n_v_[s_q2n_ld_ * localQuadrilateralIndex_+ 1]];
-  q2n_[2] = c2n_[s_q2n_v_[s_q2n_ld_ * localQuadrilateralIndex_+ 2]];
-  q2n_[3] = c2n_[s_q2n_v_[s_q2n_ld_ * localQuadrilateralIndex_+ 3]];
 };
 
 
@@ -346,26 +321,28 @@ static inline wmesh_status_t wmesh_space_indexing_quadrilaterals_calculate(wmesh
 
 extern "C"
 {
-  wmesh_status_t  wmesh_space_indexing_quadrilaterals(wmesh_int_t 		ntypes_,
-					     
+  wmesh_status_t  wmesh_space_indexing_quadrilaterals(wmesh_int_t 		c2n_size_,					     
 						      const_wmesh_int_p 	c2n_ptr_,
 						      const_wmesh_int_p 	c2n_m_,
 						      const_wmesh_int_p 	c2n_n_,
 						      const_wmesh_int_p 	c2n_v_,
 						      const_wmesh_int_p 	c2n_ld_,
 						 
+						      wmesh_int_t 		c2f_q_size_,					     
 						      const_wmesh_int_p 	c2f_q_ptr_,
 						      const_wmesh_int_p 	c2f_q_m_,
 						      const_wmesh_int_p 	c2f_q_n_,
 						      const_wmesh_int_p 	c2f_q_v_,
 						      const_wmesh_int_p 	c2f_q_ld_,
 						 
+						      wmesh_int_t 		c2d_q_size_,					     
 						      const_wmesh_int_p 	c2d_q_ptr_,
 						      const_wmesh_int_p 	c2d_q_m_,
 						      const_wmesh_int_p 	c2d_q_n_,
 						      wmesh_int_p 		c2d_q_v_,
 						      const_wmesh_int_p 	c2d_q_ld_,
 						 
+						      wmesh_int_t 		s_q2n_size_,					     
 						      const_wmesh_int_p 	s_q2n_ptr_,
 						      const_wmesh_int_p		s_q2n_m_,
 						      const_wmesh_int_p		s_q2n_n_,
@@ -411,7 +388,7 @@ extern "C"
     WMESH_POINTER_CHECK(s_q2n_v_);
     WMESH_POINTER_CHECK(s_q2n_ld_);
     
-    for (wmesh_int_t cell_type=0;cell_type<ntypes_;++cell_type)
+    for (wmesh_int_t cell_type=0;cell_type<c2n_size_;++cell_type)
       {	
 	wmesh_status_t status = wmesh_space_indexing_quadrilaterals_calculate(c2n_ptr_[cell_type],
 									      c2n_m_[cell_type],

@@ -128,18 +128,6 @@ static inline wmesh_int_t orientation_triangle(wmesh_int_p icnc_,
 
 
 
-static  inline void get_c2n(wmesh_int_t		numCellNodes_,
-			    const_wmesh_int_p 	cellsToNodes_,
-			    wmesh_int_t		cellsToNodesLd_,
-			    wmesh_int_t		cellIndex_,
-			    wmesh_int_p 	cnc_)
-{
-  for (wmesh_int_t localNodeIndex=0;localNodeIndex<numCellNodes_;++localNodeIndex)
-    {
-      cnc_[localNodeIndex] = cellsToNodes_[cellIndex_*cellsToNodesLd_+localNodeIndex];      
-    }
-};
-
 static  inline void get_c2t(wmesh_int_t 	m_,
 			    const_wmesh_int_p 	c2t_,
 			    wmesh_int_t 	c2t_ld_,
@@ -150,19 +138,6 @@ static  inline void get_c2t(wmesh_int_t 	m_,
     {
       cnc_[i] = c2t_[cell_idx_*c2t_ld_+i];      
     }
-};
-
-static  inline void get_t2n(const_wmesh_int_p	c2n_,
-			    const wmesh_int_t 	localQuadrilateralIndex_,
-			    wmesh_int_p		t2n_,
-			    wmesh_int_t 	s_t2n_m_,
-			    wmesh_int_t 	s_t2n_n_,
-			    const_wmesh_int_p 	s_t2n_v_,
-			    wmesh_int_t 	s_t2n_ld_)		    
-{
-  t2n_[0] = c2n_[s_t2n_v_[s_t2n_ld_ * localQuadrilateralIndex_+ 0]];
-  t2n_[1] = c2n_[s_t2n_v_[s_t2n_ld_ * localQuadrilateralIndex_+ 1]];
-  t2n_[2] = c2n_[s_t2n_v_[s_t2n_ld_ * localQuadrilateralIndex_+ 2]];
 };
 
 
@@ -283,26 +258,28 @@ static inline wmesh_status_t wmesh_space_indexing_triangles_calculate(wmesh_int_
 
 extern "C"
 {
-  wmesh_status_t  wmesh_space_indexing_triangles(wmesh_int_t 		ntypes_,
-					     
+  wmesh_status_t  wmesh_space_indexing_triangles(wmesh_int_t 		c2n_size_,
 						 const_wmesh_int_p 	c2n_ptr_,
 						 const_wmesh_int_p 	c2n_m_,
 						 const_wmesh_int_p 	c2n_n_,
 						 const_wmesh_int_p 	c2n_v_,
 						 const_wmesh_int_p 	c2n_ld_,
 						 
+						 wmesh_int_t 		c2f_t_size_,
 						 const_wmesh_int_p 	c2f_t_ptr_,
 						 const_wmesh_int_p 	c2f_t_m_,
 						 const_wmesh_int_p 	c2f_t_n_,
 						 const_wmesh_int_p 	c2f_t_v_,
 						 const_wmesh_int_p 	c2f_t_ld_,
 						 
+						 wmesh_int_t 		c2d_t_size_,
 						 const_wmesh_int_p 	c2d_t_ptr_,
 						 const_wmesh_int_p 	c2d_t_m_,
 						 const_wmesh_int_p 	c2d_t_n_,
 						 wmesh_int_p 		c2d_t_v_,
 						 const_wmesh_int_p 	c2d_t_ld_,
-						 
+
+						 wmesh_int_t 		s_t2n_size_,
 						 const_wmesh_int_p 	s_t2n_ptr_,
 						 const_wmesh_int_p	s_t2n_m_,
 						 const_wmesh_int_p	s_t2n_n_,
@@ -348,7 +325,7 @@ extern "C"
     WMESH_POINTER_CHECK(s_t2n_v_);
     WMESH_POINTER_CHECK(s_t2n_ld_);
     
-    for (wmesh_int_t cell_type=0;cell_type<ntypes_;++cell_type)
+    for (wmesh_int_t cell_type=0;cell_type<c2n_size_;++cell_type)
       {	
 	wmesh_status_t status = wmesh_space_indexing_triangles_calculate(c2n_ptr_[cell_type],
 									 c2n_m_[cell_type],

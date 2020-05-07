@@ -88,6 +88,7 @@ extern "C"
     const wmesh_int_t node_coo_ld 	= 3;
 
     status =  wmesh_def	(self__,
+			 3,				 
 			 mesh3d_nbVertices,
 			 4,
 			 c2n_ptr,
@@ -257,6 +258,7 @@ extern "C"
   //! @brief Get the number of entities with a specific dimension.
   //!
   wmesh_status_t status = wmesh_def	(self_,
+					 2,
 					 numNodes,
 					 2,
 					 c2n_ptr,

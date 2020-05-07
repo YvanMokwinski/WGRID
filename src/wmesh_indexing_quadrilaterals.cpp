@@ -88,32 +88,6 @@ static inline void half_quadrilateral_decod(wmesh_int_t halfQuadrilateralIndex_,
 };
 
 
-static inline void get_c2n(wmesh_int_t 		numCellNodes_,
-			   const_wmesh_int_p 	cellsToNodes_,
-			   wmesh_int_t 			cellsToNodesLd_,
-			   wmesh_int_t 			cellIndex_,
-			   wmesh_int_p 	cnc_)
-{
-  for (wmesh_int_t localNodeIndex=0;localNodeIndex<numCellNodes_;++localNodeIndex)
-    {
-      cnc_[localNodeIndex] = cellsToNodes_[cellIndex_*cellsToNodesLd_+localNodeIndex];      
-    }
-}
-
-
-static  inline void get_q2n(const_wmesh_int_p	c2n_,
-			   const wmesh_int_t 	t_lidx_,
-			   wmesh_int_p		q2n_,
-			   wmesh_int_t 		s_q2n_m_,
-			   wmesh_int_t 		s_q2n_n_,
-			   const_wmesh_int_p 	s_q2n_v_,
-			   wmesh_int_t 		s_q2n_ld_)		    
- {
-   q2n_[0] = c2n_[s_q2n_v_[s_q2n_ld_ * t_lidx_ + 0]];
-   q2n_[1] = c2n_[s_q2n_v_[s_q2n_ld_ * t_lidx_ + 1]];
-   q2n_[2] = c2n_[s_q2n_v_[s_q2n_ld_ * t_lidx_ + 2]];
-   q2n_[3] = c2n_[s_q2n_v_[s_q2n_ld_ * t_lidx_ + 3]];
-};
 
 
 
@@ -391,12 +365,14 @@ extern "C"
 						const_wmesh_int_p 	c2n_v_,
 						const_wmesh_int_p 	c2n_ld_,
 						
+						wmesh_int_t 		c2q_size_,
 						const_wmesh_int_p 	c2q_ptr_,
 						const_wmesh_int_p 	c2q_m_,
 						const_wmesh_int_p 	c2q_n_,
 						wmesh_int_p 		c2q_v_,
 						const_wmesh_int_p 	c2q_ld_,
 						
+						wmesh_int_t 		s_q2n_size_,
 						const_wmesh_int_p 	s_q2n_ptr_,
 						const_wmesh_int_p	s_q2n_m_,
 						const_wmesh_int_p	s_q2n_n_,

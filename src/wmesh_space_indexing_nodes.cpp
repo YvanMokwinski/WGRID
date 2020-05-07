@@ -3,17 +3,6 @@
 #include <array>
 #include "wmesh.hpp"
 
-static  inline void get_c2n(wmesh_int_t 		numCellNodes_,
-			    const_wmesh_int_p 	cellsToNodes_,
-			    wmesh_int_t 			cellsToNodesLd_,
-			    wmesh_int_t 			cellIndex_,
-			    wmesh_int_p 	cnc_)
-{
-  for (wmesh_int_t localNodeIndex=0;localNodeIndex<numCellNodes_;++localNodeIndex)
-    {
-      cnc_[localNodeIndex] = cellsToNodes_[cellIndex_*cellsToNodesLd_+localNodeIndex];      
-    }
-};
 
 static inline wmesh_status_t wmesh_space_indexing_nodes_calculate(wmesh_int_t 			c2n_ptr_,
 								  wmesh_int_t 			c2n_m_,
@@ -65,14 +54,14 @@ static inline wmesh_status_t wmesh_space_indexing_nodes_calculate(wmesh_int_t 		
 
 extern "C"
 {
-  wmesh_status_t  wmesh_space_indexing_nodes(wmesh_int_t 	ntypes_,
-					     
+  wmesh_status_t  wmesh_space_indexing_nodes(wmesh_int_t 	c2n_size_,
 					     const_wmesh_int_p 	c2n_ptr_,
 					     const_wmesh_int_p 	c2n_m_,
 					     const_wmesh_int_p 	c2n_n_,
 					     const_wmesh_int_p 	c2n_v_,
 					     const_wmesh_int_p 	c2n_ld_,
 					     
+					     wmesh_int_t 	c2d_n_size_,
 					     const_wmesh_int_p 	c2d_n_ptr_,
 					     const_wmesh_int_p 	c2d_n_m_,
 					     const_wmesh_int_p 	c2d_n_n_,
@@ -95,7 +84,7 @@ extern "C"
     WMESH_POINTER_CHECK(c2d_n_v_);
     WMESH_POINTER_CHECK(c2d_n_ld_);
     
-    for (wmesh_int_t cell_type=0;cell_type<ntypes_;++cell_type)
+    for (wmesh_int_t cell_type=0;cell_type<c2n_size_;++cell_type)
       {	
 	wmesh_status_t status = wmesh_space_indexing_nodes_calculate(c2n_ptr_[cell_type],
 								     c2n_m_[cell_type],

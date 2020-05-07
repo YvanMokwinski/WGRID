@@ -1493,6 +1493,7 @@ extern "C"
       }
     
     status = wmesh_def(mesh__,
+		       3,
 		       num_nodes,
 		       4,
 		       c2n_ptr,

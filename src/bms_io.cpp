@@ -71,7 +71,7 @@ extern "C"
 				      self_->m_c_c.m_data,
 				      self_->m_c_c.m_ld);    
     WMESH_STATUS_CHECK(status);
-
+    
     
     if (self_->m_bf2n.m_size > 0)
       {
@@ -125,6 +125,7 @@ extern "C"
 
     
     wmesh_int_t
+      topology_dimension = 0,
       num_nodes = 0,
       num_edges = 0,
       num_triangles = 0,
@@ -133,7 +134,7 @@ extern "C"
       num_pyramids = 0,
       num_wedges = 0,
       num_hexahedra = 0;
-    
+
     status =  bms_read_medit_stat(inm,
 				  &num_nodes,
 				  &num_edges,
@@ -195,8 +196,9 @@ extern "C"
     wmesh_int_t total_num_cells = c2n_n[0] + c2n_n[1] + c2n_n[2] + c2n_n[3];
     if (total_num_cells > 0)
       {
+	topology_dimension = 3;
 	c2n_size = 4;
-
+  
 	bf2n_n[0] = num_triangles;
 	bf2n_n[1] = num_quadrilaterals;
 	total_num_bfaces = bf2n_n[0] + bf2n_n[1];
@@ -216,6 +218,7 @@ extern "C"
 	total_num_cells = c2n_n[0] + c2n_n[1];
 	if (total_num_cells > 0)
 	  {
+	    topology_dimension = 2;
 	    c2n_size = 2;
 	    bf2n_n[0] = num_edges;
 	    total_num_bfaces = bf2n_n[0];
@@ -231,6 +234,7 @@ extern "C"
 	    total_num_cells = c2n_n[0];
 	    if (total_num_cells > 0)
 	      {
+		topology_dimension = 1;
 		c2n_size = 1;	  
 	      }
 	    else
@@ -341,6 +345,7 @@ extern "C"
     WMESH_STATUS_CHECK(status);      
     
     status =  wmesh_factory(self__,
+			    topology_dimension,
 			    num_nodes,
 
 			    c2n_size,

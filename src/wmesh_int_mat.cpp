@@ -3,7 +3,7 @@
 extern "C"
 {
 
-  void wmesh_int_mat_def(wmesh_int_mat_t * self_,
+  wmesh_status_t wmesh_int_mat_def(wmesh_int_mat_t * self_,
 			 wmesh_int_t m,
 			 wmesh_int_t n,
 			 wmesh_int_t*v,
@@ -13,6 +13,7 @@ extern "C"
     self_->n = n;
     self_->v = v;
     self_->ld = ld;
+    return WMESH_STATUS_SUCCESS;
   }
 
 }

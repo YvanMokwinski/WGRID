@@ -3,41 +3,6 @@
 #include <array>
 #include "wmesh.hpp"
 
-static  inline void get_c2n(wmesh_int_t 		numCellNodes_,
-			    const_wmesh_int_p 	cellsToNodes_,
-			    wmesh_int_t 			cellsToNodesLd_,
-			    wmesh_int_t 			cellIndex_,
-			    wmesh_int_p 	cnc_)
-{
-  for (wmesh_int_t localNodeIndex=0;localNodeIndex<numCellNodes_;++localNodeIndex)
-    {
-      cnc_[localNodeIndex] = cellsToNodes_[cellIndex_*cellsToNodesLd_+localNodeIndex];      
-    }
-};
-
-static  inline void get_c2e(wmesh_int_t 	m_,
-			    const_wmesh_int_p 	c2e_,
-			    wmesh_int_t 	c2e_ld_,
-			    wmesh_int_t 	cell_idx_,
-			    wmesh_int_p 	cnc_)
-{
-  for (wmesh_int_t i=0;i<m_;++i)
-    {
-      cnc_[i] = c2e_[cell_idx_*c2e_ld_+i];      
-    }
-};
-
-static  inline void get_e2n(const_wmesh_int_p	c2n_,
-			    const wmesh_int_t 	localEdgeIndex_,
-			    wmesh_int_p		e2n_,
-			    wmesh_int_t 	s_e2n_m_,
-			    wmesh_int_t 	s_e2n_n_,
-			    const_wmesh_int_p 	s_e2n_v_,
-			    wmesh_int_t 	s_e2n_ld_)		    
-{
-  e2n_[0] = c2n_[s_e2n_v_[s_e2n_ld_ * localEdgeIndex_+ 0]];
-  e2n_[1] = c2n_[s_e2n_v_[s_e2n_ld_ * localEdgeIndex_+ 1]];
-};
 
 
 static inline wmesh_status_t wmesh_space_indexing_edges_calculate(wmesh_int_t 			c2n_ptr_,
@@ -134,32 +99,34 @@ static inline wmesh_status_t wmesh_space_indexing_edges_calculate(wmesh_int_t 		
 
 extern "C"
 {
-  wmesh_status_t  wmesh_space_indexing_edges(wmesh_int_t 	ntypes_,
-					     
+  wmesh_status_t  wmesh_space_indexing_edges(wmesh_int_t 	c2n_size_,
 					     const_wmesh_int_p 	c2n_ptr_,
 					     const_wmesh_int_p 	c2n_m_,
 					     const_wmesh_int_p 	c2n_n_,
 					     const_wmesh_int_p 	c2n_v_,
 					     const_wmesh_int_p 	c2n_ld_,
 					     
+					     wmesh_int_t 	c2e_size_,
 					     const_wmesh_int_p 	c2e_ptr_,
 					     const_wmesh_int_p 	c2e_m_,
 					     const_wmesh_int_p 	c2e_n_,
 					     const_wmesh_int_p 	c2e_v_,
 					     const_wmesh_int_p 	c2e_ld_,
 					     
+					     wmesh_int_t 	c2d_e_size_,
 					     const_wmesh_int_p 	c2d_e_ptr_,
 					     const_wmesh_int_p 	c2d_e_m_,
 					     const_wmesh_int_p 	c2d_e_n_,
 					     wmesh_int_p 	c2d_e_v_,
 					     const_wmesh_int_p 	c2d_e_ld_,
 
+					     wmesh_int_t 	s_e2n_size_,
 					     const_wmesh_int_p 	s_e2n_ptr_,
 					     const_wmesh_int_p	s_e2n_m_,
 					     const_wmesh_int_p	s_e2n_n_,
 					     const_wmesh_int_p 	s_e2n_v_,
 					     const_wmesh_int_p	s_e2n_ld_,
-
+					     
 					     wmesh_int_t 	num_edges_,
 					     wmesh_int_t 	num_dofs_per_edge_,
 					     wmesh_int_t 	dof_idx_origin_)
@@ -188,7 +155,7 @@ extern "C"
     WMESH_POINTER_CHECK(s_e2n_v_);
     WMESH_POINTER_CHECK(s_e2n_ld_);
     
-    for (wmesh_int_t cell_type=0;cell_type<ntypes_;++cell_type)
+    for (wmesh_int_t cell_type=0;cell_type<c2n_size_;++cell_type)
       {	
 	wmesh_status_t status = wmesh_space_indexing_edges_calculate(c2n_ptr_[cell_type],
 								     c2n_m_[cell_type],
