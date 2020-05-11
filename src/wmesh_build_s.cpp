@@ -13,7 +13,7 @@ extern "C"
 				   wmesh_int_t 			dim_)
   {
 #ifndef NDEBUG
-    WMESH_POINTER_CHECK(self_);
+    WMESH_CHECK_POINTER(self_);
 #endif    
     if (dim_==3)
       {
@@ -81,7 +81,7 @@ extern "C"
 	wmesh_int_t s_e2n_ptr[2+1]	{0,6,14};
 	wmesh_int_t v[14]{ 0,1, 1,2, 2,0, 0,1, 1,2, 2,3, 3,0};
 	wmesh_int_t * __restrict__ s_e2n_v = (wmesh_int_t * __restrict__)malloc(sizeof(wmesh_int_t)*s_e2n_ptr[2]);
-	memcpy(v,s_e2n_v,sizeof(wmesh_int_t)*s_e2n_ptr[2]);
+	memcpy(s_e2n_v,v,sizeof(wmesh_int_t)*s_e2n_ptr[2]);
 
 	return wmesh_int_sparsemat_new(self_,
 				       2,
@@ -100,7 +100,7 @@ extern "C"
 	wmesh_int_t s_e2n_ptr[1+1]	{0, 2};
 	wmesh_int_t v[2]{ 0, 1};
 	wmesh_int_t * __restrict__ s_e2n_v = (wmesh_int_t * __restrict__)malloc(sizeof(wmesh_int_t)*s_e2n_ptr[1]);
-	memcpy(v,s_e2n_v,sizeof(wmesh_int_t)*s_e2n_ptr[1]);
+	memcpy(s_e2n_v,v,sizeof(wmesh_int_t)*s_e2n_ptr[1]);
 
 	return wmesh_int_sparsemat_new(self_,
 				       1,
@@ -120,7 +120,7 @@ extern "C"
 				   wmesh_int_t 			dim_)
   {
 #ifndef NDEBUG
-    WMESH_POINTER_CHECK(self_);
+    WMESH_CHECK_POINTER(self_);
 #endif    
     if (3 == dim_)
       {
@@ -183,7 +183,7 @@ extern "C"
 				   wmesh_int_t dim_)
   {
 #ifndef NDEBUG
-    WMESH_POINTER_CHECK(self_);
+    WMESH_CHECK_POINTER(self_);
 #endif    
     if (3==dim_)
       {

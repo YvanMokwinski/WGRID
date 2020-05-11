@@ -17,7 +17,7 @@ extern "C"
     wmesh_int_t * work  = nullptr;
     wmesh_status_t status;
     
-    status =  wbms_c2c_calculate_buffer_size(self_->m_c2n.m_size,
+    status =  bms_c2c_buffer_size(self_->m_c2n.m_size,
 					     self_->m_c2n.m_n,
 					     &work_n);    
     WMESH_STATUS_CHECK(status);    
@@ -32,21 +32,20 @@ extern "C"
     num_faces_[0] 		= 0;
     num_faces_[1] 		= 0;
     
-    status = wbms_c2c_calculate(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-				WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2c_t),
-				WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2c_q),
-				WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_t2n),
-				WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_q2n),
-				work_n,
-				work,
-				num_faces_,
-				num_boundary_faces_);
-
+    status = bms_c2c(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
+		     WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2c_t),
+		     WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2c_q),
+		     WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_t2n),
+		     WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_q2n),
+		     work_n,
+		     work,
+		     num_faces_,
+		     num_boundary_faces_);
+    
     free(work);      
     WMESH_STATUS_CHECK(status);    
     return WMESH_STATUS_SUCCESS;
     
-
   };
 };
 
@@ -2663,7 +2662,7 @@ extern "C"
     wmesh_int_t * work  = nullptr;
     wmesh_status_t status;
     
-    status =  wbms_c2c_calculate_buffer_size(self_->m_c2n.m_size,
+    status =  bms_c2c_calculate_buffer_size(self_->m_c2n.m_size,
 					     self_->m_c2n.m_n,
 					     &work_n);    
     WMESH_STATUS_CHECK(status);    
@@ -2678,7 +2677,7 @@ extern "C"
     num_faces_[0] 		= 0;
     num_faces_[1] 		= 0;
     
-    status = wbms_c2c_calculate(WINT_SPARSE_MAT_PARAMS2(self_->m_c2n),
+    status = bms_c2c_calculate(WINT_SPARSE_MAT_PARAMS2(self_->m_c2n),
 				WINT_SPARSE_MAT_PARAMS2(self_->m_c2c_t),
 				WINT_SPARSE_MAT_PARAMS2(self_->m_c2c_q),
 				WINT_SPARSE_MAT_PARAMS2(self_->m_s_t2n),
@@ -2762,7 +2761,7 @@ static  inline void get_q2n(const_wmesh_int_p	c2n_,
     wmesh_int_t * work  = nullptr;
     wmesh_status_t status;
     
-    status =  wbms_c2c_calculate_buffer_size(self_->m_c2n.m_size,
+    status =  bms_c2c_calculate_buffer_size(self_->m_c2n.m_size,
 					     self_->m_c2n.m_n,
 					     &work_n);    
     WMESH_STATUS_CHECK(status);    
@@ -2775,7 +2774,7 @@ static  inline void get_q2n(const_wmesh_int_p	c2n_,
     num_boundary_faces_[1] = 0;
     num_faces_[0] = 0;
     num_faces_[1] = 0;
-    status = wbms_c2c_calculate(WINT_SPARSE_MAT_PARAMS2(self_->m_c2n),
+    status = bms_c2c_calculate(WINT_SPARSE_MAT_PARAMS2(self_->m_c2n),
 				WINT_SPARSE_MAT_PARAMS2(self_->m_c2c_t),
 				WINT_SPARSE_MAT_PARAMS2(self_->m_c2c_q),
 				WINT_SPARSE_MAT_PARAMS2(self_->m_s_t2n),

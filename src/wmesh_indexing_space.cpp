@@ -176,27 +176,27 @@ wmesh_status_t wmesh_indexing_space_edges_calculate(wmesh_int_t				ntypes_,
 						    wmesh_int_p				work_)
 {
 
-  WMESH_POINTER_CHECK(c2n_ptr_);
-  WMESH_POINTER_CHECK(c2n_m_);
-  WMESH_POINTER_CHECK(c2n_n_);
-  WMESH_POINTER_CHECK(c2n_v_);
-  WMESH_POINTER_CHECK(c2n_ld_);
+  WMESH_CHECK_POINTER(c2n_ptr_);
+  WMESH_CHECK_POINTER(c2n_m_);
+  WMESH_CHECK_POINTER(c2n_n_);
+  WMESH_CHECK_POINTER(c2n_v_);
+  WMESH_CHECK_POINTER(c2n_ld_);
   
-  WMESH_POINTER_CHECK(c2d_e_ptr_);
-  WMESH_POINTER_CHECK(c2d_e_m_);
-  WMESH_POINTER_CHECK(c2d_e_n_);
-  WMESH_POINTER_CHECK(c2d_e_v_);
-  WMESH_POINTER_CHECK(c2d_e_ld_);
+  WMESH_CHECK_POINTER(c2d_e_ptr_);
+  WMESH_CHECK_POINTER(c2d_e_m_);
+  WMESH_CHECK_POINTER(c2d_e_n_);
+  WMESH_CHECK_POINTER(c2d_e_v_);
+  WMESH_CHECK_POINTER(c2d_e_ld_);
   
-  WMESH_POINTER_CHECK(s_e2n_ptr_);
-  WMESH_POINTER_CHECK(s_e2n_m_);
-  WMESH_POINTER_CHECK(s_e2n_n_);
-  WMESH_POINTER_CHECK(s_e2n_v_);
-  WMESH_POINTER_CHECK(s_e2n_ld_);
+  WMESH_CHECK_POINTER(s_e2n_ptr_);
+  WMESH_CHECK_POINTER(s_e2n_m_);
+  WMESH_CHECK_POINTER(s_e2n_n_);
+  WMESH_CHECK_POINTER(s_e2n_v_);
+  WMESH_CHECK_POINTER(s_e2n_ld_);
   
-  WMESH_POINTER_CHECK(dof_idx_);
-  WMESH_POINTER_CHECK(edge_idx_);
-  WMESH_POINTER_CHECK(work_);
+  WMESH_CHECK_POINTER(dof_idx_);
+  WMESH_CHECK_POINTER(edge_idx_);
+  WMESH_CHECK_POINTER(work_);
   
   wmesh_int_t
     e2n[2],
@@ -402,7 +402,7 @@ extern "C"
 				       wmesh_int_p	work_n_,
 				       wmesh_int_p	work_)
   {
-    WMESH_POINTER_CHECK(c2n_n_);    
+    WMESH_CHECK_POINTER(c2n_n_);    
     wmesh_int_t mx_num_cells = 0;
     for (wmesh_int_t i=0;i<ntypes_;++i)
       {
@@ -412,7 +412,7 @@ extern "C"
 	mx_num_cells = std::max(mx_num_cells, c2n_n_[i]);
       }
     
-    WMESH_POINTER_CHECK(work_n_);
+    WMESH_CHECK_POINTER(work_n_);
     if (work_ == nullptr)
       {
 	work_n_[0] = 1 + std::max(mx_num_cells,(wmesh_int_t)128);
@@ -424,7 +424,7 @@ extern "C"
       }    
     work_[0] = std::max(mx_num_cells,(wmesh_int_t)128);
 
-    WMESH_POINTER_CHECK(dof_idx_);
+    WMESH_CHECK_POINTER(dof_idx_);
     
     //    std::cout << "edge index before " << edge_idx_[0] << std::endl;
     wmesh_int_t status;

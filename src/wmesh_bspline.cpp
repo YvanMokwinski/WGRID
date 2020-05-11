@@ -262,8 +262,8 @@ void FiniteElementSegmentHermite_EvalDDt(const char*			transpose_,
 					 wmesh_int_t 				idx_,
 					 double * 				coo_)
   {
-    WMESH_POINTER_CHECK(self_);
-    WMESH_POINTER_CHECK(coo_);
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(coo_);
     
     wmesh_int_t dim;
     
@@ -281,8 +281,8 @@ void FiniteElementSegmentHermite_EvalDDt(const char*			transpose_,
 						 wmesh_int_t 				idx_,
 						 double * 				coo_)
   {
-    WMESH_POINTER_CHECK(self_);
-    WMESH_POINTER_CHECK(coo_);
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(coo_);
     
     wmesh_int_t dim;
 
@@ -524,8 +524,8 @@ void FiniteElementSegmentHermite_EvalDDt(const char*			transpose_,
   
   wmesh_status_t wmesh_bspline_dlength	(const wmesh_bspline_t*__restrict__ self_,double * __restrict__ out_length_)
   {
-    WMESH_POINTER_CHECK(self_);
-    WMESH_POINTER_CHECK(out_length_);
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(out_length_);
     out_length_[0] =  self_->m_length;
     return WMESH_STATUS_SUCCESS;    
   }
@@ -533,8 +533,8 @@ void FiniteElementSegmentHermite_EvalDDt(const char*			transpose_,
   wmesh_status_t wmesh_bspline_num_nodes	(const wmesh_bspline_t*__restrict__ 	self_,
 						 wmesh_int_p 				out_num_nodes_)
   {
-    WMESH_POINTER_CHECK(self_);
-    WMESH_POINTER_CHECK(out_num_nodes_);
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(out_num_nodes_);
     out_num_nodes_[0] =  self_->m_numPoints;
     return WMESH_STATUS_SUCCESS;    
   }
@@ -542,8 +542,8 @@ void FiniteElementSegmentHermite_EvalDDt(const char*			transpose_,
   wmesh_status_t wmesh_bspline_num_edges	(const wmesh_bspline_t*__restrict__ 	self_,
 						 wmesh_int_p 				out_num_edges_)
   {
-    WMESH_POINTER_CHECK(self_);
-    WMESH_POINTER_CHECK(out_num_edges_);
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(out_num_edges_);
     out_num_edges_[0] =  self_->m_numPoints-1;
     return WMESH_STATUS_SUCCESS;    
   }
@@ -551,8 +551,8 @@ void FiniteElementSegmentHermite_EvalDDt(const char*			transpose_,
     wmesh_status_t wmesh_bspline_dimension	(const wmesh_bspline_t*__restrict__ 	self_,
 						 wmesh_int_p 				out_dimension_)
   {
-    WMESH_POINTER_CHECK(self_);
-    WMESH_POINTER_CHECK(out_dimension_);
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(out_dimension_);
     out_dimension_[0] =  self_->m_dim;
     return WMESH_STATUS_SUCCESS;    
   }
@@ -564,8 +564,8 @@ void FiniteElementSegmentHermite_EvalDDt(const char*			transpose_,
 					 wmesh_int_t 				idx_,
 					 double * 				tan_)
   {
-    WMESH_POINTER_CHECK(self_);
-    WMESH_POINTER_CHECK(tan_);
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(tan_);
     
     wmesh_int_t dim;
     

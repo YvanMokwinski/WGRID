@@ -1,4 +1,10 @@
 #pragma once
+
+extern "C"  wmesh_status_t
+wmesh_elements_num_hyperfaces(wmesh_int_t 		topodim_,
+			      wmesh_int_p 		num_hyperfaces_);
+
+
 template<typename T>
 wmesh_status_t wmesh_raw_bounding_box(wmesh_int_t 		coo_m_,
 				      wmesh_int_t 		coo_n_,
@@ -8,7 +14,31 @@ wmesh_status_t wmesh_raw_bounding_box(wmesh_int_t 		coo_m_,
 
 extern "C"
 {
-const char * file_extension(const char * filename_);
+  const char * file_extension(const char * filename_);
+  
+  
+  wmesh_status_t
+  wmesh_element2topodim(wmesh_int_t 	element_,
+			wmesh_int_p 	topodim_);
+
+  wmesh_status_t
+  wmesh_topodim2numtypes(wmesh_int_t 	topodim_,
+			 wmesh_int_p 	ntypes_);
+  
+  wmesh_status_t
+  wmesh_topodim2elements(wmesh_int_t 	topodim_,
+			 wmesh_int_p 	num_elements_,
+			 wmesh_int_p 	elements_);
+
+  
+  wmesh_status_t
+  wmesh_elements_num_edges(wmesh_int_t 		num_elements_,
+			   const_wmesh_int_p 	elements_,
+			   wmesh_int_p 		num_edges_);
+  wmesh_status_t
+  wmesh_elements_num_nodes(wmesh_int_t 		num_elements_,
+			   const_wmesh_int_p 	elements_,
+			   wmesh_int_p 		num_nodes_);
   
 unsigned long long int hilbert_coordinate(double*__restrict__ 	crd,
 					  const double*__restrict__ box,

@@ -60,7 +60,7 @@ int main(int argc, char ** argv)
   //
   // Refine the mesh.
   //
-  status = wmesh_analysis(mesh,degree);
+  status = wmesh_analysis(mesh);
 
   wmeshspace_t * space;
   status = wmeshspace_def(&space,

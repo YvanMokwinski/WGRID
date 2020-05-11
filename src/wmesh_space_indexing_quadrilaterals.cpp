@@ -364,29 +364,29 @@ extern "C"
 	return WMESH_STATUS_SUCCESS;
       }
     
-    WMESH_POINTER_CHECK(c2n_ptr_);    
-    WMESH_POINTER_CHECK(c2n_m_);    
-    WMESH_POINTER_CHECK(c2n_n_);
-    WMESH_POINTER_CHECK(c2n_v_);
-    WMESH_POINTER_CHECK(c2n_ld_);
+    WMESH_CHECK_POINTER(c2n_ptr_);    
+    WMESH_CHECK_POINTER(c2n_m_);    
+    WMESH_CHECK_POINTER(c2n_n_);
+    WMESH_CHECK_POINTER(c2n_v_);
+    WMESH_CHECK_POINTER(c2n_ld_);
 
-    WMESH_POINTER_CHECK(c2f_q_ptr_);    
-    WMESH_POINTER_CHECK(c2f_q_m_);    
-    WMESH_POINTER_CHECK(c2f_q_n_);
-    WMESH_POINTER_CHECK(c2f_q_v_);
-    WMESH_POINTER_CHECK(c2f_q_ld_);
+    WMESH_CHECK_POINTER(c2f_q_ptr_);    
+    WMESH_CHECK_POINTER(c2f_q_m_);    
+    WMESH_CHECK_POINTER(c2f_q_n_);
+    WMESH_CHECK_POINTER(c2f_q_v_);
+    WMESH_CHECK_POINTER(c2f_q_ld_);
 
-    WMESH_POINTER_CHECK(c2d_q_ptr_);    
-    WMESH_POINTER_CHECK(c2d_q_m_);    
-    WMESH_POINTER_CHECK(c2d_q_n_);
-    WMESH_POINTER_CHECK(c2d_q_v_);
-    WMESH_POINTER_CHECK(c2d_q_ld_);
+    WMESH_CHECK_POINTER(c2d_q_ptr_);    
+    WMESH_CHECK_POINTER(c2d_q_m_);    
+    WMESH_CHECK_POINTER(c2d_q_n_);
+    WMESH_CHECK_POINTER(c2d_q_v_);
+    WMESH_CHECK_POINTER(c2d_q_ld_);
     
-    WMESH_POINTER_CHECK(s_q2n_ptr_);    
-    WMESH_POINTER_CHECK(s_q2n_m_);    
-    WMESH_POINTER_CHECK(s_q2n_n_);
-    WMESH_POINTER_CHECK(s_q2n_v_);
-    WMESH_POINTER_CHECK(s_q2n_ld_);
+    WMESH_CHECK_POINTER(s_q2n_ptr_);    
+    WMESH_CHECK_POINTER(s_q2n_m_);    
+    WMESH_CHECK_POINTER(s_q2n_n_);
+    WMESH_CHECK_POINTER(s_q2n_v_);
+    WMESH_CHECK_POINTER(s_q2n_ld_);
     
     for (wmesh_int_t cell_type=0;cell_type<c2n_size_;++cell_type)
       {	

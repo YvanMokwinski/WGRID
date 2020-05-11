@@ -60,11 +60,9 @@ extern "C"
 					 const_wmesh_int_p		bfaces_ids_)
   {
     wmesh_status_t status;
-
     const wmesh_int_t surface_numVertices 	= surface_->m_num_nodes;
-    const wmesh_int_t	nbVerticesOnOneFrame_	= surface_->m_num_nodes;    
-    const wmesh_int_t	nframes_ 		= nz_;
-    const wmesh_int_t dim 			= 3; 
+    const wmesh_int_t nbVerticesOnOneFrame_	= surface_->m_num_nodes;    
+    const wmesh_int_t nframes_ 			= nz_;
     const wmesh_int_t mesh3d_nbVertices  	= surface_numVertices * (nz_+1);
     
     wmesh_int_t c2n_size 	= 4;
@@ -85,17 +83,17 @@ extern "C"
 
     wmesh_int_p c2n_v 			= (wmesh_int_p)malloc(sizeof(wmesh_int_t)*c2n_ptr[4]);
     double * 	node_coo 		= (double*)malloc(mesh3d_nbVertices * 3 * sizeof(double));
-    const wmesh_int_t node_coo_ld 	= 3;
-
+    const wmesh_int_t node_coo_ld 	= 3;    
     status =  wmesh_def	(self__,
 			 3,				 
-			 mesh3d_nbVertices,
-			 4,
+			 c2n_size,
 			 c2n_ptr,
 			 c2n_m,
 			 c2n_n,
 			 c2n_v,
 			 c2n_ld,
+			 3,
+			 mesh3d_nbVertices,			 
 			 node_coo,
 			 node_coo_ld);
     WMESH_STATUS_CHECK(status);
@@ -106,71 +104,66 @@ extern "C"
     
     double 	cooVertex[3];
     wmesh_int_t idTopology;
-
-
-    if (dim==3)
+    
+    double izValue = 0.0;
+    for (wmesh_int_t iz=0;iz<=nz_;++iz)
       {
-
-	double izValue = 0.0;
-	for (wmesh_int_t iz=0;iz<=nz_;++iz)
+	for (wmesh_int_t ivertex=0;ivertex<surface_numVertices;++ivertex)
 	  {
-	    for (wmesh_int_t ivertex=0;ivertex<surface_numVertices;++ivertex)
-	      {
-		cooVertex[0] = surface_->m_coo[3*ivertex + 0];
-		cooVertex[1] = surface_->m_coo[3*ivertex + 1];
-		cooVertex[2] = izValue;
+	    cooVertex[0] = surface_->m_coo[surface_->m_coo_ld*ivertex + 0];
+	    cooVertex[1] = surface_->m_coo[surface_->m_coo_ld*ivertex + 1];
+	    cooVertex[2] = izValue;
 		
 #if 1
 #if 0
-		cooVertex[2] *= 2.0;
-		cooVertex[2] -= 1.0;
-		/* POUR LA SPLINE */
-		cooVertex[0] += 1.0;
-		cooVertex[1] += 1.0;
-		cooVertex[0] *= 0.5;
-		cooVertex[1] *= 0.5;
+	    cooVertex[2] *= 2.0;
+	    cooVertex[2] -= 1.0;
+	    /* POUR LA SPLINE */
+	    cooVertex[0] += 1.0;
+	    cooVertex[1] += 1.0;
+	    cooVertex[0] *= 0.5;
+	    cooVertex[1] *= 0.5;
 #endif
 #endif
-		idTopology = surface_->m_n_c.v[ivertex * surface_->m_n_c.ld + 0];
-		node_coo[node_coo_ld* ( iz * surface_numVertices + ivertex ) + 0] = cooVertex[0];
-		node_coo[node_coo_ld* ( iz * surface_numVertices + ivertex ) + 1] = cooVertex[1];
-		node_coo[node_coo_ld* ( iz * surface_numVertices + ivertex ) + 2] = cooVertex[2];
+	    idTopology = surface_->m_n_c.v[ivertex * surface_->m_n_c.ld + 0];
+	    node_coo[node_coo_ld* ( iz * surface_numVertices + ivertex ) + 0] = cooVertex[0];
+	    node_coo[node_coo_ld* ( iz * surface_numVertices + ivertex ) + 1] = cooVertex[1];
+	    node_coo[node_coo_ld* ( iz * surface_numVertices + ivertex ) + 2] = cooVertex[2];
 		
-		if (idTopology==1)
+	    if (idTopology==1)
+	      {
+		if (iz == 0)
 		  {
-		    if (iz == 0)
-		      {
-			node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = idTopology;
-		      }
-		    else if (iz == nz_)
-		      {
-			node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = idTopology;
-		      }
-		    else
-		      {
-			node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = bfaces_ids_[0];
-		      }
+		    node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = idTopology;
 		  }
-		else if (idTopology == 100)
+		else if (iz == nz_)
 		  {
-		    if (iz == 0)
-		      {
-			node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = idTopology;
-		      }
-		    else if (iz == nz_)
-		      {
-			node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = bfaces_ids_[1];
-		      }
-		    else
-		      {
-			node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = 1000;
-		      }
-		  }		
-	      } 	     	      
-	    izValue += (ndz_>1) ? dz_[iz] : dz_[0];
-	  }     
+		    node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = idTopology;
+		  }
+		else
+		  {
+		    node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = bfaces_ids_[0];
+		  }
+	      }
+	    else if (idTopology == 100)
+	      {
+		if (iz == 0)
+		  {
+		    node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = idTopology;
+		  }
+		else if (iz == nz_)
+		  {
+		    node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = bfaces_ids_[1];
+		  }
+		else
+		  {
+		    node_ids[node_ids_ld * (iz * surface_numVertices + ivertex) + 0] = 1000;
+		  }
+	      }		
+	  } 	     	      
+	izValue += (ndz_>1) ? dz_[iz] : dz_[0];
+      }     
 	
-      }
     
     wmesh_int_t f2n[4];
     wmesh_int_t v2n[8];
@@ -220,75 +213,70 @@ extern "C"
     return WMESH_STATUS_SUCCESS;
   }
 
-  wmesh_status_t wmesh_def_polar_extrusion(wmesh_t ** self_,
+  wmesh_status_t wmesh_def_polar_extrusion(wmesh_t ** 		self_,
 					   wmesh_int_t 		dim_,
-					   const_wmesh_int_p 		n_,
-					   const double * 		x_,
-					   const_wmesh_int_p  		nbRotations_)
+					   const_wmesh_int_p 	n_,
+					   const double * 	x_,
+					   const_wmesh_int_p  	nbRotations_)
   {
+    const wmesh_int_t topodim = 2;
+    
+    double cooVertex[3];
+    wmesh_int_t cell2Nodes[4];
+    double MNS_TWICEPI = acos(-1.0) * 2.0;
+    const wmesh_int_t 	nbRotations		= nbRotations_[0];
+    const wmesh_int_t 	n			= n_[0];
+    const wmesh_int_t 	n_m1			= n-1;
+    const wmesh_int_t 	numNodes		= (n-1) * nbRotations + 1;
+    const wmesh_int_t 	numTriangles 		= nbRotations;
+    const wmesh_int_t 	numQuadrilaterals 	= nbRotations * (n-2);
+    
+    wmesh_int_t c2n_size = 2;
+    wmesh_int_t c2n_ptr[2+1] {0,numTriangles*3, numTriangles*3+numQuadrilaterals*4} ;
+    wmesh_int_t c2n_m[2] {3,4} ;
+    wmesh_int_t c2n_n[2] {numTriangles, numQuadrilaterals} ;
+    wmesh_int_p c2n_v = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*c2n_ptr[2]);
+    wmesh_int_t c2n_ld[2]{3,4};
+    
+    const double 	dtheta	= MNS_TWICEPI / ((double)nbRotations);
+    
+    double* coo = (double*)malloc(dim_*sizeof(double)*numNodes);
   
-  double cooVertex[3];
-  wmesh_int_t cell2Nodes[4];
-  double MNS_TWICEPI = acos(-1.0) * 2.0;
-  const wmesh_int_t 	nbRotations		= nbRotations_[0];
-  const wmesh_int_t 	n			= n_[0];
-  const wmesh_int_t 	n_m1			= n-1;
-  const wmesh_int_t 	numNodes		= (n-1) * nbRotations + 1;
-  const wmesh_int_t 	numTriangles 		= nbRotations;
-  const wmesh_int_t 	numQuadrilaterals 	= nbRotations * (n-2);
-
-
-
-  wmesh_int_t c2n_ptr[2+1] {0,numTriangles*3, numTriangles*3+numQuadrilaterals*4} ;
-  wmesh_int_t c2n_m[2] {3,4} ;
-  wmesh_int_t c2n_n[2] {numTriangles, numQuadrilaterals} ;
-  wmesh_int_p c2n_v = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*c2n_ptr[2]);
-  wmesh_int_t c2n_ld[2]{3,4};
-
-  
-  const double 	dtheta 				= MNS_TWICEPI / ((double)nbRotations);
-
-  wmesh_int_p triangleToNodes = (wmesh_int_p)malloc(3*sizeof(wmesh_int_t)*numTriangles);
-  wmesh_int_p quadrilateralToNodes = (wmesh_int_p)malloc(4*sizeof(wmesh_int_t)*numQuadrilaterals);
-  
-  double*		coo 		= (double*)malloc(3*sizeof(double)*numNodes);
-
-
-  //!
-  //! @brief Get the number of entities with a specific dimension.
-  //!
-  wmesh_status_t status = wmesh_def	(self_,
-					 2,
-					 numNodes,
-					 2,
+    //!
+    //! @brief Get the number of entities with a specific dimension.
+    //!
+    wmesh_status_t status = wmesh_def	(self_,
+					 topodim,
+					 c2n_size,
 					 c2n_ptr,
 					 c2n_m,
 					 c2n_n,
 					 c2n_v,
 					 c2n_ld,
+					 dim_,
+					 numNodes,
 					 coo,
-					 3);
-  WMESH_STATUS_CHECK(status);
-
-
-  wmesh_int_p		coo_c 		= self_[0]->m_n_c.v;
-  wmesh_int_p		cell_c 		= self_[0]->m_c_c.m_data;
-
-  /* COMPUTE THE GEOMETRY */
-  cooVertex[2] = ((double)0.0);  
-
-  wmesh_int_t vertexIndex = 0;
-  cooVertex[0] = ((double)0.0);
-  cooVertex[1] = ((double)0.0);
-  {
-    wmesh_int_t idx = vertexIndex++;  
-    for(wmesh_int_t k=0;k<dim_;++k)
-      {
-	coo[dim_*idx+k] = cooVertex[k];
-      }
-    coo_c[idx] = 100;
-  }
-  
+					 dim_);
+    WMESH_STATUS_CHECK(status);
+    
+    wmesh_int_p		coo_c 		= self_[0]->m_n_c.v;
+    wmesh_int_p		cell_c 		= self_[0]->m_c_c.m_data;
+    
+    /* COMPUTE THE GEOMETRY */
+    cooVertex[2] = ((double)0.0);  
+    
+    wmesh_int_t vertexIndex = 0;
+    cooVertex[0] = ((double)0.0);
+    cooVertex[1] = ((double)0.0);
+    {
+      wmesh_int_t idx = vertexIndex++;  
+      for(wmesh_int_t k=0;k<dim_;++k)
+	{
+	  coo[dim_*idx+k] = cooVertex[k];
+	}
+      coo_c[idx] = 100;
+    }
+    
   for (wmesh_int_t irot=0;irot<nbRotations;++irot)
     {
       const double theta = ((double)irot)*dtheta;
@@ -354,7 +342,6 @@ extern "C"
 	}
     } 
   
-  //  self_[0]->m_flag_cells = (wmesh_int_p)calloc((c2n_n[0]+c2n_n[1]),sizeof(wmesh_int_t));
   return WMESH_STATUS_SUCCESS;
 }
   

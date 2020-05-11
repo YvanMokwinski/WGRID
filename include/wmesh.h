@@ -2,7 +2,17 @@
 #define WMESH_H
 
 #include "wmesh-functions.h"
-#include "wmesh-status.h"
+
+#define WMESH_ELEMENT_NODE 		0
+#define WMESH_ELEMENT_EDGE 		1
+#define WMESH_ELEMENT_TRIANGLE 		2
+#define WMESH_ELEMENT_QUADRILATERAL 	3
+#define WMESH_ELEMENT_TETRAHEDRON 	4
+#define WMESH_ELEMENT_PYRAMID 		5
+#define WMESH_ELEMENT_WEDGE 		6
+#define WMESH_ELEMENT_HEXAHEDRON	7
+#define WMESH_ELEMENT_ALL		8
+
 
 #ifdef __cplusplus
 extern "C"
@@ -13,8 +23,8 @@ extern "C"
   struct wmeshspace_t;
   struct wmesh_bspline_t;
 
-  
 
+  
   wmesh_status_t wmeshspace_def			(wmeshspace_t ** 	self__,
 						 wmesh_int_t 		degree_,
 						 wmesh_t * 		mesh_);
@@ -76,6 +86,9 @@ extern "C"
   //!
   //! @brief Kill the mesh.
   //!
+  wmesh_status_t wmesh_rmacro_def(wmesh_t ** 	mesh__,
+				  wmesh_int_t 	element_,
+				  wmesh_int_t 	degree_);
 
   wmesh_status_t wmesh_refine			(wmesh_t*    self_,			      
 						 wmesh_int_t degree,
@@ -109,7 +122,7 @@ extern "C"
   //!
   //! @brief Get the number of entities with a specific dimension.
   //!
-  wmesh_status_t wmesh_analysis(wmesh_t*		self_,wmesh_int_t  degree_);
+  wmesh_status_t wmesh_analysis(wmesh_t*		self_);
   
   //!
   //! @brief Get the number of entities with a specific dimension.
@@ -119,8 +132,7 @@ extern "C"
   
   wmesh_status_t wmesh_factory	(wmesh_t** 		self__,
 				 wmesh_int_t 		topology_dimension_,
-				 wmesh_int_t 		num_nodes_,
-
+				 
 				 wmesh_int_t 		c2n_size_,
 				 const_wmesh_int_p 	c2n_ptr_,
 				 const_wmesh_int_p 	c2n_m_,
@@ -162,15 +174,17 @@ extern "C"
   //!
   wmesh_status_t wmesh_def	(wmesh_t** 		self_,
 				 wmesh_int_t 		topology_dimension_,
-				 wmesh_int_t 		num_nodes_,
-				 wmesh_int_t 		ntypes_,
+				 wmesh_int_t 		c2n_size_,
 				 const_wmesh_int_p 	c2n_ptr_,
 				 const_wmesh_int_p 	c2n_m_,
 				 const_wmesh_int_p 	c2n_n_,
 				 wmesh_int_p 		c2n_v_,
 				 const_wmesh_int_p	c2n_ld_,
-				 double * coo_,
-				 wmesh_int_t coo_ld_);
+
+				 wmesh_int_t		coo_m_,
+				 wmesh_int_t		coo_n_,
+				 double * 		coo_,
+				 wmesh_int_t 		coo_ld_);
 
   //!
   //! @brief Get the number of entities with a specific dimension.
@@ -183,10 +197,6 @@ extern "C"
   //!
   wmesh_status_t wmesh_write	(const wmesh_t * 	self_,
 				 const char * 	filename_);
-  
-  wmesh_status_t wmesh_write_medit(const wmesh_t* 		self_,
-				   const char * 		filename_,
-				   ...);
   wmesh_status_t wmesh_write_vtk(const wmesh_t* 		self_,
 				 const char * 		filename_,
 				 ...);

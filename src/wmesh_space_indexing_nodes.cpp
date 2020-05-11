@@ -72,17 +72,17 @@ extern "C"
 					     wmesh_int_t 	num_dofs_per_node_,
 					     wmesh_int_t 	dof_idx_origin_)
   {
-    WMESH_POINTER_CHECK(c2n_ptr_);    
-    WMESH_POINTER_CHECK(c2n_m_);    
-    WMESH_POINTER_CHECK(c2n_n_);
-    WMESH_POINTER_CHECK(c2n_v_);
-    WMESH_POINTER_CHECK(c2n_ld_);
+    WMESH_CHECK_POINTER(c2n_ptr_);    
+    WMESH_CHECK_POINTER(c2n_m_);    
+    WMESH_CHECK_POINTER(c2n_n_);
+    WMESH_CHECK_POINTER(c2n_v_);
+    WMESH_CHECK_POINTER(c2n_ld_);
 
-    WMESH_POINTER_CHECK(c2d_n_ptr_);    
-    WMESH_POINTER_CHECK(c2d_n_m_);    
-    WMESH_POINTER_CHECK(c2d_n_n_);
-    WMESH_POINTER_CHECK(c2d_n_v_);
-    WMESH_POINTER_CHECK(c2d_n_ld_);
+    WMESH_CHECK_POINTER(c2d_n_ptr_);    
+    WMESH_CHECK_POINTER(c2d_n_m_);    
+    WMESH_CHECK_POINTER(c2d_n_n_);
+    WMESH_CHECK_POINTER(c2d_n_v_);
+    WMESH_CHECK_POINTER(c2d_n_ld_);
     
     for (wmesh_int_t cell_type=0;cell_type<c2n_size_;++cell_type)
       {	

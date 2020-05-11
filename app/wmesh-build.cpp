@@ -7,7 +7,7 @@
 void usage(const char * appname_)
 {
   fprintf(stderr,"//\n");
-  fprintf(stderr,"// %s  --nteta <value> --nradius <value> -o <filename>\n",appname_);
+  fprintf(stderr,"// %s [--dim {2|3}] --nteta <value> --nradius <value> -o <filename>\n",appname_);
   fprintf(stderr,"//\n");
   fprintf(stderr,"// Generate a circular face mesh\n");
   fprintf(stderr,"// Example: %s  --nteta 5 --nradius 7 -o example.mesh\n",appname_);
@@ -24,6 +24,7 @@ int main(int 		argc,
   bool 				verbose 	= false;
 
   wmesh_int_t
+    opt_dim,
     opt_nteta = 0,
     opt_nradius = 0;
   
@@ -45,6 +46,17 @@ int main(int 		argc,
   // Get verbose.
   //
   verbose = cmd.option("-v");
+
+
+  if (false == cmd.option("--dim", &opt_dim))
+    {
+      fprintf(stderr,"missing option '--dim {2|3}' option, default is 2.\n");
+    }
+  else if (opt_dim != 2 && opt_dim != 3)
+    {
+      fprintf(stderr,"invalid value from '--dim {2,3}' option.\n");
+      return WMESH_STATUS_INVALID_ARGUMENT;
+    }
   
   //
   // Get the number of partitions.
@@ -79,15 +91,15 @@ int main(int 		argc,
       fprintf(stderr,"missing output file, '-o' option.\n");
       return WMESH_STATUS_INVALID_ARGUMENT;
     }
-
   
   double*x1d = new double[opt_nradius];
   for (wmesh_int_t i=0;i<opt_nradius;++i)
     {
       x1d[i] = ((double)i) / ((double)(opt_nradius-1));
     }
+
   status = wmesh_def_polar_extrusion(&mesh,
-				     3,
+				     opt_dim,
 				     &opt_nradius,
 				     x1d,
 				     &opt_nteta);

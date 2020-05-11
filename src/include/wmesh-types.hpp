@@ -47,7 +47,15 @@ extern "C"
     const_wmesh_int_p  	n_,			\
     wmesh_int_p  	data_,			\
     const_wmesh_int_p  	ld_
+
+
   
+  wmesh_status_t wmesh_int_sparsemat_init(wmesh_int_t 		size_,
+					  wmesh_int_p		ptr_,
+					  const_wmesh_int_p	m_,
+					  const_wmesh_int_p	n_,
+					  wmesh_int_p		ld_);
+
   wmesh_status_t wmesh_int_sparsemat_new(wmesh_int_sparsemat_t* self_,
 					 WMESH_INT_SPARSEMAT_PARAMS );
   
@@ -55,21 +63,6 @@ extern "C"
 					 wmesh_int_t 		idx_,
 					 wmesh_int_mat_t* 	wint_mat_);
   
-#if 0
-  void wmesh_int_sparsemat_def	(wmesh_int_sparsemat_t*self_,
-				 wmesh_int_t 	size_);
-  
-  void wmesh_int_sparsemat_get	(wmesh_int_sparsemat_t* self_,
-				 wmesh_int_t 	idx_,
-				 wmesh_int_mat_t* 	wint_mat_);
-  
-  void wmesh_int_sparsemat_set	(wmesh_int_sparsemat_t* 	self_,
-				 const_wmesh_int_p  	m_,
-				 const_wmesh_int_p  	n_,
-				 const_wmesh_int_p  	ld_,
-				 const_wmesh_int_p  ptr_,
-				 wmesh_int_p  data_);
-#endif  
   wmesh_status_t wmesh_int_sparsemat_free(wmesh_int_sparsemat_t*self_);    
   wmesh_status_t wmesh_int_sparsemat_info(const wmesh_int_sparsemat_t* self_,
 					  FILE * out_);
@@ -97,5 +90,6 @@ extern "C"
   };
 
 };
+
 
 #endif

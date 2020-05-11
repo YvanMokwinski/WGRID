@@ -11,18 +11,16 @@
 #include <chrono>
 //#include "wfe_element.h"
 #include "bms.h"
-#include "libmeshb7.h"
+
 using namespace std::chrono;
 
-extern "C"
-{
-  wmesh_status_t wmesh_write_medit(const wmesh_t* 		self_,
+wmesh_status_t wmesh_write_medit(const wmesh_t* 		self_,
+				   bool 			is_binary_,
 				   const char * 		filename_,
 				   ...)
   {
-    WMESH_POINTER_CHECK(self_);
-    WMESH_POINTER_CHECK(filename_);
-
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(filename_);
 
     wmesh_status_t status;    
     wmesh_str_t filename;
@@ -32,18 +30,30 @@ extern "C"
       vsprintf(filename,filename_,args);
       va_end(args); }
 
-    
     int64_t inm;
-
-    status = bms_write_medit_open(filename,&inm);
+    int32_t version;
+    if (is_binary_)
+      {
+#if WMESH_ILP64
+	version = 4;
+#else
+	version = 3;
+#endif
+      }
+    else
+      {
+	version = 1;
+      }
+    
+    status = bms_write_medit_open(&inm,filename,version,self_->m_coo_m);
     WMESH_STATUS_CHECK(status);
     
     //
     // Write the geometry.
     //
-    wmesh_int_t 		coo_m  	= 3;
-    wmesh_int_t 		coo_n  	= self_->m_num_nodes;
-    wmesh_int_t 		coo_ld 	= 3;
+    wmesh_int_t 		coo_m  	= self_->m_coo_m;
+    wmesh_int_t 		coo_n  	= self_->m_coo_n;
+    wmesh_int_t 		coo_ld 	= self_->m_coo_ld;
     const double*__restrict__ 	coo_v 	= self_->m_coo;
     
     status = bms_write_medit_geometry(inm,
@@ -102,6 +112,7 @@ extern "C"
   };
 
   wmesh_status_t wmesh_read_medit(wmesh_t** 		self__,
+				  bool 			is_binary_,
 				  const char * 		filename_,
 				  ...)
   {
@@ -116,14 +127,31 @@ extern "C"
     int32_t dim;
     int32_t version;
     int64_t inm;
-    
     status =  bms_read_medit_open(filename,
 				  &inm,
 				  &version,
 				  &dim);
     WMESH_STATUS_CHECK(status);
+    int32_t ref_version = 1;
+    if (is_binary_)
+      {
+#if WMESH_ILP64
+	ref_version = 4;
+#else
+	ref_version = 3;
+#endif
+      }
+    else
+      {
+	ref_version = 1;
+      }
 
-    
+    if (version != ref_version)
+      {
+	std::cerr << "// ERROR::wmesh_read_medit: the version " << version << " is incompatible with the installation one (=" << ref_version << ")" << std::endl;
+	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_CONFIG);
+      }    
+
     wmesh_int_t
       topology_dimension = 0,
       num_nodes = 0,
@@ -346,7 +374,6 @@ extern "C"
     
     status =  wmesh_factory(self__,
 			    topology_dimension,
-			    num_nodes,
 
 			    c2n_size,
 			    c2n_ptr,
@@ -445,5 +472,3 @@ extern "C"
     return WMESH_STATUS_SUCCESS;  
   };
 
-
-};

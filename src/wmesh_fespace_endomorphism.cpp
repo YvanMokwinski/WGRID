@@ -7,34 +7,10 @@
 #include <iostream>
 #include "bms.h"
 
-#define WINT_SPARSE_MAT_PARAMS(_f)		\
-  _f.m_ptr,					\
-    _f.m_m,					\
-    _f.m_n,					\
-    _f.m_data,					\
-    _f.m_ld
-
+#include "wmesh-utils.hpp"
 using namespace std::chrono;
 extern "C"
 {
-  static int sort_predicate(const void * a_,
-			    const void * b_)
-  {
-    const_wmesh_int_p a = (const_wmesh_int_p)a_;
-    const_wmesh_int_p b = (const_wmesh_int_p)b_;
-    if (*a < *b)
-      {
-	return -1;
-      }
-    else if (*a > *b)    
-      {
-	return 1;
-      }
-    else
-      {
-	return 0;
-      }
-  }
   
   wmesh_status_t wmesh_fespace_endomorphism	(const wmesh_t*__restrict__	mesh_,
 						 wmesh_int_t 	degree_,
@@ -49,8 +25,7 @@ extern "C"
     wmesh_int_p n2c_ptr = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*(n2c_m+1)); 
     wmesh_int_p n2c_v 	= (wmesh_int_p)malloc(sizeof(wmesh_int_t)*mesh_->m_c2n.m_ptr[mesh_->m_c2n.m_size]); 
 
-    status = bms_n2c(mesh_->m_c2n.m_size,
-		     WINT_SPARSE_MAT_PARAMS(mesh_->m_c2n),
+    status = bms_n2c(WMESH_INT_SPARSEMAT_FORWARD(mesh_->m_c2n),
 		     n2c_ptr,
 		     n2c_m,
 		     n2c_v);
@@ -146,17 +121,14 @@ extern "C"
 	// Sort.
 	//
 
-	//
-	// Copy back.
-	//
-
 	qsort(select,
 	      select_n,
 	      sizeof(wmesh_int_t),
-	      sort_predicate);
-	
-	
-	
+	      wmesh_qsort_increasing_predicate<wmesh_int_t>);
+
+	//
+	// Copy back.
+	//
 	for (wmesh_int_t s = 0;s<select_n;++s)
 	  {
 	    csr_ind_[0][csr_ptr_[0][idof] + s] = select[s];
@@ -167,13 +139,6 @@ extern "C"
     free(blank);
     free(n2c_ptr);
     free(n2c_v);
-#if 0
-    wmesh_status_t bms_n2c_cindex	(wmesh_int_t 		c_,
-					 wmesh_int_p 		cindex_);
-  
-    wmesh_status_t bms_n2c_ctype	(wmesh_int_t 		c_,
-					 wmesh_int_p 		ctype_);
-#endif
     return WMESH_STATUS_SUCCESS;
   }
   

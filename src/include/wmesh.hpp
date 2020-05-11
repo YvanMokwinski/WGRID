@@ -3,22 +3,16 @@
 #include "wmesh.h"
 #include "wmesh-types.hpp"
 
-#define WMESH_ELEMENT_NODE 		0
-#define WMESH_ELEMENT_EDGE 		1
-#define WMESH_ELEMENT_TRIANGLE 		2
-#define WMESH_ELEMENT_QUADRILATERAL 	3
-#define WMESH_ELEMENT_TETRAHEDRON 	4
-#define WMESH_ELEMENT_PYRAMID 		5
-#define WMESH_ELEMENT_WEDGE 		6
-#define WMESH_ELEMENT_HEXAHEDRON	7
-#define WMESH_ELEMENT_ALL		8
-
 #include <stdio.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+  wmesh_status_t wmesh_init_c2c(const wmesh_int_t 		topodim_,
+				const wmesh_int_sparsemat_t*	c2n_,
+				wmesh_int_sparsemat_t*		c2c_);
+
   wmesh_status_t wmesh_init_bf2n(wmesh_int_t 			num_triangles_,
 				 wmesh_int_t 			num_quadrilaterals_,
 				 wmesh_int_sparsemat_t*		bf2n_);
@@ -123,6 +117,8 @@ extern "C"
     //!
     //! @brief Coordinates.
     //!
+    wmesh_int_t			m_coo_m;
+    wmesh_int_t			m_coo_n;
     double * 			m_coo;    
     wmesh_int_t			m_coo_ld;
     wmesh_int_mat_t		m_n_c;
@@ -155,8 +151,12 @@ extern "C"
   };
 
 
-  
+  inline double * wmesh_get_coo(wmesh_t*self_)
+  {
+    return self_->m_coo;
+  }
 
+  
 static  inline void get_c2e(wmesh_int_t 	m_,
 			    const_wmesh_int_p 	c2e_,
 			    wmesh_int_t 	c2e_ld_,
@@ -169,37 +169,37 @@ static  inline void get_c2e(wmesh_int_t 	m_,
     }
 };
 
+  static inline void get_c2n(wmesh_int_t 	numCellNodes_,
+			     const_wmesh_int_p 	c2n_,
+			     wmesh_int_t 	c2n_ld_,
+			     wmesh_int_t 	idx_,
+			     wmesh_int_p 	cnc_)
+  {
+    for (wmesh_int_t localNodeIndex=0;localNodeIndex<numCellNodes_;++localNodeIndex)
+      {
+	cnc_[localNodeIndex] = c2n_[idx_*c2n_ld_+localNodeIndex];      
+      }
+  }
+
+
 static  inline void get_e2n(const_wmesh_int_p	c2n_,
-			    const wmesh_int_t 	localEdgeIndex_,
+			    const wmesh_int_t 	e_idx_,
 			    wmesh_int_p		e2n_,
 			    wmesh_int_t 	s_e2n_m_,
 			    wmesh_int_t 	s_e2n_n_,
 			    const_wmesh_int_p 	s_e2n_v_,
 			    wmesh_int_t 	s_e2n_ld_)		    
 {
-  e2n_[0] = c2n_[s_e2n_v_[s_e2n_ld_ * localEdgeIndex_+ 0]];
-  e2n_[1] = c2n_[s_e2n_v_[s_e2n_ld_ * localEdgeIndex_+ 1]];
-};
+  e2n_[0] = c2n_[s_e2n_v_[s_e2n_ld_ * e_idx_+ 0]];
+  e2n_[1] = c2n_[s_e2n_v_[s_e2n_ld_ * e_idx_+ 1]];
+}
 
-  static inline void get_c2n(wmesh_int_t 		numCellNodes_,
-			     const_wmesh_int_p 	cellsToNodes_,
-			     wmesh_int_t 			cellsToNodesLd_,
-			     wmesh_int_t 			cellIndex_,
-			     wmesh_int_p 	cnc_)
-  {
-    for (wmesh_int_t localNodeIndex=0;localNodeIndex<numCellNodes_;++localNodeIndex)
-      {
-	cnc_[localNodeIndex] = cellsToNodes_[cellIndex_*cellsToNodesLd_+localNodeIndex];      
-      }
-  }
-
-
-static  inline void get_q2n(const_wmesh_int_p	c2n_,
-			    const wmesh_int_t 	t_lidx_,
-			    wmesh_int_p		q2n_,
+static  inline void get_q2n(const_wmesh_int_p		c2n_,
+			    const wmesh_int_t 		t_lidx_,
+			    wmesh_int_p			q2n_,
 			    wmesh_int_t 		s_q2n_m_,
 			    wmesh_int_t 		s_q2n_n_,
-			    const_wmesh_int_p 	s_q2n_v_,
+			    const_wmesh_int_p 		s_q2n_v_,
 			    wmesh_int_t 		s_q2n_ld_)		    
 {
   q2n_[0] = c2n_[s_q2n_v_[s_q2n_ld_ * t_lidx_ + 0]];
@@ -208,7 +208,7 @@ static  inline void get_q2n(const_wmesh_int_p	c2n_,
   q2n_[3] = c2n_[s_q2n_v_[s_q2n_ld_ * t_lidx_ + 3]];
 };
 
-  static  inline void get_t2n(const_wmesh_int_p	c2n_,
+  static  inline void get_t2n(const_wmesh_int_p		c2n_,
 			      const wmesh_int_t 	t_lidx_,
 			      wmesh_int_p		t2n_,
 			      wmesh_int_t 		s_t2n_m_,
@@ -219,6 +219,20 @@ static  inline void get_q2n(const_wmesh_int_p	c2n_,
     t2n_[0] = c2n_[s_t2n_v_[s_t2n_ld_ * t_lidx_ + 0]];
     t2n_[1] = c2n_[s_t2n_v_[s_t2n_ld_ * t_lidx_ + 1]];
     t2n_[2] = c2n_[s_t2n_v_[s_t2n_ld_ * t_lidx_ + 2]];
+  };
+  
+  static inline void get_x2n(const_wmesh_int_p	c2n_,
+			     const wmesh_int_t 	x_lidx_,
+			     wmesh_int_p	x2n_,
+			     wmesh_int_t 	s_x2n_m_,
+			     wmesh_int_t 	s_x2n_n_,
+			     const_wmesh_int_p 	s_x2n_v_,
+			     wmesh_int_t 	s_x2n_ld_)		    
+  {    
+    for (wmesh_int_t i=0;i<s_x2n_m_;++i)
+      {
+	x2n_[i] = c2n_[s_x2n_v_[s_x2n_ld_ * x_lidx_ + i]];
+      }
   };
 
   struct wmeshspace_t

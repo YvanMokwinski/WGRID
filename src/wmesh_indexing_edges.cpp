@@ -1,3 +1,81 @@
+#if 1
+#include <limits>
+#include <iostream>
+#include <array>
+#include "wmesh.hpp"
+
+#include "GenericEncoding.hpp"
+#include "bms_c2x_template.hpp"
+
+extern "C"
+{
+  wmesh_status_t  wmesh_indexing_edges_buffer_size(wmesh_int_t		c2n_size_,
+						   const_wmesh_int_p	c2n_n_,
+						   wmesh_int_p 		work_n_)
+  {
+    return bms_c2x_buffer_size<WMESH_ELEMENT_EDGE>(c2n_size_,
+						   c2n_n_,
+						   work_n_);
+  };
+  
+  wmesh_status_t  wmesh_indexing_edges(wmesh_int_t 		c2n_size_,
+				       
+				       const_wmesh_int_p 	c2n_ptr_,
+				       const_wmesh_int_p 	c2n_m_,
+				       const_wmesh_int_p 	c2n_n_,
+				       const_wmesh_int_p 	c2n_v_,
+				       const_wmesh_int_p 	c2n_ld_,
+				       
+				       wmesh_int_t 		c2e_size_,
+				       const_wmesh_int_p 	c2e_ptr_,
+				       const_wmesh_int_p 	c2e_m_,
+				       const_wmesh_int_p 	c2e_n_,
+				       wmesh_int_p 		c2e_v_,
+				       const_wmesh_int_p 	c2e_ld_,
+				       
+				       wmesh_int_t 		s_e2n_size_,
+				       const_wmesh_int_p 	s_e2n_ptr_,
+				       const_wmesh_int_p	s_e2n_m_,
+				       const_wmesh_int_p	s_e2n_n_,
+				       const_wmesh_int_p 	s_e2n_v_,
+				       const_wmesh_int_p	s_e2n_ld_,
+				       
+				       wmesh_int_p		edge_idx_,
+				       wmesh_int_t		work_n_,
+				       wmesh_int_p		work_)
+  {
+    
+    bool match_mode = false;
+    return bms_c2x<WMESH_ELEMENT_EDGE>(c2n_size_,
+				       
+				       c2n_ptr_,
+				       c2n_m_,
+				       c2n_n_,
+				       c2n_v_,
+				       c2n_ld_,
+				       
+				       c2e_size_,
+				       c2e_ptr_,
+				       c2e_m_,
+				       c2e_n_,
+				       c2e_v_,
+				       c2e_ld_,
+				       
+				       s_e2n_size_,
+				       s_e2n_ptr_,
+				       s_e2n_m_,
+				       s_e2n_n_,
+				       s_e2n_v_,
+				       s_e2n_ld_,
+
+				       match_mode,
+				       edge_idx_,
+				       work_n_,
+				       work_);
+  }
+};
+
+#else
 #include <limits>
 #include <iostream>
 #include <array>
@@ -157,23 +235,23 @@ wmesh_status_t wmesh_indexing_edges_calculate(wmesh_int_t 				cell_type_,
 					      wmesh_int_p				work_)
 {
 
-  WMESH_POINTER_CHECK(c2n_m_);
-  WMESH_POINTER_CHECK(c2n_n_);
-  WMESH_POINTER_CHECK(c2n_v_);
-  WMESH_POINTER_CHECK(c2n_ld_);
+  WMESH_CHECK_POINTER(c2n_m_);
+  WMESH_CHECK_POINTER(c2n_n_);
+  WMESH_CHECK_POINTER(c2n_v_);
+  WMESH_CHECK_POINTER(c2n_ld_);
   
-  WMESH_POINTER_CHECK(c2e_m_);
-  WMESH_POINTER_CHECK(c2e_n_);
-  WMESH_POINTER_CHECK(c2e_v_);
-  WMESH_POINTER_CHECK(c2e_ld_);
+  WMESH_CHECK_POINTER(c2e_m_);
+  WMESH_CHECK_POINTER(c2e_n_);
+  WMESH_CHECK_POINTER(c2e_v_);
+  WMESH_CHECK_POINTER(c2e_ld_);
   
-  WMESH_POINTER_CHECK(s_e2n_m_);
-  WMESH_POINTER_CHECK(s_e2n_n_);
-  WMESH_POINTER_CHECK(s_e2n_v_);
-  WMESH_POINTER_CHECK(s_e2n_ld_);
+  WMESH_CHECK_POINTER(s_e2n_m_);
+  WMESH_CHECK_POINTER(s_e2n_n_);
+  WMESH_CHECK_POINTER(s_e2n_v_);
+  WMESH_CHECK_POINTER(s_e2n_ld_);
   
-  WMESH_POINTER_CHECK(edge_idx_);
-  WMESH_POINTER_CHECK(work_);
+  WMESH_CHECK_POINTER(edge_idx_);
+  WMESH_CHECK_POINTER(work_);
   
   wmesh_int_t
     e2n[2],
@@ -292,8 +370,8 @@ extern "C"
 						   const_wmesh_int_p	c2n_n_,
 						   wmesh_int_p 		work_n_)
   {
-    WMESH_POINTER_CHECK(c2n_n_);
-    WMESH_POINTER_CHECK(work_n_);
+    WMESH_CHECK_POINTER(c2n_n_);
+    WMESH_CHECK_POINTER(work_n_);
     wmesh_int_t mx_num_cells = 0;
     for (wmesh_int_t i=0;i<c2n_size_;++i)
       {
@@ -334,22 +412,22 @@ extern "C"
 				       wmesh_int_p		work_)
   {
 
-    WMESH_POINTER_CHECK(c2n_m_);
-    WMESH_POINTER_CHECK(c2n_n_);
-    WMESH_POINTER_CHECK(c2n_v_);
-    WMESH_POINTER_CHECK(c2n_ld_);
+    WMESH_CHECK_POINTER(c2n_m_);
+    WMESH_CHECK_POINTER(c2n_n_);
+    WMESH_CHECK_POINTER(c2n_v_);
+    WMESH_CHECK_POINTER(c2n_ld_);
   
-    WMESH_POINTER_CHECK(c2e_m_);
-    WMESH_POINTER_CHECK(c2e_n_);
-    WMESH_POINTER_CHECK(c2e_v_);
-    WMESH_POINTER_CHECK(c2e_ld_);
+    WMESH_CHECK_POINTER(c2e_m_);
+    WMESH_CHECK_POINTER(c2e_n_);
+    WMESH_CHECK_POINTER(c2e_v_);
+    WMESH_CHECK_POINTER(c2e_ld_);
 
-    WMESH_POINTER_CHECK(s_e2n_m_);
-    WMESH_POINTER_CHECK(s_e2n_n_);
-    WMESH_POINTER_CHECK(s_e2n_v_);
-    WMESH_POINTER_CHECK(s_e2n_ld_);
-    WMESH_POINTER_CHECK(edge_idx_);
-    WMESH_POINTER_CHECK(work_);
+    WMESH_CHECK_POINTER(s_e2n_m_);
+    WMESH_CHECK_POINTER(s_e2n_n_);
+    WMESH_CHECK_POINTER(s_e2n_v_);
+    WMESH_CHECK_POINTER(s_e2n_ld_);
+    WMESH_CHECK_POINTER(edge_idx_);
+    WMESH_CHECK_POINTER(work_);
 
     wmesh_status_t status;
     wmesh_int_t required_work_n;
@@ -493,3 +571,4 @@ extern "C"
     return WMESH_STATUS_SUCCESS;
   }
 };
+#endif

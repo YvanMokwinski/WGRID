@@ -3,17 +3,38 @@
 #include <stdlib.h>
 #include <string.h>
 #include "wmesh-status.h"
+
+wmesh_status_t wmesh_int_sparsemat_init(wmesh_int_t 		size_,
+					wmesh_int_p		ptr_,
+					const_wmesh_int_p	m_,
+					const_wmesh_int_p	n_,
+					wmesh_int_p		ld_)
+{
+  WMESH_CHECK_POINTER(ptr_);
+  WMESH_CHECK_POINTER(m_);
+  WMESH_CHECK_POINTER(n_);
+  WMESH_CHECK_POINTER(ld_);
+  for (wmesh_int_t i=0;i<size_;++i)
+    {
+      ld_[i] = m_[i];
+    }  
+  ptr_[0] = 0;
+  for (wmesh_int_t i=0;i<size_;++i)
+    {
+      ptr_[i+1] = ptr_[i] + n_[i] * ld_[i];
+    }    
+  return WMESH_STATUS_SUCCESS;
+}
+
 extern "C"
 {
   
 
   wmesh_status_t wmesh_int_sparsemat_fprintf(const wmesh_int_sparsemat_t* 		self_,
-					  FILE * out_)
+					     FILE * out_)
   {
-    if (!self_ || !out_)
-      {
-	return WMESH_STATUS_INVALID_POINTER;
-      }
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(out_);
     
     for (wmesh_int_t k=0;k<self_->m_size;++k)
       {
@@ -37,6 +58,9 @@ extern "C"
 					 wmesh_int_t idx_,
 					 wmesh_int_mat_t* wint_mat_)
   {
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(wint_mat_);
+
     wmesh_int_mat_def(wint_mat_,
 		      self_->m_m[idx_],
 		      self_->m_n[idx_],
@@ -44,10 +68,12 @@ extern "C"
 		 self_->m_ld[idx_]);
     return WMESH_STATUS_SUCCESS;
   }
+
   
   wmesh_status_t wmesh_int_sparsemat_new(wmesh_int_sparsemat_t*self_,
 					 WMESH_INT_SPARSEMAT_PARAMS)
   {
+    WMESH_CHECK_POINTER(self_);
     self_->m_size = size_;
     self_->m_m = (wmesh_int_t*)malloc(sizeof(wmesh_int_t)*self_->m_size);
     self_->m_n = (wmesh_int_t*)malloc(sizeof(wmesh_int_t)*self_->m_size);

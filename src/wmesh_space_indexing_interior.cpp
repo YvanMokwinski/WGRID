@@ -35,12 +35,12 @@ extern "C"
 						wmesh_int_p 		dof_idx_origin_)
   {
 
-    WMESH_POINTER_CHECK(c2d_i_ptr_);    
-    WMESH_POINTER_CHECK(c2d_i_m_);    
-    WMESH_POINTER_CHECK(c2d_i_n_);
-    WMESH_POINTER_CHECK(c2d_i_v_);
-    WMESH_POINTER_CHECK(c2d_i_ld_);
-    WMESH_POINTER_CHECK(dof_idx_origin_);
+    WMESH_CHECK_POINTER(c2d_i_ptr_);    
+    WMESH_CHECK_POINTER(c2d_i_m_);    
+    WMESH_CHECK_POINTER(c2d_i_n_);
+    WMESH_CHECK_POINTER(c2d_i_v_);
+    WMESH_CHECK_POINTER(c2d_i_ld_);
+    WMESH_CHECK_POINTER(dof_idx_origin_);
 
     wmesh_int_t dof_idx_origin = dof_idx_origin_[0];
     for (wmesh_int_t i=0;i<c2d_i_size_;++i)

@@ -12,9 +12,9 @@ LIBS=-L$(DISTRIB)/lib -lwmesh-$(CC)$(DEBUG) -lMeshb.7 $(BLASLIB)
 install: $(CPP_OBJ) $(CPP_EXE)
 
 %.cpp.exe:%.cpp.o libwmesh.a
-	$(CPP) $(CPPFLAGS) $< -o $@  $(LIBS)
+	$(CPP) $(CPPFLAGS) $(FLAGS) $< -o $@  $(LIBS)
 	ln -fs $(DISTRIB)/$(PLATFORM)-$(CC)$(DEBUG)/$@ $(DISTRIB)/bin/$*$(DEBUG)
 
 %.cpp.o:%.cpp
-	$(CPP) $(CPPFLAGS) -c  $< -o $@ $(INCLUDES)
+	$(CPP) $(CPPFLAGS) $(FLAGS) -c  $< -o $@ $(INCLUDES)
 

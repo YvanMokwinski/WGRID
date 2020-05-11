@@ -426,8 +426,7 @@ int main(int argc, char ** argv)
   //
   // Analyze the mesh.
   //
-  status = wmesh_analysis(mesh,
-			  degree);
+  status = wmesh_analysis(mesh);
   
   WMESH_STATUS_CHECK(status);
   

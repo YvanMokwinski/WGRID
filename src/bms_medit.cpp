@@ -45,8 +45,8 @@ static wmesh_status_t bms_read_medit_geometry(int64_t 				inm_,
 					      wmesh_int_p  			nflags_,
 					      wmesh_int_t 			nflags_ld_)
 {
-  WMESH_POINTER_CHECK(coo_);
-  WMESH_POINTER_CHECK(nflags_);
+  WMESH_CHECK_POINTER(coo_);
+  WMESH_CHECK_POINTER(nflags_);
 
   int gmf_status;
 
@@ -109,16 +109,19 @@ extern "C"
 				 {GmfTriangles,GmfQuadrilaterals,0,0},
 				 {0,0,0,0},
 				 {GmfTetrahedra,GmfPyramids,GmfPrisms,GmfHexahedra}};
-
-  wmesh_status_t bms_write_medit_open(wmesh_str_t 	filename_,
-				      int64_t*		inm_)
+  wmesh_status_t
+  bms_write_medit_open
+  (int64_t*		inm_,
+   wmesh_str_t 		filename_,
+   wmesh_int_t          precision_,
+   wmesh_int_t          dimension_)
   {
     inm_[0] = 0;
     int64_t inm;      
     inm = GmfOpenMesh(filename_,
 		      GmfWrite,
-		      1,
-		      3);    
+		      precision_,
+		      dimension_);    
     if (!inm)
       {
 	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
@@ -138,14 +141,14 @@ extern "C"
 				     wmesh_int_p num_hexahedra_)
   {
     WMESH_CHECK((inm_!=0));
-    WMESH_POINTER_CHECK( num_nodes_);
-    WMESH_POINTER_CHECK( num_edges_);
-    WMESH_POINTER_CHECK( num_triangles_);
-    WMESH_POINTER_CHECK( num_quadrilaterals_);
-    WMESH_POINTER_CHECK( num_tetrahedra_);
-    WMESH_POINTER_CHECK( num_pyramids_);
-    WMESH_POINTER_CHECK( num_wedges_);
-    WMESH_POINTER_CHECK( num_hexahedra_);
+    WMESH_CHECK_POINTER( num_nodes_);
+    WMESH_CHECK_POINTER( num_edges_);
+    WMESH_CHECK_POINTER( num_triangles_);
+    WMESH_CHECK_POINTER( num_quadrilaterals_);
+    WMESH_CHECK_POINTER( num_tetrahedra_);
+    WMESH_CHECK_POINTER( num_pyramids_);
+    WMESH_CHECK_POINTER( num_wedges_);
+    WMESH_CHECK_POINTER( num_hexahedra_);
 
     num_nodes_[0] = GmfStatKwd(inm_,GmfVertices);
     num_edges_[0] = GmfStatKwd(inm_,GmfEdges);
@@ -201,8 +204,8 @@ extern "C"
 					  const_wmesh_int_p 			c_c_v,
 					  const_wmesh_int_p 			c_c_ld)
   {
-    WMESH_POINTER_CHECK(c2n_v);
-    WMESH_POINTER_CHECK(c_c_v);
+    WMESH_CHECK_POINTER(c2n_v);
+    WMESH_CHECK_POINTER(c_c_v);
     
     for (wmesh_int_t itype=0;itype<c2n_size;++itype)
       {
@@ -251,8 +254,8 @@ extern "C"
     WMESH_CHECK( (coo_m_ >= 2) );
     WMESH_CHECK( (coo_n_ >= 2) );
     WMESH_CHECK( (coo_ld_ >= coo_m_) );
-    WMESH_POINTER_CHECK(coo_);
-    WMESH_POINTER_CHECK(nflags_);
+    WMESH_CHECK_POINTER(coo_);
+    WMESH_CHECK_POINTER(nflags_);
     WMESH_CHECK( (nflags_ld_ >= 1) );
     
     const double*__restrict__ coo_first	= coo_;
@@ -303,38 +306,38 @@ extern "C"
   }
   
 
-   wmesh_status_t bms_read_medit_topology(int64_t					inm_,
+   wmesh_status_t bms_read_medit_topology(int64_t			inm_,
 						
-						const wmesh_int_t 			c2n_size,
-						const_wmesh_int_p 			c2n_ptr,
-						const_wmesh_int_p 			c2n_m,
-						const_wmesh_int_p 			c2n_n,
-						wmesh_int_p 				c2n_v,
-						const_wmesh_int_p 			c2n_ld,
+					  wmesh_int_t 			c2n_size,
+					  const_wmesh_int_p 		c2n_ptr,
+					  const_wmesh_int_p 		c2n_m,
+					  const_wmesh_int_p 		c2n_n,
+					  wmesh_int_p 			c2n_v,
+					  const_wmesh_int_p 		c2n_ld,
 						
-						const wmesh_int_t 			c_c_size,
-						const_wmesh_int_p 			c_c_ptr,
-						const_wmesh_int_p 			c_c_m,
-						const_wmesh_int_p 			c_c_n,
-						wmesh_int_p 				c_c_v,
-						const_wmesh_int_p 			c_c_ld)
+					  wmesh_int_t 			c_c_size,
+					  const_wmesh_int_p 		c_c_ptr,
+					  const_wmesh_int_p 		c_c_m,
+					  const_wmesh_int_p 		c_c_n,
+					  wmesh_int_p 			c_c_v,
+					  const_wmesh_int_p 		c_c_ld)
   
   {
     WMESH_CHECK( (inm_!=0) );
 
     WMESH_CHECK( (c2n_size > 0) );
-    WMESH_POINTER_CHECK( c2n_ptr );
-    WMESH_POINTER_CHECK( c2n_m );
-    WMESH_POINTER_CHECK( c2n_n );
-    WMESH_POINTER_CHECK( c2n_v );
-    WMESH_POINTER_CHECK( c2n_ld );
+    WMESH_CHECK_POINTER( c2n_ptr );
+    WMESH_CHECK_POINTER( c2n_m );
+    WMESH_CHECK_POINTER( c2n_n );
+    WMESH_CHECK_POINTER( c2n_v );
+    WMESH_CHECK_POINTER( c2n_ld );
 
     WMESH_CHECK( (c2n_size == c_c_size) );
-    WMESH_POINTER_CHECK( c_c_ptr );
-    WMESH_POINTER_CHECK( c_c_m );
-    WMESH_POINTER_CHECK( c_c_n );
-    WMESH_POINTER_CHECK( c_c_v );
-    WMESH_POINTER_CHECK( c_c_ld );
+    WMESH_CHECK_POINTER( c_c_ptr );
+    WMESH_CHECK_POINTER( c_c_m );
+    WMESH_CHECK_POINTER( c_c_n );
+    WMESH_CHECK_POINTER( c_c_v );
+    WMESH_CHECK_POINTER( c_c_ld );
     
     int gmf_status;    
     for (wmesh_int_t itype=0;itype<c2n_size;++itype)
@@ -348,6 +351,8 @@ extern "C"
 	    wmesh_int_p c_c_v_first 	= c_c_v + c_c_ptr[itype];
 	    wmesh_int_p c2n_v_last 	= c2n_v_first + (num_cells-1) * c2n_ld[itype];
 	    wmesh_int_p c_c_v_last 	= c_c_v_first + (num_cells-1) * c_c_ld[itype];
+
+	    GmfGotoKwd(inm_,gmf_type);
 	    switch(c2n_m[itype])
 	      {
 	      case 2:
@@ -474,8 +479,8 @@ extern "C"
     WMESH_CHECK( (coo_m_ >= 2) );
     WMESH_CHECK( (coo_n_ >= 2) );
     WMESH_CHECK( (coo_ld_ >= coo_m_) );
-    WMESH_POINTER_CHECK(coo_);
-    WMESH_POINTER_CHECK(nflags_);
+    WMESH_CHECK_POINTER(coo_);
+    WMESH_CHECK_POINTER(nflags_);
     WMESH_CHECK( (nflags_ld_ >= 1) );
     
     int gmf_status;
@@ -485,7 +490,7 @@ extern "C"
     const_wmesh_int_p nflags_first 	= nflags_;
     const_wmesh_int_p nflags_last 	= &nflags_[ (coo_n_-1) * nflags_ld_ ];
     
-    GmfSetKwd(inm_,GmfVertices,coo_n_);
+    GmfGotoKwd(inm_,GmfVertices);
     switch (coo_m_)
       {
       case 2:

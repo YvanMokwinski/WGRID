@@ -3,7 +3,7 @@
 #include <string.h>
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
-#include "wmesh_medit.hpp"
+#include "wmesh_utils.hpp"
 #include "bms.h"
 
 #include <chrono>
@@ -49,8 +49,47 @@ extern "C"
 				   bf2n_ld);
   }
 
+
   
-   wmesh_status_t wmesh_init_c2f(const wmesh_int_sparsemat_t*	c2n_,
+  wmesh_status_t wmesh_init_c2c(const wmesh_int_t 		topodim_,
+				const wmesh_int_sparsemat_t*	c2n_,
+				wmesh_int_sparsemat_t*		c2c_)
+  {
+    wmesh_status_t status;
+    wmesh_int_t elements[4];
+    wmesh_int_t c2c_size;
+    wmesh_int_t c2c_m[4];
+    wmesh_int_t c2c_ld[4];
+    wmesh_int_t c2c_ptr[4+1];
+    wmesh_int_t c2c_n[4];
+    
+    status = wmesh_topodim2elements(topodim_,
+				    &c2c_size,
+				    elements);
+
+    WMESH_STATUS_CHECK(status);
+
+    status = wmesh_elements_num_hyperfaces(topodim_,
+					   c2c_m);
+    WMESH_STATUS_CHECK(status);
+
+    status = wmesh_int_sparsemat_init(c2c_size,
+				      c2c_ptr,
+				      c2c_m,
+				      c2n_->m_n,
+				      c2c_ld);
+    WMESH_STATUS_CHECK(status);
+    wmesh_int_p c2c_v = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*c2c_ptr[c2c_size]);    
+    return wmesh_int_sparsemat_new(c2c_,
+				   c2c_size,
+				   c2c_ptr,
+				   c2c_m,
+				   c2n_->m_n,
+				   c2c_v,
+				   c2c_ld);
+  }
+  
+  wmesh_status_t wmesh_init_c2f(const wmesh_int_sparsemat_t*	c2n_,
 				       wmesh_int_sparsemat_t*		c2f_)
   {
     wmesh_int_t c2f_m[4] {4,5,5,6};

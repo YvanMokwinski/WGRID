@@ -11,8 +11,10 @@
 #include "wmesh_utils.hpp"
 using namespace std::chrono;
 
+
 extern "C"
 {
+ 
 
   wmesh_status_t wmesh_kill(wmesh_t* self_)
   {
@@ -28,7 +30,6 @@ extern "C"
   //!
   wmesh_status_t wmesh_factory	(wmesh_t** 		self__,
 				 wmesh_int_t 		topology_dimension_,    
-				 wmesh_int_t 		num_nodes_,
 
 				 wmesh_int_t 		c2n_size_,
 				 const_wmesh_int_p 	c2n_ptr_,
@@ -71,7 +72,11 @@ extern "C"
     wmesh_t * self_ = self__[0];
 
     self_->m_topology_dimension = topology_dimension_;
-    self_->m_num_nodes = num_nodes_;
+    self_->m_num_nodes 	= coo_n_;
+    self_->m_coo_n 	= coo_n_;
+    self_->m_coo_m 	= coo_m_;
+    self_->m_coo 	= coo_v_;
+    self_->m_coo_ld 	= coo_ld_;
     
     wmesh_status_t status;
     
@@ -94,12 +99,10 @@ extern "C"
 				     c_c_ld_);
     WMESH_STATUS_CHECK(status);
     
-    self_->m_coo 	= coo_v_;
-    self_->m_coo_ld 	= coo_ld_;
     
     wmesh_int_mat_def(&self_->m_n_c,
 		      1,
-		      num_nodes_,
+		      coo_n_,
 		      n_c_v_,
 		      n_c_ld_);
     
@@ -178,13 +181,14 @@ extern "C"
   //!
   wmesh_status_t wmesh_def	(wmesh_t** 		self__,
 				 wmesh_int_t 		topology_dimension_, 
-				 wmesh_int_t 		num_nodes_,
 				 wmesh_int_t 		ntypes_,
 				 const_wmesh_int_p 	c2n_ptr_,
 				 const_wmesh_int_p 	c2n_m_,
 				 const_wmesh_int_p 	c2n_n_,
 				 wmesh_int_p 		c2n_v_,
 				 const_wmesh_int_p	c2n_ld_,
+				 wmesh_int_t		coo_m_,
+				 wmesh_int_t		coo_n_,
 				 double * 		coo_,
 				 wmesh_int_t 		coo_ld_)
   {
@@ -192,8 +196,13 @@ extern "C"
     self__[0] = (wmesh_t*)calloc(1,sizeof(wmesh_t));
     wmesh_t * self_ = self__[0];
     self_->m_topology_dimension = topology_dimension_;
-    self_->m_num_nodes	= num_nodes_;
+    self_->m_num_nodes	= coo_n_;
+    self_->m_coo_n = coo_n_;
+    self_->m_coo_m = coo_m_;
+    self_->m_coo_ld 	= coo_ld_;    
+    self_->m_coo 	= coo_;
 
+    
     status = wmesh_int_sparsemat_new(&self_->m_c2n,
 				     ntypes_,
 				     c2n_ptr_,
@@ -205,12 +214,10 @@ extern "C"
     wmesh_int_t num_cells = 0;
     for (wmesh_int_t i=0;i<ntypes_;++i) num_cells += c2n_n_[i];
     
-    self_->m_coo 	= coo_;
-    
     status = wmesh_int_mat_def(&self_->m_n_c,
 			       1,
-			       num_nodes_,
-			       (wmesh_int_p)calloc(num_nodes_,sizeof(wmesh_int_t)),
+			       self_->m_num_nodes,
+			       (wmesh_int_p)calloc(self_->m_num_nodes,sizeof(wmesh_int_t)),
 			       1);
     WMESH_STATUS_CHECK(status);
     
@@ -569,12 +576,12 @@ extern "C"
   wmesh_status_t wmesh_write(const wmesh_t* 		self_,
 			      const char * 		filename_)
   {
-    WMESH_POINTER_CHECK(self_);
-    WMESH_POINTER_CHECK(filename_);
+    WMESH_CHECK_POINTER(self_);
+    WMESH_CHECK_POINTER(filename_);
     const char * extension = file_extension(filename_);
     if (!strcmp(extension,".mesh")||!strcmp(extension,".meshb"))
       {
-	return wmesh_write_medit(self_,filename_);
+	return wmesh_write_medit(self_,0 == strcmp(extension,".meshb"),filename_);
       }
     else if (!strcmp(extension,".vtk"))
       {
@@ -585,18 +592,20 @@ extern "C"
 	std::cerr << "// wmesh_write, no extension found in filename '" << filename_<< "'" << std::endl;
 	return WMESH_STATUS_INVALID_ARGUMENT;
       }
+    return WMESH_STATUS_INVALID_ARGUMENT;
   };
 
   wmesh_status_t wmesh_read(wmesh_t ** 		self__,
 			    const char * 	filename_)
   {
-    WMESH_POINTER_CHECK(self__);
-    WMESH_POINTER_CHECK(filename_);
+    WMESH_CHECK_POINTER(self__);
+    WMESH_CHECK_POINTER(filename_);
     const char * extension = file_extension(filename_);
     wmesh_int_t status;
     if (!strcmp(extension,".mesh")||!strcmp(extension,".meshb"))
       {
 	return wmesh_read_medit(self__,
+				0 == strcmp(extension,".meshb"),
 				filename_);
       }
     else if (!strcmp(extension,".vtk"))

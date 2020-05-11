@@ -1,3 +1,82 @@
+#if 1
+#include <limits>
+#include <iostream>
+#include <array>
+#include "wmesh.hpp"
+
+#include "GenericEncoding.hpp"
+#include "bms_c2x_template.hpp"
+
+extern "C"
+{
+  wmesh_status_t  wmesh_indexing_quadrilaterals_buffer_size(wmesh_int_t		c2n_size_,
+						   const_wmesh_int_p	c2n_n_,
+						   wmesh_int_p 		work_n_)
+  {
+    return bms_c2x_buffer_size<WMESH_ELEMENT_QUADRILATERAL>(c2n_size_,
+						   c2n_n_,
+						   work_n_);
+  };
+  
+  wmesh_status_t  wmesh_indexing_quadrilaterals(wmesh_int_t 		c2n_size_,
+						
+						const_wmesh_int_p 	c2n_ptr_,
+						const_wmesh_int_p 	c2n_m_,
+						const_wmesh_int_p 	c2n_n_,
+						const_wmesh_int_p 	c2n_v_,
+						const_wmesh_int_p 	c2n_ld_,
+						
+						wmesh_int_t 		c2q_size_,
+						const_wmesh_int_p 	c2q_ptr_,
+						const_wmesh_int_p 	c2q_m_,
+						const_wmesh_int_p 	c2q_n_,
+						wmesh_int_p 		c2q_v_,
+						const_wmesh_int_p 	c2q_ld_,
+						
+				       wmesh_int_t 		s_q2n_size_,
+				       const_wmesh_int_p 	s_q2n_ptr_,
+				       const_wmesh_int_p	s_q2n_m_,
+				       const_wmesh_int_p	s_q2n_n_,
+				       const_wmesh_int_p 	s_q2n_v_,
+				       const_wmesh_int_p	s_q2n_ld_,
+				       
+				       wmesh_int_p		idx_,
+				       wmesh_int_t		work_n_,
+				       wmesh_int_p		work_)
+  {
+    
+    bool match_mode = true;
+    return bms_c2x<WMESH_ELEMENT_QUADRILATERAL>(c2n_size_,
+						
+						c2n_ptr_,
+						c2n_m_,
+						c2n_n_,
+						c2n_v_,
+						c2n_ld_,
+						
+						c2q_size_,
+						c2q_ptr_,
+						c2q_m_,
+						c2q_n_,
+						c2q_v_,
+						c2q_ld_,
+						
+						s_q2n_size_,
+						s_q2n_ptr_,
+						s_q2n_m_,
+						s_q2n_n_,
+						s_q2n_v_,
+						s_q2n_ld_,
+						
+						match_mode,
+						idx_,
+						work_n_,
+						work_);
+  }
+};
+
+
+#else
 
 #include <limits>
 #include <iostream>
@@ -194,23 +273,23 @@ wmesh_status_t wmesh_indexing_quadrilaterals_calculate(wmesh_int_t 				cell_type
 							      wmesh_int_p				work_)
 {
 
-  WMESH_POINTER_CHECK(c2n_m_);
-  WMESH_POINTER_CHECK(c2n_n_);
-  WMESH_POINTER_CHECK(c2n_v_);
-  WMESH_POINTER_CHECK(c2n_ld_);
+  WMESH_CHECK_POINTER(c2n_m_);
+  WMESH_CHECK_POINTER(c2n_n_);
+  WMESH_CHECK_POINTER(c2n_v_);
+  WMESH_CHECK_POINTER(c2n_ld_);
   
-  WMESH_POINTER_CHECK(c2q_m_);
-  WMESH_POINTER_CHECK(c2q_n_);
-  WMESH_POINTER_CHECK(c2q_v_);
-  WMESH_POINTER_CHECK(c2q_ld_);
+  WMESH_CHECK_POINTER(c2q_m_);
+  WMESH_CHECK_POINTER(c2q_n_);
+  WMESH_CHECK_POINTER(c2q_v_);
+  WMESH_CHECK_POINTER(c2q_ld_);
   
-  WMESH_POINTER_CHECK(s_q2n_m_);
-  WMESH_POINTER_CHECK(s_q2n_n_);
-  WMESH_POINTER_CHECK(s_q2n_v_);
-  WMESH_POINTER_CHECK(s_q2n_ld_);
+  WMESH_CHECK_POINTER(s_q2n_m_);
+  WMESH_CHECK_POINTER(s_q2n_n_);
+  WMESH_CHECK_POINTER(s_q2n_v_);
+  WMESH_CHECK_POINTER(s_q2n_ld_);
   
-  WMESH_POINTER_CHECK(t_idx_);
-  WMESH_POINTER_CHECK(work_);
+  WMESH_CHECK_POINTER(t_idx_);
+  WMESH_CHECK_POINTER(work_);
   
   wmesh_int_t
     q2n[4],
@@ -343,8 +422,8 @@ extern "C"
 							    const_wmesh_int_p 	c2n_n_,						
 							    wmesh_int_t*__restrict__ size_)
   {
-    WMESH_POINTER_CHECK(c2n_n_);    
-    WMESH_POINTER_CHECK(size_);    
+    WMESH_CHECK_POINTER(c2n_n_);    
+    WMESH_CHECK_POINTER(size_);    
     wmesh_int_t mx_num_cells = 0;
     for (wmesh_int_t i=0;i<c2n_size_;++i)
       {
@@ -383,27 +462,27 @@ extern "C"
 						wmesh_int_t		work_n_,
 						wmesh_int_p		work_)
   {
-    WMESH_POINTER_CHECK(c2n_ptr_);
-    WMESH_POINTER_CHECK(c2n_m_);
-    WMESH_POINTER_CHECK(c2n_n_);
-    WMESH_POINTER_CHECK(c2n_v_);
-    WMESH_POINTER_CHECK(c2n_ld_);
+    WMESH_CHECK_POINTER(c2n_ptr_);
+    WMESH_CHECK_POINTER(c2n_m_);
+    WMESH_CHECK_POINTER(c2n_n_);
+    WMESH_CHECK_POINTER(c2n_v_);
+    WMESH_CHECK_POINTER(c2n_ld_);
   
-    WMESH_POINTER_CHECK(c2q_ptr_);
-    WMESH_POINTER_CHECK(c2q_m_);
-    WMESH_POINTER_CHECK(c2q_n_);
-    WMESH_POINTER_CHECK(c2q_v_);
-    WMESH_POINTER_CHECK(c2q_ld_);
+    WMESH_CHECK_POINTER(c2q_ptr_);
+    WMESH_CHECK_POINTER(c2q_m_);
+    WMESH_CHECK_POINTER(c2q_n_);
+    WMESH_CHECK_POINTER(c2q_v_);
+    WMESH_CHECK_POINTER(c2q_ld_);
     
-    WMESH_POINTER_CHECK(s_q2n_ptr_);
-    WMESH_POINTER_CHECK(s_q2n_m_);
-    WMESH_POINTER_CHECK(s_q2n_n_);
-    WMESH_POINTER_CHECK(s_q2n_v_);
-    WMESH_POINTER_CHECK(s_q2n_ld_);
+    WMESH_CHECK_POINTER(s_q2n_ptr_);
+    WMESH_CHECK_POINTER(s_q2n_m_);
+    WMESH_CHECK_POINTER(s_q2n_n_);
+    WMESH_CHECK_POINTER(s_q2n_v_);
+    WMESH_CHECK_POINTER(s_q2n_ld_);
 
-    WMESH_POINTER_CHECK(work_);
+    WMESH_CHECK_POINTER(work_);
 
-    WMESH_POINTER_CHECK(quadrilateral_idx_);
+    WMESH_CHECK_POINTER(quadrilateral_idx_);
     
     wmesh_int_t required_work_n;
     wmesh_status_t status;
@@ -497,3 +576,4 @@ extern "C"
     return WMESH_STATUS_SUCCESS;
   }
 };
+#endif

@@ -3,8 +3,8 @@
 
 int main(int argc, char ** argv)
 {  
-  wmesh_t* 		mesh = nullptr;
-  wmesh_t* 		refined_mesh = nullptr;
+  wmesh_t* 		mesh 		= nullptr;
+  wmesh_t* 		refined_mesh 	= nullptr;
   wmesh_status_t 	status;
 
   //
@@ -57,7 +57,7 @@ int main(int argc, char ** argv)
 		      ifilename);
   WMESH_STATUS_CHECK(status);
 
-
+#if 0
   //
   // Refine the mesh.
   //
@@ -73,7 +73,7 @@ int main(int argc, char ** argv)
   status = wmesh_write(refined_mesh,
 		       ofilename);
   WMESH_STATUS_CHECK(status);
-
+#endif
   
   return WMESH_STATUS_SUCCESS;
 }

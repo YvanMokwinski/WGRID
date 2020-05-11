@@ -108,6 +108,7 @@ int main(int 		argc,
   wmesh_int_t bface_ids[3] 	= {101,102,103};
   
   double dz[1]= {1.0/((double)nbRotations)};
+
   status =  wmesh_extrusion(&mesh,
 			    surface,
 			    nbRotations,
@@ -116,7 +117,6 @@ int main(int 		argc,
 			    bface_ids);
   
   WMESH_STATUS_CHECK(status);
-
 
   wmesh_t* curve = nullptr;
   if (has_curve)
@@ -131,7 +131,8 @@ int main(int 		argc,
   
   status = wmesh_extract_boundary(mesh);
   WMESH_STATUS_CHECK(status);
-  status = wmesh_write_medit(mesh,ofilename);
+  status = wmesh_write(mesh,ofilename);
   WMESH_STATUS_CHECK(status);
+
   return 0;
 }
