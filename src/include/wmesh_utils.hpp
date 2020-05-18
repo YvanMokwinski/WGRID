@@ -1,8 +1,19 @@
 #pragma once
+#include "wmesh.h"
 
-extern "C"  wmesh_status_t
-wmesh_elements_num_hyperfaces(wmesh_int_t 		topodim_,
-			      wmesh_int_p 		num_hyperfaces_);
+template <wmesh_int_t ELEMENT> inline wmesh_int_t wfe_ndofs_template(wmesh_int_t d_) {return -1;}
+
+template <> inline wmesh_int_t wfe_ndofs_template<WMESH_ELEMENT_EDGE>(wmesh_int_t d_) { return d_+1; }
+
+template <> inline wmesh_int_t wfe_ndofs_template<WMESH_ELEMENT_TRIANGLE>(wmesh_int_t d_) { return ((d_+1)*(d_+2)) / 2; }
+template <> inline wmesh_int_t wfe_ndofs_template<WMESH_ELEMENT_QUADRILATERAL>(wmesh_int_t d_) { return ((d_+1)*(d_+1)); }
+
+template <> inline wmesh_int_t wfe_ndofs_template<WMESH_ELEMENT_TETRAHEDRON>(wmesh_int_t d_) { return ((d_+1)*(d_+2)*(d_+3)) / 6; }
+template <> inline wmesh_int_t wfe_ndofs_template<WMESH_ELEMENT_PYRAMID>(wmesh_int_t d_) { return ((d_+2)*(d_+1)*(2*d_+3)) / 6; }
+template <> inline wmesh_int_t wfe_ndofs_template<WMESH_ELEMENT_WEDGE>(wmesh_int_t d_) { return ((d_+1)*(d_+1)*(d_+2)) / 2; }
+template <> inline wmesh_int_t wfe_ndofs_template<WMESH_ELEMENT_HEXAHEDRON>(wmesh_int_t d_) { return (d_+1)*(d_+1)*(d_+1); }
+
+
 
 
 template<typename T>
@@ -14,6 +25,16 @@ wmesh_status_t wmesh_raw_bounding_box(wmesh_int_t 		coo_m_,
 
 extern "C"
 {
+
+  wmesh_status_t wfe_ndofs(wmesh_int_t element_,
+			   wmesh_int_t d_,
+			   wmesh_int_p ndofs_);
+
+  wmesh_status_t
+  wmesh_elements_num_hyperfaces(wmesh_int_t 		topodim_,
+				wmesh_int_p 		num_hyperfaces_);
+
+
   const char * file_extension(const char * filename_);
   
   

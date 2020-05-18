@@ -1,7 +1,7 @@
 DISTRIB=$(PWD)
 include $(DISTRIB)/config.mk
-OPTIMIZE_FLAGS=-O3 -DNDEBUG #-Wall -Werror
-DEBUG_FLAGS=-g #-Wall -Werror
+OPTIMIZE_FLAGS=-O3 -DNDEBUG
+DEBUG_FLAGS=-g
 
 install: 
 	mkdir -p bin

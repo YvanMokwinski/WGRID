@@ -2,16 +2,7 @@
 #define WMESH_H
 
 #include "wmesh-functions.h"
-
-#define WMESH_ELEMENT_NODE 		0
-#define WMESH_ELEMENT_EDGE 		1
-#define WMESH_ELEMENT_TRIANGLE 		2
-#define WMESH_ELEMENT_QUADRILATERAL 	3
-#define WMESH_ELEMENT_TETRAHEDRON 	4
-#define WMESH_ELEMENT_PYRAMID 		5
-#define WMESH_ELEMENT_WEDGE 		6
-#define WMESH_ELEMENT_HEXAHEDRON	7
-#define WMESH_ELEMENT_ALL		8
+#include "wmesh-enums.h"
 
 
 #ifdef __cplusplus
@@ -55,31 +46,6 @@ extern "C"
   wmesh_status_t  wmesh_curve_extrusion		(wmesh_t *		self_,
 						 const wmesh_t *	surface_,
 						 const wmesh_t * 	curve_);
-  
-  
-  wmesh_status_t wmesh_treilli_buffer_size	(wmesh_int_t 	cell_type_,
-						 wmesh_int_t 	degree_,
-						 wmesh_int_p	work_n_,
-						 wmesh_int_p	num_entities_);
-  
-  
-  wmesh_status_t wmesh_treilli_calculate	(wmesh_int_t 		cell_type_,
-						 wmesh_int_t 		degree_,
-						 wmesh_int_t 		num_nodes_,
-						     
-						 const_wmesh_int_p 	c2n_ptr_,
-						 const_wmesh_int_p 	c2n_m_,
-						 const_wmesh_int_p 	c2n_n_,
-						 wmesh_int_p 		c2n_v_,
-						 const_wmesh_int_p 	c2n_ld_,
-						 
-						 wmesh_int_t 		icoo_m_,
-						 wmesh_int_t 		icoo_n_,
-						 wmesh_int_p 		icoo_v_,
-						 wmesh_int_t 		icoo_ld_,
-						 
-						 wmesh_int_t		work_n_,
-						 wmesh_int_p		work_);
 
 
     
@@ -106,13 +72,6 @@ extern "C"
 
   wmesh_status_t wmesh_partitioning		(wmesh_t*	self_,
 						 wmesh_int_t 	nparts_);
-
-
-  wmesh_status_t wmesh_treilli(wmesh_t ** 	mesh__,
-			       wmesh_int_t 	cell_type_,
-			       wmesh_int_t 	degree_,
-			       wmesh_int_t	work_n_,
-			       wmesh_int_p	work_);
 
   //!
   //! @brief Kill the mesh.

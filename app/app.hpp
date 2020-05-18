@@ -1,6 +1,44 @@
 #pragma once 
 #include "wmesh.h"
+#include "wmesh_nodes_family.h"
 #include <string.h>
+
+//!
+//! @brief element names for applications.
+//!
+static const char * s_wmesh_nodes_family_names[WMESH_NODES_FAMILY_ALL]
+= {"bezier",
+   "lagrange",
+   "gausslobatto"};
+
+//!
+//! @brief Convert a string to an nodesfamily.
+//!
+inline  wmesh_status_t app_str2nodesfamily(wmesh_str_t nodesfamily_name_,
+					   wmesh_int_p nodesfamily_)
+{
+  WMESH_CHECK_POINTER(nodesfamily_);
+  for (wmesh_int_t i=0;i<WMESH_NODES_FAMILY_ALL;++i)
+    {            
+      if (!strcmp(s_wmesh_nodes_family_names[i],
+		  nodesfamily_name_))
+	{
+	  nodesfamily_[0] = i;
+	  return WMESH_STATUS_SUCCESS;  
+	}
+    }
+  return WMESH_STATUS_INVALID_ARGUMENT;  
+}
+
+//!
+//! @brief Convert nodesfamily to a string.
+//!
+inline  wmesh_status_t app_nodesfamily2str(wmesh_int_t nodesfamily_,
+					   wmesh_str_t nodesfamily_name_)
+{
+  strcpy(nodesfamily_name_,s_wmesh_nodes_family_names[nodesfamily_]);
+  return WMESH_STATUS_SUCCESS;  
+}
 
 //!
 //! @brief element names for applications.

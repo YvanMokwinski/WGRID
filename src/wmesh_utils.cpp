@@ -9,6 +9,31 @@
 #include "wmesh.hpp"
 #include "GenericEncoding.hpp"
 
+extern "C" wmesh_status_t wfe_ndofs(wmesh_int_t element_,
+				    wmesh_int_t d_,
+				    wmesh_int_p ndofs_)
+{
+#ifdef TREAT_CASE
+#error TREAT_CASE is already defined
+#else
+#define TREAT_CASE(_f) case _f: ndofs_[0] = wfe_ndofs_template<_f>(d_); return WMESH_STATUS_SUCCESS
+#endif
+  switch(element_)
+    {
+    TREAT_CASE(WMESH_ELEMENT_NODE);
+    TREAT_CASE(WMESH_ELEMENT_EDGE);
+    TREAT_CASE(WMESH_ELEMENT_TRIANGLE);
+    TREAT_CASE(WMESH_ELEMENT_QUADRILATERAL);
+    TREAT_CASE(WMESH_ELEMENT_TETRAHEDRON);
+    TREAT_CASE(WMESH_ELEMENT_PYRAMID);
+    TREAT_CASE(WMESH_ELEMENT_WEDGE);
+    TREAT_CASE(WMESH_ELEMENT_HEXAHEDRON);
+    
+    }
+  return WMESH_STATUS_INVALID_ENUM;
+#undef TREAT_CASE
+}
+
 extern "C"  wmesh_status_t
 wmesh_elements_num_hyperfaces(wmesh_int_t 		topodim_,
 			      wmesh_int_p 		num_hyperfaces_)
@@ -342,13 +367,16 @@ unsigned long long int hilbert_coordinate(double*__restrict__ 	crd,
 		      {2,3,0,1,6,7,4,5}, {6,5,2,1,0,3,4,7}, {6,5,2,1,0,3,4,7}, {4,3,2,5,6,1,0,7}};
   
   /* Convert double precision coordinates to integers */
-  double tmp0 = (crd[0] - box[0]) * box[0+3];
-  double tmp1 = (crd[1] - box[1]) * box[1+3];
-  double tmp2 = (crd[2] - box[2]) * box[2+3];
+  double tmp[3];
+  unsigned long long int * h = (unsigned long long int *)&tmp[0];
+  
+  tmp[0] = (crd[0] - box[0]) * box[0+3];
+  tmp[1] = (crd[1] - box[1]) * box[1+3];
+  tmp[2] = (crd[2] - box[2]) * box[2+3];
 
-  IntCrd[0] = *((unsigned long long int*)&tmp0);
-  IntCrd[1] = *((unsigned long long int*)&tmp1);
-  IntCrd[2] = *((unsigned long long int*)&tmp2);
+  IntCrd[0] = h[0];
+  IntCrd[1] = h[1];
+  IntCrd[2] = h[2];
 
   /* Binary hilbert renumbering loop */
   

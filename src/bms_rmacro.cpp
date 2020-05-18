@@ -768,8 +768,9 @@ static wmesh_status_t bms_rmacro_fe_icoo(wmesh_int_t element_,
 				     wmesh_int_p icoo_,
 				     wmesh_int_t icoo_ld_) 
 {
+  wmesh_status_t status;
   WMESH_CHECK_POINTER(icoo_);
-  wmesh_int_t n1d = degree_+1;
+  //  wmesh_int_t n1d = degree_+1;
   switch(element_)
     {
       
@@ -787,164 +788,21 @@ static wmesh_status_t bms_rmacro_fe_icoo(wmesh_int_t element_,
       
     case WMESH_ELEMENT_TRIANGLE:
       {
-	bms_fe_triangle_ordering(icoo_,icoo_ld_,0,degree_);
-#if 0
-	wmesh_int_p icoo = icoo_;
-	for (wmesh_int_t d = 0;d<degree_;++d)
-	  {  
-	    const wmesh_int_t n = (degree_-d>0)? (degree_-d)-1 : 0;
-	    
-	    icoo[0] = d;
-	    icoo[1] = d;
-	    icoo += icoo_ld_;
-	    
-	    icoo[0] = degree_ - d;
-	    icoo[1] = d;
-	    icoo += icoo_ld_;
-	    
-	    icoo[0] = d;
-	    icoo[1] = degree_ - d;
-	    icoo += icoo_ld_;
-	    
-	    for (wmesh_int_t i=d;i<n;++i)
-	      {
-		icoo[0] = i+1;
-		icoo[1] = d;
-		icoo += icoo_ld_;
-	      } 
-	    
-	    for (wmesh_int_t i=d;i<n;++i)
-	      {
-		icoo[0] = (degree_ - d) - (i+1-d);
-		icoo[1] = i + 1;
-		icoo += icoo_ld_;
-	      }    
-	    
-	    for (wmesh_int_t i=d;i<n;++i)
-	      {
-		icoo[0] = d + 0;
-		icoo[1] = (degree_-d) - (i+1-d);
-		icoo += icoo_ld_;
-	      }
-
-	  }
-#endif	  
-
-#if 0
-	const wmesh_int_t n = (degree_>0)? degree_-1 : 0;
-
-	wmesh_int_p icoo = icoo_;
-	icoo[0] = 0;
-	icoo[1] = 0;
-	icoo += icoo_ld_;
-
-	icoo[0] = degree_;
-	icoo[1] = 0;
-	icoo += icoo_ld_;
-
-	icoo[0] = 0;
-	icoo[1] = degree_;
-	icoo += icoo_ld_;
-
-	
-	for (wmesh_int_t i=0;i<n;++i)
-	  {
-	    icoo[0] = i+1;
-	    icoo[1] = 0;
-	    icoo += icoo_ld_;
-	  } 
-
-	for (wmesh_int_t i=0;i<n;++i)
-	  {
-	    icoo[0] = degree_ - (i+1);
-	    icoo[1] = i+1;
-	    icoo += icoo_ld_;
-	  } 	
-
-	for (wmesh_int_t i=0;i<n;++i)
-	  {
-	    icoo[0] = 0;
-	    icoo[1] = degree_ - (i+1);
-	    icoo += icoo_ld_;
-	  } 
-	
-	for (wmesh_int_t i=0;i<n1d;i++)
-	  {
-	    for (wmesh_int_t j=0;j<=i;j++)
-	      {
-		icoo[0] = j;
-		icoo[1] = i - j;
-		icoo += icoo_ld_;
-	      } 
-	  }
-#endif
-	
+	status = bms_fe_triangle_ordering(icoo_,
+					  icoo_ld_,
+					  0,
+					  degree_);
+	WMESH_STATUS_CHECK(status);
 	return WMESH_STATUS_SUCCESS;
       }
       
     case WMESH_ELEMENT_QUADRILATERAL:
       {
-	bms_fe_quadrilateral_ordering(icoo_,icoo_ld_,0,degree_);
-#if 0
-	wmesh_int_p icoo = icoo_;
-	for (wmesh_int_t d = 0;d<degree_;++d)
-	  {  
-	    const wmesh_int_t n = (degree_-d>0)? (degree_-d)-1 : 0;
-	    
-	    icoo[0] = d;
-	    icoo[1] = d;
-	    icoo += icoo_ld_;
-	    
-	    icoo[0] = degree_ - d;
-	    icoo[1] = d;
-	    icoo += icoo_ld_;
-	    
-	    icoo[0] = degree_ - d;
-	    icoo[1] = degree_ - d;
-	    icoo += icoo_ld_;
-	    
-	    icoo[0] = d;
-	    icoo[1] = degree_ - d;
-	    icoo += icoo_ld_;
-	    
-	    for (wmesh_int_t i=d;i<n;++i)
-	      {
-		icoo[0] = i+1;
-		icoo[1] = d;
-		icoo += icoo_ld_;
-	      } 
-	    
-	    for (wmesh_int_t i=d;i<n;++i)
-	      {
-		icoo[0] = degree_ - d;
-		icoo[1] = i + 1;
-		icoo += icoo_ld_;
-	      }    
-	    
-	    for (wmesh_int_t i=d;i<n;++i)
-	      {
-     	    icoo[0] = (degree_ - d) - (i+1-d);
-	    icoo[1] = (degree_ - d);
-	    icoo += icoo_ld_;
-	  }
-	    
-	    for (wmesh_int_t i=d;i<n;++i)
-	      {
-		icoo[0] = d + 0;
-		icoo[1] = (degree_-d) - (i+1-d);
-		icoo += icoo_ld_;
-	      }
-
-	  }
-	  
-	  if (degree_ %2 ==0)
-	    {
-	    icoo[0] = degree_/2;
-	    icoo[1] = degree_/2;
-	    std::cout << icoo[0]<< " ddddd " << icoo[1]<<std::endl;
-	    icoo += icoo_ld_;	    
-	  }
-#endif	  
+	status = bms_fe_quadrilateral_ordering(icoo_,
+					       icoo_ld_,
+					       0,
+					       degree_);
+	WMESH_STATUS_CHECK(status);
 	return WMESH_STATUS_SUCCESS;
       }
       
@@ -970,10 +828,10 @@ static wmesh_status_t bms_rmacro_fe_icoo(wmesh_int_t element_,
 	icoo_[idx*icoo_ld_+2] = 0;	
 	++idx;
 	icoo_[idx*icoo_ld_+0] = 0;	  
-	icoo_[idx*icoo_ld_+1] = 0;	
+	icoo_[idx*icoo_ld_+1] = 0;
 	icoo_[idx*icoo_ld_+2] = degree_;	
 	++idx;
-      
+
 	static const wmesh_int_t tetraedge_cnc[] = { 1,2,
 						     2,0,
 						     0,1,
@@ -1032,8 +890,6 @@ static wmesh_status_t bms_rmacro_fe_icoo(wmesh_int_t element_,
 			  const wmesh_int_t l0 		= degree_-( (i+1) + (j+1) );
 			  const wmesh_int_t l1 		= (i+1);
 			  const wmesh_int_t l2 		= (j+1);
-
-			  
 			  
 			  icoo_[idx*icoo_ld_+0] = reface[0] * l0 + reface[3] * l1 + reface[6] * l2;
 			  icoo_[idx*icoo_ld_+1] = reface[1] * l0 + reface[4] * l1 + reface[7] * l2;
@@ -1542,7 +1398,8 @@ static wmesh_status_t bms_rmacro_fe_icoo(wmesh_int_t element_,
 						     0,4,
 						     1,5,
 						     2,6,
-						     3,7 }; 
+						     3,7 };
+	
 	/* deja reference dans eVolume */
 	static const wmesh_int_t hexaface_cnc[]  = {0,3,2,1,
 						    4,5,6,7,				 

@@ -702,7 +702,7 @@ bool wmesh_bspline_findEdge(const wmesh_bspline_t*  self_,
   for (wmesh_int_t iv=0;iv<offsetNode_[0];++iv)
     {
       wmesh_int_t idx 	= (Nz - 1) * offsetNode_[0] + iv;
-      wmesh_int_t idTopology 	= ids_[idx];
+      //      wmesh_int_t idTopology 	= ids_[idx];
       for (wmesh_int_t i=0;i<dim;++i)
 	{
 	  coo0[i] = coo_[idx*coo_ld_ + i];
@@ -722,7 +722,7 @@ bool wmesh_bspline_findEdge(const wmesh_bspline_t*  self_,
   for (wmesh_int_t iv=0;iv<offsetNode_[0];++iv)
     {
       wmesh_int_t idx = iv;
-      wmesh_int_t idTopology = ids_[idx];
+      // wmesh_int_t idTopology = ids_[idx];
       for (wmesh_int_t i=0;i<dim;++i)
 	{
 	  coo0[i] = coo_[idx*coo_ld_ + i];
@@ -864,7 +864,7 @@ bool wmesh_bspline_findEdge(const wmesh_bspline_t*  self_,
 						    3);
   
   double * __restrict__ rayon = (double*)malloc(sizeof(double)*Nz);
-  double minrayon=1e+30;
+  //  double minrayon=1e+30;
   { wmesh_int_t iz;
     for (iz=0;iz<Nz;++iz)
       {
@@ -872,7 +872,7 @@ bool wmesh_bspline_findEdge(const wmesh_bspline_t*  self_,
 
 
 	wmesh_int_t idx = iz*offsetNode_[0];
-	wmesh_int_t idTopology = ids_[idx];
+	//	wmesh_int_t idTopology = ids_[idx];
 	for (wmesh_int_t i=0;i<dim;++i)
 	  {
 	    coo0[i] = coo_[idx*coo_ld_ + i];
@@ -886,7 +886,7 @@ bool wmesh_bspline_findEdge(const wmesh_bspline_t*  self_,
 	bool edgeHasBeenFound = wmesh_bspline_findEdge(self_,s0,&iedge,s1);
 	if (! edgeHasBeenFound)
 	  {
-	    printf("! edgeHasBeenFound\n",s0);
+	    printf("! edgeHasBeenFound\n");
 	    exit(1);
 	  }
 	double posrayon[3];
@@ -1036,7 +1036,7 @@ bool wmesh_bspline_findEdge(const wmesh_bspline_t*  self_,
 
 	    
 	    wmesh_int_t idx = iz*offsetNode_[0] + iv;
-	    wmesh_int_t idTopology = ids_[idx];
+	    //	    wmesh_int_t idTopology = ids_[idx];
 	    for (wmesh_int_t i=0;i<dim;++i)
 	      {
 		coo0[i] = coo_[idx*coo_ld_ + i];

@@ -4,7 +4,7 @@
 int main(int argc, char ** argv)
 {  
   wmesh_t* 		mesh 		= nullptr;
-  wmesh_t* 		refined_mesh 	= nullptr;
+  //  wmesh_t* 		refined_mesh 	= nullptr;
   wmesh_status_t 	status;
 
   //
@@ -22,6 +22,10 @@ int main(int argc, char ** argv)
     // Get verbose.
     //
     verbose = cmd.option("-v");
+    if (verbose)
+      {
+	cmd.disp_header(stdout);
+      }    
     
     //
     // Get the number of partitions.

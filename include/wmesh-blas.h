@@ -5,6 +5,7 @@
 
 #ifdef WMESH_OPEN_BLAS
 #include </usr/lib/openblas/include/f77blas.h>
+#define BLAS_dscal 	dscal_
 #define BLAS_dcopy 	dcopy_
 #define BLAS_dgemm 	dgemm_
 #define BLAS_ddot 	ddot_
@@ -18,7 +19,7 @@
 #endif
 
 #include "mkl.h"
-
+#define BLAS_dscal 	dscal
 #define BLAS_dcopy 	dcopy
 #define BLAS_dgemm 	dgemm
 #define BLAS_ddot  	ddot

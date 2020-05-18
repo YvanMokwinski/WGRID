@@ -476,7 +476,7 @@ extern "C"
       {
 	wmesh_int_t ndofs[2]= { ((degree+1)*(degree+2)) / 2,
 				((degree+1)*(degree+1))};
-	
+
 	wmesh_int_t ndofs_n[2] = {1,1};
 	wmesh_int_t ndofs_e[2] = {degree-1,degree-1};
 	wmesh_int_t ndofs_i[2] = { (degree>0) ? ((degree-1)*(degree-2)) / 2 : 1,

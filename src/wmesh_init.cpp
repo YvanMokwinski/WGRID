@@ -61,7 +61,7 @@ extern "C"
     wmesh_int_t c2c_m[4];
     wmesh_int_t c2c_ld[4];
     wmesh_int_t c2c_ptr[4+1];
-    wmesh_int_t c2c_n[4];
+    // wmesh_int_t c2c_n[4];
     
     status = wmesh_topodim2elements(topodim_,
 				    &c2c_size,

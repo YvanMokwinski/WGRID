@@ -20,7 +20,6 @@ int main(int 		argc,
   wmesh_t* 			mesh = nullptr;
   wmesh_status_t 		status;
   WCOMMON::cmdline::str_t 	ofilename;
-  const char * 			ifilename 	= nullptr;
   bool 				verbose 	= false;
 
   wmesh_int_t
@@ -46,6 +45,10 @@ int main(int 		argc,
   // Get verbose.
   //
   verbose = cmd.option("-v");
+  if (verbose)
+    {
+      cmd.disp_header(stdout);
+    }     
 
 
   if (false == cmd.option("--dim", &opt_dim))

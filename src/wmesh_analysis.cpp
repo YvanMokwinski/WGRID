@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <string.h>
 #include "wmesh-types.hpp"
@@ -12,153 +11,69 @@
 using namespace std::chrono;
 extern "C"
 {
+  
 
-  wmesh_status_t wmesh_shape_eval_basis(wmesh_int_t     cell_type_,
-					wmesh_int_t 	coo_m_,
-					wmesh_int_t 	coo_n_,
-					double * 	coo_x_,
-					wmesh_int_t 	coo_ld_,
-					double * 	x_,
-					wmesh_int_t 	x_ld_)
+
+  wmesh_status_t wmesh_c2e_calculate(const wmesh_int_sparsemat_t* 	c2n_,
+				     wmesh_int_sparsemat_t* 		c2e_,
+				     const wmesh_int_sparsemat_t* 	s_e2n_,
+				     wmesh_int_p 			num_edges_)
   {
-    
-    static const double s_zero = ((double)0.0);
-    static const double s_one = ((double)1.0);
-    static constexpr double one = 1.0;
-    if (cell_type_==0)
-      {
-	for (wmesh_int_t k=0;k<coo_n_;++k)
-	  {
-	    const auto
-	      r = coo_x_[coo_ld_*k+0],
-	      s = coo_x_[coo_ld_*k+1],
-	      t = coo_x_[coo_ld_*k+2];
-	    
-	    x_[k*x_ld_+0] = s_one - (r+s+t);
-	    x_[k*x_ld_+1] = r;
-	    x_[k*x_ld_+2] = s;
-	    x_[k*x_ld_+3] = t;
-	  }		  
-      }
-    else if (cell_type_==1)
-      {
-	for (wmesh_int_t k=0;k<coo_n_;++k)
-	  {
-	    const auto
-	      r = coo_x_[coo_ld_*k+0],
-	      s = coo_x_[coo_ld_*k+1],
-	      t = coo_x_[coo_ld_*k+2];
-	    
-	    const auto
-	      tscale = (t < s_one) ? s_one / (s_one - t) : s_zero,
-	      lts = s_one - t - s,
-	      ltr = s_one - t - r;
-	    
-	    x_[k*x_ld_+0] = ltr  * lts * tscale;
-	    x_[k*x_ld_+1] = r * lts * tscale;
-	    x_[k*x_ld_+2] = r * s * tscale;
-	    x_[k*x_ld_+3] = ltr * s  * tscale;
-	    x_[k*x_ld_+4] = t;
-	  }		  
-      }
-    else if (cell_type_==2)
-      {
-	for (wmesh_int_t k=0;k<coo_n_;++k)
-	  {
-	    const auto
-	      r = coo_x_[coo_ld_*k+0],
-	      s = coo_x_[coo_ld_*k+1],
-	      t = coo_x_[coo_ld_*k+2];
-	   
-	    const auto
-	      l = one - (r+s),
-	      lt = one - t;
-	    
-	    x_[k*x_ld_+0] = l * lt;
-	    x_[k*x_ld_+1] = r * lt;
-	    x_[k*x_ld_+2] = s * lt;
-	    x_[k*x_ld_+3] = l * t;
-	    x_[k*x_ld_+4] = r * t;
-	    x_[k*x_ld_+5] = s * t;
-	  }		  
-      }
-    else if (cell_type_==3)
-      {
-	for (wmesh_int_t k=0;k<coo_n_;++k)
-	  {
-	    const auto
-	      r = coo_x_[coo_ld_*k+0],
-	      s = coo_x_[coo_ld_*k+1],
-	      t = coo_x_[coo_ld_*k+2];
-
-	    const auto
-	      lr = one - r,
-	      ls = one - s,
-	      lt = one - t;
-	    
-	    x_[k*x_ld_+0] = lr* ls * lt;
-	    x_[k*x_ld_+1] = r * ls * lt;
-	    x_[k*x_ld_+2] = r *  s * lt;
-	    x_[k*x_ld_+3] = lr*  s * lt;
-	    x_[k*x_ld_+4] = lr* ls * t;
-	    x_[k*x_ld_+5] =  r* ls * t;
-	    x_[k*x_ld_+6] =  r*  s * t;
-	    x_[k*x_ld_+7] = lr*  s * t;
-	  }
-      }
-    else
-      {
-	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
-      }
-    return WMESH_STATUS_SUCCESS;
-  }
-
-  
-
-
-
-
-  
-  
-  
-  wmesh_status_t wmesh_analysis_edges(wmesh_t* 		self_,
-				      wmesh_int_p 	num_edges_)
-  {
-    wmesh_int_t edge_idx = 0;
-    
+    WMESH_CHECK_POINTER(c2n_);
+    WMESH_CHECK_POINTER(c2e_);
+    WMESH_CHECK_POINTER(s_e2n_);
+    WMESH_CHECK_POINTER(num_edges_);    
+    wmesh_int_t edge_idx = 0;    
     wmesh_int_t work_n;
-    wmesh_status_t status =  wmesh_indexing_edges_buffer_size(4,
-							      self_->m_c2n.m_n,
-							      &work_n);      
+    wmesh_status_t status =  bms_c2e_buffer_size(c2n_->m_size,
+						 c2n_->m_n,
+						 &work_n);      
     WMESH_STATUS_CHECK(status);
     wmesh_int_t * work = (wmesh_int_t*)malloc(work_n*sizeof(wmesh_int_t));
     if (!work)
       {
 	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
       } 
-    status =  wmesh_indexing_edges(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-				   WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2e),
-				   WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_e2n),				     
-				   &edge_idx,
-				   work_n,
-				   work);
+    status =  bms_c2e(WMESH_INT_SPARSEMAT_FORWARD(*c2n_),
+		      WMESH_INT_SPARSEMAT_FORWARD(*c2e_),
+		      WMESH_INT_SPARSEMAT_FORWARD(*s_e2n_),				     
+		      &edge_idx,
+		      work_n,
+		      work);
     free(work);
     WMESH_STATUS_CHECK(status);
     num_edges_[0] = edge_idx;
     return WMESH_STATUS_SUCCESS;
   }
+
   
 
-  wmesh_status_t wmesh_analysis_faces(wmesh_t* 		self_)
+  wmesh_status_t wmesh_c2f_calculate(const wmesh_int_sparsemat_t* 	c2n_,
+				     const wmesh_int_sparsemat_t* 	s_t2n_,
+				     wmesh_int_sparsemat_t* 		c2f_t_,
+				     const wmesh_int_sparsemat_t* 	s_q2n_,
+				     wmesh_int_sparsemat_t* 		c2f_q_)
   {
-    wmesh_status_t status;
-    
+    WMESH_CHECK_POINTER(c2n_);
+    WMESH_CHECK_POINTER(s_t2n_);
+    WMESH_CHECK_POINTER(c2f_t_);
+    WMESH_CHECK_POINTER(s_q2n_);
+    WMESH_CHECK_POINTER(c2f_q_);
+
+    wmesh_status_t status;    
+    wmesh_int_t work_n0;
     wmesh_int_t work_n;
-    status =  wmesh_indexing_triangles_buffer_size(self_->m_c2n.m_size,
-						   self_->m_c2n.m_n,
-						   &work_n);
+
+    status =  bms_c2f_t_buffer_size(c2n_->m_size,
+				    c2n_->m_n,
+				    &work_n0);
+    WMESH_STATUS_CHECK(status);    
+    status =  bms_c2f_q_buffer_size(c2n_->m_size,
+				    c2n_->m_n,
+				    &work_n);
     WMESH_STATUS_CHECK(status);
-    wmesh_int_p work = (wmesh_int_p)malloc(work_n*sizeof(wmesh_int_t));
+    work_n = (work_n0 > work_n) ? work_n0 : work_n;
+    wmesh_int_p work 	= (wmesh_int_p)malloc(work_n*sizeof(wmesh_int_t));
     if (!work)
       {
 	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
@@ -168,81 +83,64 @@ extern "C"
     // Enumerates triangles faces.
     //
     wmesh_int_t face_idx = 0;
-    status =  wmesh_indexing_triangles(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-				       WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2f_t),
-				       WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_t2n),				     
-				       &face_idx,
-				       work_n,
-				       work);      
+    status =  bms_c2f_t(WMESH_INT_SPARSEMAT_FORWARD(*c2n_),
+			WMESH_INT_SPARSEMAT_FORWARD(*c2f_t_),
+			WMESH_INT_SPARSEMAT_FORWARD(*s_t2n_),				     
+			&face_idx,
+			work_n,
+			work);      
     
     WMESH_STATUS_CHECK(status);      
     face_idx = 0;
-    status = wmesh_indexing_quadrilaterals(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-					   WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2f_q),
-					   WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_q2n),				     
-					   &face_idx,
-					   work_n,
-					   work);      
+    status = bms_c2f_q(WMESH_INT_SPARSEMAT_FORWARD(*c2n_),
+		       WMESH_INT_SPARSEMAT_FORWARD(*c2f_q_),
+		       WMESH_INT_SPARSEMAT_FORWARD(*s_q2n_),				     
+		       &face_idx,
+		       work_n,
+		       work);      
     WMESH_STATUS_CHECK(status);
     return WMESH_STATUS_SUCCESS;
   }
 
-  
-  wmesh_status_t wmesh_c2c(wmesh_t* 		self_,
-			   wmesh_int_p 		num_hyperfaces_,
-			   wmesh_int_p 		num_boundary_hyperfaces_)
+
+
+  wmesh_status_t wmesh_c2c_calculate(const wmesh_int_t 			topodim_,
+				     const wmesh_int_sparsemat_t* 	c2n_,
+				     const wmesh_int_sparsemat_t* 	s_e2n_,
+				     wmesh_int_sparsemat_t* 		c2c_e_,
+				     const wmesh_int_sparsemat_t* 	s_t2n_,
+				     wmesh_int_sparsemat_t* 		c2c_t_,
+				     const wmesh_int_sparsemat_t* 	s_q2n_,
+				     wmesh_int_sparsemat_t* 		c2c_q_,
+				     wmesh_int_p 			num_hyperfaces_,
+				     wmesh_int_p 			num_boundary_hyperfaces_)
   {
-    const wmesh_int_t topodim = self_->m_topology_dimension;
-    //
-    // Initialize c2c.
-    //
-    wmesh_status_t status = wmesh_init_c2c	(topodim,
-						 &self_->m_c2n,
-						 &self_->m_c2c);
-    WMESH_STATUS_CHECK(status);	
-
-    if (topodim == 3)
-      {
-	//
-	// Initialize sub c2c for triangles.
-	//
-	status = wmesh_init_c2f_t(&self_->m_c2c,
-				  &self_->m_c2c_t);
-	WMESH_STATUS_CHECK(status);
-	
-	//
-	// Initialize sub c2c for quadrilaterals.
-	//
-	status = wmesh_init_c2f_q(&self_->m_c2c,
-				  &self_->m_c2c_q);
-	WMESH_STATUS_CHECK(status);      
-      }
-
+    wmesh_int_t status;
     wmesh_int_t work_n;
     wmesh_int_t * work  = nullptr;
-
-    if (self_->m_topology_dimension==3)
+    if (topodim_==3)
       {	
-	status =  bms_c2c_buffer_size(self_->m_c2n.m_size,
-				      self_->m_c2n.m_n,
+	status =  bms_c2c_buffer_size(c2n_->m_size,
+				      c2n_->m_n,
 				      &work_n);    
-	WMESH_STATUS_CHECK(status);    
+	WMESH_STATUS_CHECK(status);
+	
 	work = (wmesh_int_t*)malloc(work_n*sizeof(wmesh_int_t));
 	if (!work)
 	  {
 	    WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
 	  }      
 	
-	num_boundary_hyperfaces_[0] = 0;
-	num_boundary_hyperfaces_[1] = 0;
+	num_boundary_hyperfaces_[0] 	= 0;
+	num_boundary_hyperfaces_[1] 	= 0;
 	num_hyperfaces_[0] 		= 0;
 	num_hyperfaces_[1] 		= 0;
 	
-	status = bms_c2c(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-			 WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2c_t),
-			 WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2c_q),
-			 WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_t2n),
-			 WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_q2n),
+	status = bms_c2c(WMESH_INT_SPARSEMAT_FORWARD(*c2n_),
+			 WMESH_INT_SPARSEMAT_FORWARD(*c2c_t_),
+			 WMESH_INT_SPARSEMAT_FORWARD(*c2c_q_),
+			 WMESH_INT_SPARSEMAT_FORWARD(*s_t2n_),
+			 WMESH_INT_SPARSEMAT_FORWARD(*s_q2n_),
 			 work_n,
 			 work,
 			 num_hyperfaces_,
@@ -252,12 +150,13 @@ extern "C"
 	WMESH_STATUS_CHECK(status);    
 	return WMESH_STATUS_SUCCESS;
       }
-    else
+    else if (topodim_==2)      
       {
-	status =  bms_c2c_e_buffer_size(self_->m_c2n.m_size,
-					self_->m_c2n.m_n,
+	status =  bms_c2c_e_buffer_size(c2n_->m_size,
+					c2n_->m_n,
 					&work_n);    
-	WMESH_STATUS_CHECK(status);    
+	WMESH_STATUS_CHECK(status);
+	
 	work = (wmesh_int_t*)malloc(work_n*sizeof(wmesh_int_t));
 	if (!work)
 	  {
@@ -266,22 +165,111 @@ extern "C"
 	
 	num_boundary_hyperfaces_[0] = 0;
 		
-	status = bms_c2c_e(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-			   WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2c),
-			   WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_e2n),
+	status = bms_c2c_e(WMESH_INT_SPARSEMAT_FORWARD(*c2n_),
+			   WMESH_INT_SPARSEMAT_FORWARD(*c2c_e_),
+			   WMESH_INT_SPARSEMAT_FORWARD(*s_e2n_),
 			   num_boundary_hyperfaces_,
 			   work_n,
 			   work);
 	
-	num_hyperfaces_[0] = (num_boundary_hyperfaces_[0] + self_->m_c2n.m_n[0]*3+self_->m_c2n.m_n[1]*4)/2;
-	
+	num_hyperfaces_[0] = (num_boundary_hyperfaces_[0] + c2n_->m_n[0]*3+c2n_->m_n[1]*4);
+	WMESH_CHECK(num_hyperfaces_[0] % 2 == 0);
+	num_hyperfaces_[0] /= 2;
 	free(work);      
 	WMESH_STATUS_CHECK(status);    
 	return WMESH_STATUS_SUCCESS;
 
       }
-   
+    else
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_NOT_IMPLEMENTED);    
+      }
   }
+
+
+  wmesh_status_t wmesh_c2c(const wmesh_t* 		self_,
+			   wmesh_int_sparsemat_t* 	c2c_,
+			   wmesh_int_sparsemat_t* 	c2c_t_,
+			   wmesh_int_sparsemat_t* 	c2c_q_,
+			   wmesh_int_p 			num_facets_,
+			   wmesh_int_p 			num_bfacets_)
+  {
+    const wmesh_int_t topodim = self_->m_topology_dimension;
+    wmesh_int_sparsemat_t* c2e = nullptr;
+
+    //
+    // Initialize c2c.
+    //
+    wmesh_status_t status = wmesh_init_c2c	(topodim,
+						 &self_->m_c2n,
+						 c2c_);
+    WMESH_STATUS_CHECK(status);	
+    switch(topodim)
+      {
+      case 3:
+	{
+	  //
+	  // Initialize sub c2c for triangles.
+	  //
+	  status = wmesh_init_c2f_t(c2c_,
+				    c2c_t_);
+	  WMESH_STATUS_CHECK(status);
+	  
+	  //
+	  // Initialize sub c2c for quadrilaterals.
+	  //
+	  status = wmesh_init_c2f_q(c2c_,
+				    c2c_q_);
+	  WMESH_STATUS_CHECK(status);
+	  break;	  
+	}
+
+      case 2:
+	{
+	  c2e = c2c_;
+	  break;
+	}
+	
+      }
+    
+    return  wmesh_c2c_calculate(topodim,
+				&self_->m_c2n,
+				&self_->m_s_e2n,
+				c2e,
+				&self_->m_s_t2n,
+				c2c_t_,
+				&self_->m_s_q2n,
+				c2c_q_,
+				num_facets_,
+				num_bfacets_);
+  }
+
+
+
+
+    wmesh_status_t wmesh_c2e(const wmesh_t* 		self_,
+			   wmesh_int_sparsemat_t* 	c2e_,				     
+			   wmesh_int_p 			num_edges_)
+  {    
+    return wmesh_c2e_calculate(&self_->m_c2n,
+			       c2e_,
+			       &self_->m_s_e2n,
+			       num_edges_);
+  }
+
+
+  wmesh_status_t wmesh_c2f(const wmesh_t* 		self_,
+			   wmesh_int_sparsemat_t* 	c2f_t_,
+			   wmesh_int_sparsemat_t* 	c2f_q_)
+  {
+    return  wmesh_c2f_calculate(&self_->m_c2n,
+				&self_->m_s_t2n,
+				c2f_t_,
+				&self_->m_s_q2n,
+				c2f_q_);
+  }
+
+  
 
   
   using timing_t = high_resolution_clock::time_point;
@@ -346,9 +334,12 @@ extern "C"
     
 
       auto start = timing_start();      
-	status    = wmesh_c2c(self_,
-			      num_facets,
-			      num_bfacets);
+      status    = wmesh_c2c(self_,
+			    &self_->m_c2c,
+			    &self_->m_c2c_t,
+			    &self_->m_c2c_q,
+			    num_facets,
+			    num_bfacets);
 
 	if (self_->m_topology_dimension==3)
 	  {
@@ -375,13 +366,15 @@ extern "C"
 	if (self_->m_topology_dimension==3)
 	  {
 	    start = timing_start();      
-	    status = wmesh_analysis_edges(self_, &self_->m_num_edges);
+	    status = wmesh_c2e(self_, &self_->m_c2e, &self_->m_num_edges);
 	    stop = timing_stop();
 	    std::cout << "edge analysis, elapsed " << timing_seconds(start,stop) << std::endl;
 	    WMESH_STATUS_CHECK(status);
 
 	    start = timing_start();      
-	    status    = wmesh_analysis_faces(self_);
+	    status    = wmesh_c2f(self_,
+				  &self_->m_c2f_t,
+				  &self_->m_c2f_q);
 	    stop = timing_stop();
 	    std::cout << "faces analysis, elapsed " << timing_seconds(start,stop) << std::endl;
 	    WMESH_STATUS_CHECK(status);
@@ -389,18 +382,10 @@ extern "C"
 	else if (self_->m_topology_dimension==2)
 	  {
 	    start = timing_start();      
-	    status = wmesh_analysis_edges(self_, &self_->m_num_edges);
+	    status = wmesh_c2e(self_, &self_->m_c2e, &self_->m_num_edges);
 	    stop = timing_stop();
 	    std::cout << "edge analysis, elapsed " << timing_seconds(start,stop) << std::endl;
 	    WMESH_STATUS_CHECK(status);
-
-#if 0
-	    start = timing_start();      
-	    status    = wmesh_analysis_faces(self_);
-	    stop = timing_stop();
-	    std::cout << "faces analysis, elapsed " << timing_seconds(start,stop) << std::endl;
-	    WMESH_STATUS_CHECK(status);
-#endif
 	  }
 	
 

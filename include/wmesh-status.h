@@ -67,10 +67,19 @@ extern "C"
 //! @param _c The condition.
 #define WMESH_CHECK(_c)  do { if (!(_c)) { fprintf(stderr,"WMESH invalid condition (line=%d,file='%s','%s')\n",__LINE__,__FILE__,#_c); return WMESH_STATUS_INVALID_CONFIG; } } while(0)
 
+
+//! @brief Checks if the condition is satisfied.
+//! @param _c The condition.
+#define WMESH_CHECK_POSITIVE(_c)  WMESH_CHECK( (_c) > 0 )
+
 //! @brief Checks an expected status.
 //! @param _expected_status The expected status.
 //! @param _status The current status.
 #define WMESH_STATUS_EXPECT(_expected_status,_status) do { if (_expected_status != _status) { fprintf(stderr,"WMESH failed expected status '%s', returned '%s' instead.\n",wmesh_status_to_string(_expected_status),wmesh_status_to_string(_status)); return _status; } } while(0)
 
+
+//! @brief Checks if the condition is satisfied.
+//! @param _c The condition.
+#define WMESH_CHECK_STORAGE(_c)  WMESH_CHECK( WMESH_STORAGE_INTERLEAVE == (_c) || WMESH_STORAGE_BLOCK == (_c) )
 
 #endif

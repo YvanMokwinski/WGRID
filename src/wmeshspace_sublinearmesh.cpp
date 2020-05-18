@@ -1,22 +1,978 @@
 #if 1
 
+
 //
 // treat 2d
 //
 #include <stdlib.h>
 #include <string.h>
 #include "wmesh-types.hpp"
+#include "wmesh-math.hpp"
 #include "wmesh-status.h"
 #include "wmesh_medit.hpp"
 #include "wmesh_utils.hpp"
+#include "wmesh-blas.h"
 #include "bms.h"
 
 #include <chrono>
 #include <iostream>
+#include <math.h>
+//#include <cmath>
 
+
+template <typename T> constexpr T Factorial(wmesh_int_t i)
+{
+  return (i==0) ? T(1.0) : T(i)*Factorial<T>(i-1);
+};
+
+template <typename T> constexpr T Gamma(wmesh_int_t i)
+{
+  return Factorial<T>(i-1);
+};
+
+template <typename T> constexpr T Pow2(wmesh_int_t i)
+{
+  return (i==0) ? T(1.0) : T(2.0) * Pow2<T>(i-1);
+};
+
+
+template <typename T>
+wmesh_status_t bms_jacobip(wmesh_int_t 	alpha_,
+			   wmesh_int_t 	beta_,
+			   wmesh_int_t 	N_,
+			   wmesh_int_t 	x_n_,
+			   const T * 	x_,
+			   wmesh_int_t  x_ld_,
+			   T * 		y_,
+			   wmesh_int_t  y_ld_,
+			   wmesh_int_t 	work_n_,			   
+			   T * 		work_)
+{
+  WMESH_CHECK(alpha_ >= 0);
+  WMESH_CHECK(beta_  >= 0);
+  WMESH_CHECK(N_     >= 0);
+  WMESH_CHECK_POSITIVE(x_n_);
+  WMESH_CHECK(work_n_  >= 2*x_n_);
+  WMESH_CHECK_POINTER(x_);
+  WMESH_CHECK_POINTER(y_);
+  WMESH_CHECK_POINTER(work_);
+
+  static constexpr T
+    r2 = T(2.0),
+    r3 = T(3.0),
+    r1 = T(1.0),
+    r0 = T(0.0);
+  
+  T aold   = r0,
+    anew   = r0,
+    bnew   = r0,
+    h1     = r0,
+    gamma1 = r0;
+  
+  const T
+    ab  = alpha_ + beta_,
+    ab1 = alpha_+beta_+1,
+    a1  = alpha_+1,
+    b1  = beta_+1;
+  
+  // Initial values P_0(x) and P_1(x)
+  const T gamma0 = Pow2<T>(ab1)*Gamma<T>(a1)*Gamma<T>(b1)/Factorial<T>(ab1);
+  const T y0 = r1 / wmesh_math<T>::sqrt(gamma0);
+  for (wmesh_int_t i=0;i<x_n_;++i)
+    {
+      y_[i * y_ld_] = y0;
+    }
+  
+  wmesh_int_t n1=1;
+  T * pii = work_;
+  T * pi = work_ + x_n_;
+  if (N_>0)
+    {
+      BLAS_dcopy(&x_n_,y_,&y_ld_,pii,&n1);
+      //      auto pii = y;
+      gamma1 = (a1)*(b1)/(ab+3.0)*gamma0;
+      for (wmesh_int_t i=0;i<x_n_;++i)
+	{      
+	  y_[i*y_ld_] = ((ab+r2)*x_[i]/r2 + (alpha_-beta_)/r2) / sqrt(gamma1);
+	}
+      if (N_>1)
+	{
+	  BLAS_dcopy(&x_n_,y_,&y_ld_,pi,&n1);
+	  //  auto pi = y;
+	  // Repeat value in recurrence.
+	  aold = r2 / (r2+ab) * sqrt((a1)*(b1)/(ab+r3));	  
+	  // Forward recurrence using the symmetry of the recurrence.
+	  for (int i=1; i<=(N_-1); ++i)
+	    {
+	      h1 = r2*i+ab;
+	      anew = r2/(h1+r2)*sqrt((i+1)*(i+ab1)*(i+a1)*(i+b1)/(h1+r1)/(h1+r3));
+	      bnew = -(alpha_*alpha_-beta_*beta_) / ( h1*(h1+r2) );
+
+	      for (wmesh_int_t i=0;i<x_n_;++i)
+		{
+		  y_[i*y_ld_] = (x_[i]-bnew) * pi[i] - aold*pii[i];
+		}
+	      for (wmesh_int_t i=0;i<x_n_;++i)
+		{
+		  y_[i*y_ld_] *= r1/anew;
+		}
+	      
+	      //	      y = (x-bnew) * pi - aold*pii;
+	      //	      BLAS_daxpy(&x_n_,&s,y_,&n1);
+	      //	      y *= r1/anew;
+	      //	      T s = r1 / anew;
+	      //	      BLAS_dscal(&x_n_,&s,y_,&n1);
+	      aold = anew;
+	      BLAS_dcopy(&x_n_,pi,&n1,pii,&n1);
+	      BLAS_dcopy(&x_n_,y_,&y_ld_,pi,&n1);
+	      //  pii = pi;
+	      //  pi = y;
+	    }	  
+	}     
+    }
+  return WMESH_STATUS_SUCCESS;
+};
+
+
+#if 0
+void bms_basis_monomial_triangle(cst_pI 	degree,
+				 cst_pI 	n,
+				 pR 		r,
+				 cst_pI 	roff_,
+				 cst_pR 	p,
+				 cst_pI 	poff_,
+				 pR 		rwork,
+				 cst_pI 	rwork_n,
+				 pI 		err_)
+{
+  I i,q,k,j;
+  err_[0] = (I)0;
+  if (degree[0]==0)
+    {
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]] = (R)1.0;
+    }
+  else if (degree[0]==1)
+    {
+      for (i=0;i<n[0];++i)
+	{
+	  const R x = p[i];
+	  const R y = p[poff_[0]+i];
+	  r[i*roff_[0]] = (R)1.0;
+	  r[i*roff_[0]+1] = x;
+	  r[i*roff_[0]+2] = y;
+	}
+    }
+  else if (degree[0]==2)
+    {
+      for (i=0;i<n[0];++i)
+	{
+	  const R x = p[i];
+	  const R y = p[poff_[0]+i];
+	  r[i*roff_[0]] = (R)1.0;
+	  r[i*roff_[0]+1] = x;
+	  r[i*roff_[0]+2] = y;
+	  r[i*roff_[0]+3] = x*x;
+	  r[i*roff_[0]+4] = y*x;
+	  r[i*roff_[0]+5] = y*y;
+	}
+    }
+  else if (degree[0]==3)
+    {
+      for (i=0;i<n[0];++i)
+	{
+	  const R x = p[i];
+	  const R y = p[poff_[0]+i];
+	  r[i*roff_[0]] = (R)1.0;
+	  r[i*roff_[0]+1] = x;
+	  r[i*roff_[0]+2] = y;
+	  r[i*roff_[0]+3] = x*x;
+	  r[i*roff_[0]+4] = y*x;
+	  r[i*roff_[0]+5] = y*y;
+	  r[i*roff_[0]+6] = r[i*roff_[0]+3]*x;
+	  r[i*roff_[0]+7] = r[i*roff_[0]+3]*y;
+	  r[i*roff_[0]+8] = r[i*roff_[0]+5]*x;
+	  r[i*roff_[0]+9] = r[i*roff_[0]+5]*y;
+	}
+    }
+  else if (degree[0]==4)
+    {
+      for (i=0;i<n[0];++i)
+	{
+	  const R x 	= p[i];
+	  const R y 	= p[poff_[0]+i];
+	  r[i*roff_[0]] 	= (R)1.0;
+	  r[i*roff_[0]+1] 	= x;
+	  r[i*roff_[0]+2] 	= y;
+	  r[i*roff_[0]+3] 	= x*x;
+	  r[i*roff_[0]+4] 	= y*x;
+	  r[i*roff_[0]+5] 	= y*y;
+	  r[i*roff_[0]+6] 	= r[i*roff_[0]+3]*x;
+	  r[i*roff_[0]+7] 	= r[i*roff_[0]+3]*y;
+	  r[i*roff_[0]+8] 	= r[i*roff_[0]+5]*x;
+	  r[i*roff_[0]+9] 	= r[i*roff_[0]+5]*y;
+	  r[i*roff_[0]+10] 	= r[i*roff_[0]+6]*x;
+	  r[i*roff_[0]+11] 	= r[i*roff_[0]+6]*y;
+	  r[i*roff_[0]+12] 	= r[i*roff_[0]+3]*r[i*roff_[0]+5];
+	  r[i*roff_[0]+13] 	= r[i*roff_[0]+9]*x;
+	  r[i*roff_[0]+14] 	= r[i*roff_[0]+9]*y;
+	}
+    }
+  else
+    {
+      for (i=0;i<n[0];++i)
+	{
+	  const R x 		= p[i];
+	  const R y 		= p[poff_[0]+i];
+	  r[i*roff_[0]] 	= (R)1.0;
+	  r[i*roff_[0]+1] 	= x;
+	  r[i*roff_[0]+2] 	= y;
+	  r[i*roff_[0]+3] 	= x*x;
+	  r[i*roff_[0]+4] 	= y*x;
+	  r[i*roff_[0]+5] 	= y*y;
+	  r[i*roff_[0]+6] 	= r[i*roff_[0]+3]*x;
+	  r[i*roff_[0]+7] 	= r[i*roff_[0]+3]*y;
+	  r[i*roff_[0]+8] 	= r[i*roff_[0]+5]*x;
+	  r[i*roff_[0]+9] 	= r[i*roff_[0]+5]*y;
+	  r[i*roff_[0]+10] 	= r[i*roff_[0]+6]*x;
+	  r[i*roff_[0]+11] 	= r[i*roff_[0]+6]*y;
+	  r[i*roff_[0]+12] 	= r[i*roff_[0]+3]*r[i*roff_[0]+5];
+	  r[i*roff_[0]+13] 	= r[i*roff_[0]+9]*x;
+	  r[i*roff_[0]+14] 	= r[i*roff_[0]+9]*y;
+	}
+      for (k=5;k<=degree[0];++k)
+	for (q = (k*(k+1))/((I)2),j=0;j<=k;++j)
+	  for (i=0;i<n[0];++i)
+	    r[i*roff_[0]+q+j] = nsPOW(p[i],((R)k-j)) * nsPOW(p[poff_[0]+i],((R)j));    
+    }
+}
+
+
+
+void mkS_canonic_tetra(cst_mpsint 	degree,
+			     cst_mpsint 	n,
+			     mpsreal 		r,
+			     cst_mpsint 	roff_,
+			     cst_mpsreal 	p,
+			     cst_mpsint 	poff_,
+			     mpsreal 		rwork,
+			     cst_mpsint 	rwork_n,
+			     mpsint 		err_)
+{
+  nsINT i;
+  err_[0] = (nsINT)0;
+  if (degree[0]==0)
+    {
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]] = (nsREAL)1.0;
+    }
+  else if (degree[0]==1)
+    {
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]] = (nsREAL)1.0;
+      nsblas_dcopy(n,(nsREAL*)&p[0],&__vmps_blas_negal1,&r[1],roff_);
+      nsblas_dcopy(n,(nsREAL*)&p[poff_[0]],&__vmps_blas_negal1,&r[2],roff_);
+      nsblas_dcopy(n,(nsREAL*)&p[2*poff_[0]],&__vmps_blas_negal1,&r[3],roff_);      
+    }
+  else if (degree[0]==2)
+    {
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]] = (nsREAL)1.0;
+      nsblas_dcopy(n,(nsREAL*)&p[0],&__vmps_blas_negal1,&r[1],roff_);
+      nsblas_dcopy(n,(nsREAL*)&p[poff_[0]],&__vmps_blas_negal1,&r[2],roff_);
+      nsblas_dcopy(n,(nsREAL*)&p[2*poff_[0]],&__vmps_blas_negal1,&r[3],roff_);            
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+4] = p[i]*p[i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+5] = p[i]*p[poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+6] = p[i]*p[2*poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+7] = p[poff_[0]+i]*p[poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+8] = p[poff_[0]+i]*p[2*poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+9] = p[2*poff_[0]+i]*p[2*poff_[0]+i];
+    }
+  else  if (degree[0]==3)
+    {
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]] = (nsREAL)1.0;
+      nsblas_dcopy(n,(nsREAL*)&p[0],&__vmps_blas_negal1,&r[1],roff_);
+      nsblas_dcopy(n,(nsREAL*)&p[poff_[0]],&__vmps_blas_negal1,&r[2],roff_);
+      nsblas_dcopy(n,(nsREAL*)&p[2*poff_[0]],&__vmps_blas_negal1,&r[3],roff_);            
+
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+4] = p[i]*p[i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+5] = p[i]*p[poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+6] = p[i]*p[2*poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+7] = p[poff_[0]+i]*p[poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+8] = p[poff_[0]+i]*p[2*poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+9] = p[2*poff_[0]+i]*p[2*poff_[0]+i];
+
+      for (i=0;i<n[0];++i)
+	{
+	  double r = p[i];
+	  double s = p[poff_[0]+i];
+	  double t = p[2*poff_[0]+i];
+	  
+	  r[i*roff_[0]+4] = r*r;
+	  r[i*roff_[0]+5] = r*s;
+	  r[i*roff_[0]+6] = r*t;
+	  r[i*roff_[0]+7] = s*s;
+	  r[i*roff_[0]+8] = s*t;
+	  r[i*roff_[0]+9] = t*t;
+	  
+	  for (i=0;i<n[0];++i)
+	    r[i*roff_[0]+10] = p[i]*p[i]*p[i];
+	}
+      
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+10] = p[i]*p[i]*p[i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+11] = p[i]*p[poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+12] = p[i]*p[2*poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+13] = p[poff_[0]+i]*p[poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+14] = p[poff_[0]+i]*p[2*poff_[0]+i];
+      for (i=0;i<n[0];++i)
+	r[i*roff_[0]+15] = p[2*poff_[0]+i]*p[2*poff_[0]+i];
+
+      
+    }
+}
+
+
+//
+// TEMPLATE DEFINITION
+//
+template<typename T>
+wmesh_status_t
+wfe_shape_eval_edge_canonic
+(
+
+ wmesh_int_t 		rst_storage_,
+ wmesh_int_t 		rst_m_,
+ wmesh_int_t 		rst_n_,
+ const T * 		rst_v_,
+ wmesh_int_t 		rst_ld_,
+ 
+ wmesh_int_t storagee_,
+ wmesh_int_t me_,
+ wmesh_int_t ne_,
+ T* e_,
+ wmesh_int_t lde_,
+ size_t work_n_,
+ void* work_)
+{
+  
+  //  if (WFE::storage_t::is_invalid(storagec_)) return WFE::status_t::invalid_enum;
+  //  if (WFE::storage_t::is_invalid(storagee_)) return WFE::status_t::invalid_enum;
+  
+  WMESH_CHECK_POSITIVE(rst_m_);
+  WMESH_CHECK_POSITIVE(rst_n_);
+  WMESH_CHECK( rst_ld_ >= rst_m_ );
+  WMESH_CHECK_POINTER( rst_v_);
+
+  WMESH_CHECK_POSITIVE(me_);
+  WMESH_CHECK_POSITIVE(ne_);
+  WMESH_CHECK( lde_ >= me_ );
+  WMESH_CHECK_POINTER( e_);
+
+  bool e_is_block = (storagee_ == WCOMMON_STORAGE_BLOCK);
+  bool c_is_block = (storagec_ == WCOMMON_STORAGE_BLOCK);
+  
+  wmesh_int_t mc 	= c_is_block ? rst_m_ : rst_n_;
+  wmesh_int_t nc 	= c_is_block ? rst_n_ : rst_m_;
+  
+  wmesh_int_t me 	= e_is_block ? me_ : ne_;
+  wmesh_int_t ne 	= e_is_block ? ne_ : me_;
+
+  wmesh_int_t ndofs =  mc;
+  
+  WMESH_CHECK(nc == 1);
+  WMESH_CHECK(mc == me);
+  // WMESH_CHECK(ne == ndofs);
+
+  if (e_is_block)
+    {
+      for (wmesh_int_t i=0;i<mc;++i)
+	{
+	  e_[i] = 1.0;
+	}
+    }
+  else
+    {
+      for (wmesh_int_t i=0;i<mc;++i)
+	{
+	  e_[i * lde_] = 1.0;
+	}	
+    }
+  
+  wmesh_int_t option =
+    (c_is_block && e_is_block)    ? 1 :
+    (c_is_block && !e_is_block)   ? 2 :
+    (!c_is_block && e_is_block)   ? 3 :
+    (!c_is_block && !e_is_block)  ? 4 : 0;
+  
+  if (1 == ndofs)
+    {
+      return WFE::status_t::success;
+    }
+  
+  switch(option)
+    {
+    case 1: 
+      {    
+	for (wmesh_int_t i=0;i<mc;++i)
+	  {
+	    for (wmesh_int_t j=0;j<nc;++j)
+	      {
+		e_[ (1 + j) * lde_ + i] = rst_v_[j * rst_ld_ + i];
+	      }
+	  }
+	break;
+      }
+    case 2: 
+      {
+	for (wmesh_int_t i=0;i<mc;++i)
+	  {
+	    for (wmesh_int_t j=0;j<nc;++j)
+	      {
+		e_[i * lde_ + 1 + j] = = rst_v_[j * rst_ld_ + i];
+	      }
+	  }
+	break;
+      }
+    case 3: 
+      {    
+	for (wmesh_int_t i=0;i<mc;++i)
+	  {
+	    for (wmesh_int_t j=0;j<nc;++j)
+	      {
+		e_[ (1 + j) * lde_ + i] = rst_v_[i * ldc_ + j];
+	      }
+	  }
+	break;
+      }
+    case 4: 
+      {
+	for (wmesh_int_t i=0;i<mc;++i)
+	  {
+	    for (wmesh_int_t j=0;j<nc;++j)
+	      {
+		e_[i* lde_ + 1 + j] = rst_v_[i * ldc_ + j];
+	      }
+	  }
+	break;
+      }
+    }
+
+  if (dim == 1)
+    {
+      switch(option)
+	{
+	case 1:
+	case 3:
+	  {
+	
+	    for (wmesh_int_t d=2;d < ndofs;++d)
+	      {
+		for (wmesh_int_t i=0;i<mc;++i)
+		  {
+		    e_[lde_ * d + i] = e_[lde_ + i] * e_[lde_ * (d - 1) + i];
+		  }
+	      }
+	  
+	    break;
+	  }
+	
+	case 2:
+	case 4:
+	  {	  
+	    for (wmesh_int_t d=2;d < ndofs;++d)
+	      {
+		for (wmesh_int_t i=0;i<mc;++i)
+		  {
+		    e_[lde_ * i + d] = e_[lde_ * i + 1] * e_[lde_ * i + (d - 1)];
+		  }
+	      }
+	    break;
+	  }
+	}
+    }
+  else if (dim == 2)
+    {
+      for (wmesh_int_t i=0;i<n;++i)
+	{
+	}
+      
+      //
+      // 1 x y x*x y*x y*y
+      //
+      // 3 0
+      // 2 1
+      // 1 2
+      // 0 1
+      //
+      // 1 x y z x*x x*y x*z y*y y*z z*z      x*x*x x*x*y x*x*z x*y*y x*y*z x*z*z
+      //      
+      for (int i=3;i>=0;--i)
+	{
+	  for (int j=0;j<3-i;++j)
+	    {
+	      
+	    }
+	}
+      
+      // 3 0 0
+      // 2 1 0
+      // 2 0 1
+      // 1 2 0
+      // 1 1 1      
+      // 1 0 2      
+      // 0 3 0
+      // 0 2 1
+      // 0 1 2
+      // 0 0 3
+      //
+      switch(option)
+	{
+	case 1:
+	case 3:
+	  {	
+	    for (wmesh_int_t d=2;d < ndofs;++d)
+	      {
+		for (wmesh_int_t i=0;i<mc;++i)
+		  {
+		    e_[lde_ * d + i] = e_[lde_ + i] * e_[lde_ * (d - 1) + i];
+		  }
+	      }
+	  
+	    break;
+	  }
+	
+	case 2:
+	case 4:
+	  {	  
+	    for (wmesh_int_t d=2;d < ndofs;++d)
+	      {
+		for (wmesh_int_t i=0;i<mc;++i)
+		  {
+		    e_[lde_ * i + d] = e_[lde_ * i + 1] * e_[lde_ * i + (d - 1)];
+		  }
+	      }
+	    break;
+	  }
+	}
+    }
+  else  if (dim == 3)
+    {
+      switch(option)
+	{
+	case 1:
+	case 3:
+	  {
+	
+	    for (wmesh_int_t d=2;d < ndofs;++d)
+	      {
+		for (wmesh_int_t i=0;i<mc;++i)
+		  {
+		    e_[lde_ * d + i] = e_[lde_ + i] * e_[lde_ * (d - 1) + i];
+		  }
+	      }
+	  
+	    break;
+	  }
+	
+	case 2:
+	case 4:
+	  {	  
+	    for (wmesh_int_t d=2;d < ndofs;++d)
+	      {
+		for (wmesh_int_t i=0;i<mc;++i)
+		  {
+		    e_[lde_ * i + d] = e_[lde_ * i + 1] * e_[lde_ * i + (d - 1)];
+		  }
+	      }
+	    break;
+	  }
+	}
+
+    }
+    
+  return WFE::status_t::success;
+}
+
+
+
+
+template<typename T>
+wmesh_status_t  bms_shape_nodal_calculate(wmesh_int_t 			degree_,
+					  wmesh_int_t			rst_storage_,
+					  wmesh_int_t 			rst_m_,
+					  wmesh_int_t			rst_n_,
+					  const T * __restrict__ 	rst_x_,
+					  wmesh_int_t			rst_ld_)
+{
+  
+  WMESH_CHECK(WCOMMON_STORAGE_UNKNOWN != rst_storage_);
+  WMESH_CHECK(rst_m_ > 0);
+  WMESH_CHECK(rst_n_ > 0);
+  WMESH_CHECK(rst_ld_ >= rst_m_);
+  WMESH_CHECK_POINTER(rst_x_);
+
+  wmesh_int_t dim   = (WCOMMON_STORAGE_INTERLEAVE == rst_storage_) ? rst_m_ : rst_n_;
+  wmesh_int_t ndofs = (WCOMMON_STORAGE_INTERLEAVE == rst_storage_) ? rst_n_ : rst_m_;
+
+  size_t required_memory = wfe_shape_eval_memsize_edge_lagrange(self_,neval);
+  if (work_n_ < required_memory)
+    {
+      return WFE::status_t::invalid_work_size;
+    }
+
+  //
+  // Get the local dofs coordinates.
+  //
+  
+  T * __restrict__ vandermonde 	= (T*__restrict__)work_;
+  T * __restrict__ canonic	= vandermonde + ndofs * ndofs;  
+  wmesh_int_p ipiv		= (wmesh_int_p)(canonic + ndofs * neval);
+
+  
+
+  
+  const wmesh_int_t nshapes = ndofs;
+  WFE::status_t status =  wfe_shape_eval_edge_canonic(&shape_eval_edge_canonic,
+						      WFE::storage_t::block,
+						      nshapes,
+						      1,
+						      lc,
+						      nshapes,
+						      WFE::storage_t::interleave,
+						      nshapes,
+						      nshapes,
+						      vandermonde,
+						      nshapes,
+						      work_n,
+						      work);
+  
+
+  status =  wfe_shape_eval_edge_canonic(&shape_eval_edge_canonic,
+					storagec_,
+					mc_,
+					nc_,
+					c_,
+					ldc_,
+					WFE::storage_t::interleave,
+					nshapes,
+					neval,
+					canonic,
+					nshapes,
+					work_n,
+					work);
+  
+
+  wmesh_int_t info_lapack;
+  gesv(&nshapes,
+       &neval,
+       vandermonde,
+       &nshapes,
+       ipiv,
+       canonic,
+       &nshapes,						     
+       &info_lapack);
+  if (info_lapack!=0)
+    {
+      printf("info lapack error\n");
+    }
+  
+  //
+  // The result is interleave
+  //
+  if (storagee_ == WFE::storage_t::block)
+    {
+      //
+      // transpose
+      //
+      for (wmesh_int_t j=0;j<neval;++j)
+	{
+	  for (wmesh_int_t i=0;i<ndofs;++i)
+	    {
+	      e_[i*lde_ + j] = canonic[j * ndofs + i];
+	    }	    
+	}	
+    }
+  else
+    {
+      //
+      // Copy
+      //
+      for (wmesh_int_t j=0;j<neval;++j)
+	{
+	  for (wmesh_int_t i=0;i<ndofs;++i)
+	    {
+	      e_[j*lde_ + i] = canonic[j * ndofs + i];
+	    }	    
+	}
+    }
+  
+  return WMESH_STATUS_SUCCESS;
+
+};
+
+template <typename T>
+wmesh_status_t bms_basis_nodal(wmesh_int_t     		cell_type_,
+
+			       wmesh_int_t		rst_storage_,
+			       wmesh_int_t 		rst_m_,
+			       wmesh_int_t		rst_n_,
+			       const T * __restrict__ 	rst_x_,
+			       wmesh_int_t		rst_ld_,
+			       
+			       wmesh_int_t		eval_storage_,
+			       wmesh_int_t		eval_m_,
+			       wmesh_int_t 		eval_n_,
+			       T *__restrict__ 		eval_,
+			       wmesh_int_t 		eval_ld_)
+{     
+  static constexpr  T s_zero 	= ((T)0.0);
+  static constexpr  T s_one 	= ((T)1.0);
+  if (cell_type_==0)
+    {
+      for (wmesh_int_t k=0;k<coo_n_;++k)
+	{
+	  const auto
+	    r = coo_x_[coo_ld_*k+0],
+	    s = coo_x_[coo_ld_*k+1],
+	    t = coo_x_[coo_ld_*k+2];
+	  
+	  x_[k*x_ld_+0] = s_one - (r+s+t);
+	  x_[k*x_ld_+1] = r;
+	  x_[k*x_ld_+2] = s;
+	  x_[k*x_ld_+3] = t;
+	}		  
+    }
+  else if (cell_type_==1)
+    {
+      for (wmesh_int_t k=0;k<coo_n_;++k)
+	{
+	  const auto
+	    r = coo_x_[coo_ld_*k+0],
+	    s = coo_x_[coo_ld_*k+1],
+	      t = coo_x_[coo_ld_*k+2];
+	    
+	    const auto
+	      tscale = (t < s_one) ? s_one / (s_one - t) : s_zero,
+	      lts = s_one - t - s,
+	      ltr = s_one - t - r;
+	    
+	    x_[k*x_ld_+0] = ltr  * lts * tscale;
+	    x_[k*x_ld_+1] = r * lts * tscale;
+	    x_[k*x_ld_+2] = r * s * tscale;
+	    x_[k*x_ld_+3] = ltr * s  * tscale;
+	    x_[k*x_ld_+4] = t;
+	  }		  
+      }
+    else if (cell_type_==2)
+      {
+	for (wmesh_int_t k=0;k<coo_n_;++k)
+	  {
+	    const auto
+	      r = coo_x_[coo_ld_*k+0],
+	      s = coo_x_[coo_ld_*k+1],
+	      t = coo_x_[coo_ld_*k+2];
+	   
+	    const auto
+	      l = one - (r+s),
+	      lt = one - t;
+	    
+	    x_[k*x_ld_+0] = l * lt;
+	    x_[k*x_ld_+1] = r * lt;
+	    x_[k*x_ld_+2] = s * lt;
+	    x_[k*x_ld_+3] = l * t;
+	    x_[k*x_ld_+4] = r * t;
+	    x_[k*x_ld_+5] = s * t;
+	  }		  
+      }
+    else if (cell_type_==3)
+      {
+	for (wmesh_int_t k=0;k<coo_n_;++k)
+	  {
+	    const auto
+	      r = coo_x_[coo_ld_*k+0],
+	      s = coo_x_[coo_ld_*k+1],
+	      t = coo_x_[coo_ld_*k+2];
+
+	    const auto
+	      lr = one - r,
+	      ls = one - s,
+	      lt = one - t;
+	    
+	    x_[k*x_ld_+0] = lr* ls * lt;
+	    x_[k*x_ld_+1] = r * ls * lt;
+	    x_[k*x_ld_+2] = r *  s * lt;
+	    x_[k*x_ld_+3] = lr*  s * lt;
+	    x_[k*x_ld_+4] = lr* ls * t;
+	    x_[k*x_ld_+5] =  r* ls * t;
+	    x_[k*x_ld_+6] =  r*  s * t;
+	    x_[k*x_ld_+7] = lr*  s * t;
+	  }
+      }
+    else
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
+      }
+  return WMESH_STATUS_SUCCESS;
+}
+#endif
 using namespace std::chrono;
 extern "C"
 {
+
+  
+
+
+  wmesh_status_t bms_djacobip(wmesh_int_t 	alpha_,
+			      wmesh_int_t 	beta_,
+			      wmesh_int_t 	N_,
+			      wmesh_int_t 	x_n_,
+			      const double * 	x_,
+			      wmesh_int_t  	x_ld_,
+			      double * 		y_,
+			      wmesh_int_t  	y_ld_,
+			      wmesh_int_t 	work_n_,			   
+			      double * 		work_)
+  
+  {    
+    return bms_jacobip(alpha_,
+		       beta_,
+		       N_,
+		       x_n_,
+		       x_,
+		       x_ld_,
+		       y_,
+		       y_ld_,
+		       work_n_,			   
+		       work_);
+  }
+  
+#if 0
+  wmesh_status_t bms_basis_eval(wmesh_int_t     cell_type_,
+
+				wmesh_int_t	rst_storage_,
+				wmesh_int_t 	rst_m_,
+				wmesh_int_t 	rst_n_,
+				double * 	rst_x_,
+				wmesh_int_t 	rst_ld_,
+				
+				wmesh_int_t	eval_storage_,
+				wmesh_int_t 	eval_m_,
+				wmesh_int_t 	eval_n_,
+				double * 	eval_,
+				wmesh_int_t 	eval_ld_)
+  {     
+    static const double s_zero 	= ((double)0.0);
+    static const double s_one 	= ((double)1.0);
+    static constexpr double one = 1.0;
+    if (cell_type_==0)
+      {
+	for (wmesh_int_t k=0;k<coo_n_;++k)
+	  {
+	    const auto
+	      r = coo_x_[coo_ld_*k+0],
+	      s = coo_x_[coo_ld_*k+1],
+	      t = coo_x_[coo_ld_*k+2];
+	    
+	    x_[k*x_ld_+0] = s_one - (r+s+t);
+	    x_[k*x_ld_+1] = r;
+	    x_[k*x_ld_+2] = s;
+	    x_[k*x_ld_+3] = t;
+	  }		  
+      }
+    else if (cell_type_==1)
+      {
+	for (wmesh_int_t k=0;k<coo_n_;++k)
+	  {
+	    const auto
+	      r = coo_x_[coo_ld_*k+0],
+	      s = coo_x_[coo_ld_*k+1],
+	      t = coo_x_[coo_ld_*k+2];
+	    
+	    const auto
+	      tscale = (t < s_one) ? s_one / (s_one - t) : s_zero,
+	      lts = s_one - t - s,
+	      ltr = s_one - t - r;
+	    
+	    x_[k*x_ld_+0] = ltr  * lts * tscale;
+	    x_[k*x_ld_+1] = r * lts * tscale;
+	    x_[k*x_ld_+2] = r * s * tscale;
+	    x_[k*x_ld_+3] = ltr * s  * tscale;
+	    x_[k*x_ld_+4] = t;
+	  }		  
+      }
+    else if (cell_type_==2)
+      {
+	for (wmesh_int_t k=0;k<coo_n_;++k)
+	  {
+	    const auto
+	      r = coo_x_[coo_ld_*k+0],
+	      s = coo_x_[coo_ld_*k+1],
+	      t = coo_x_[coo_ld_*k+2];
+	   
+	    const auto
+	      l = one - (r+s),
+	      lt = one - t;
+	    
+	    x_[k*x_ld_+0] = l * lt;
+	    x_[k*x_ld_+1] = r * lt;
+	    x_[k*x_ld_+2] = s * lt;
+	    x_[k*x_ld_+3] = l * t;
+	    x_[k*x_ld_+4] = r * t;
+	    x_[k*x_ld_+5] = s * t;
+	  }		  
+      }
+    else if (cell_type_==3)
+      {
+	for (wmesh_int_t k=0;k<coo_n_;++k)
+	  {
+	    const auto
+	      r = coo_x_[coo_ld_*k+0],
+	      s = coo_x_[coo_ld_*k+1],
+	      t = coo_x_[coo_ld_*k+2];
+
+	    const auto
+	      lr = one - r,
+	      ls = one - s,
+	      lt = one - t;
+	    
+	    x_[k*x_ld_+0] = lr* ls * lt;
+	    x_[k*x_ld_+1] = r * ls * lt;
+	    x_[k*x_ld_+2] = r *  s * lt;
+	    x_[k*x_ld_+3] = lr*  s * lt;
+	    x_[k*x_ld_+4] = lr* ls * t;
+	    x_[k*x_ld_+5] =  r* ls * t;
+	    x_[k*x_ld_+6] =  r*  s * t;
+	    x_[k*x_ld_+7] = lr*  s * t;
+	  }
+      }
+    else
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
+      }
+    return WMESH_STATUS_SUCCESS;
+  }
+#endif
+
+
+  
   wmesh_status_t wmeshspace_sublinearmesh(wmeshspace_t * 	self_,
 					  wmesh_t ** 		mesh__)
   {    
@@ -27,8 +983,6 @@ extern "C"
     
     wmesh_int_t 	num_types;
     wmesh_int_t 	elements[4];
-    wmesh_int_t 	c2d_n_m[4];//  {4,5,6,8};
-    wmesh_int_t 	c2d_n_ptr[4+1];
     double * 		refevals[4] {};
     double 		cell_xyz[32];
     wmesh_int_t 	cell_xyz_ld = coo_m;

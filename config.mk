@@ -2,8 +2,8 @@ PLATFORM=Linux
 CC=gcc
 CPP=g++
 
-CFLAGS= -pipe -m64 -Wall -funroll-loops -funroll-all-loops -DWMESH_ILP64=1     -DWMESH_MKL_BLAS
-CPPFLAGS= -pipe -m64 -Wall   -funroll-loops -funroll-all-loops -DWMESH_ILP64=1 -DWMESH_MKL_BLAS
+CFLAGS= -pipe -m64 -Wall -Werror -funroll-loops -funroll-all-loops -DWMESH_ILP64=1     -DWMESH_MKL_BLAS
+CPPFLAGS= -pipe -m64 -Wall -Werror -funroll-loops -funroll-all-loops -DWMESH_ILP64=1 -DWMESH_MKL_BLAS
 CFLAGS+=-std=c99
 CPPFLAGS+=-std=c++11
 

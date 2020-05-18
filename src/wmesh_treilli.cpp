@@ -149,12 +149,112 @@ extern "C"
 			
 			work_n_rem,
 			work_rem);
-    
-    double idegree = ((double)1.0)/((double)degree_);
-    for (wmesh_int_t i=0;i<num_nodes*topodim;++i)
+
+    //
+    //
+    //
+    wmesh_int_t family = 0;
+    switch(family)
       {
-	coo[i] = icoo[i]*idegree;
+      case 0:
+	{
+	  double idegree = ((double)1.0)/((double)degree_);
+	  for (wmesh_int_t i=0;i<num_nodes*topodim;++i)
+	    {
+	      coo[i] = icoo[i]*idegree;
+	    }
+	  break;
+	}
+      default:
+	{
+	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ENUM);
+	}
       }
+    
+#if 0
+    //
+    //
+    //
+    wmesh_int_t family = WFE_NODES_FAMILY_LAGRANGE;
+    switch(family)
+      {
+      case WFE_NODES_FAMILY_LAGRANGE:
+	{
+	  double idegree = ((double)1.0)/((double)degree_);
+	  for (wmesh_int_t i=0;i<num_nodes*topodim;++i)
+	    {
+	      coo[i] = icoo[i]*idegree;
+	    }
+	  break;
+	}
+	
+      case WFE_NODES_FAMILY_LAGRANGEBUBBLE:
+	{
+	  WMESH_STATUS_CHECK(WMESH_STATUS_NOT_IMPLEMENTED);
+	  break;
+	}
+	
+      case WFE_NODES_FAMILY_GAUSSLOBATTO:
+	{
+	  //
+	  //
+	  //
+	  wmesh_nodes_icoo_gauss_lobatto(dim,
+					 num_nodes,
+					 icoo,
+					 dim);
+	  
+	  //
+	  //
+	  //
+	  const wmesh_int_t k_ld = (degree_+1)*(degree_+1);
+	  const wmesh_int_t i_ld = (degree_+1);
+	  wmesh_nodes_coo_gauss_lobatto(dim,
+					num_nodes,
+					coo,
+					dim,
+					dim,
+					num_nodes,
+					icoo,
+					dim);
+	  
+	  for (wmesh_int_t idx=0;idx<num_nodes;++idx)
+	    {
+	      for (wmesh_int_t idim=0;idim<topodim;++idim)
+		{
+		  ijk[idim] = icoo[topodim*idx + idim];
+		}
+	      if (topodim==3)
+		perm[NxN * ijk[2] + N * ijk[0] + ijk[1]] = 1+idx;
+	      else if (topodim==2)
+		perm[N * ijk[0] + ijk[1]] = 1+idx;
+	      else if (topodim==1)
+		perm[ijk[0]] = 1+idx;
+	    }
+
+	  //
+	  // 
+	  //	  
+	  double idegree = ((double)1.0)/((double)degree_);
+	  for (wmesh_int_t i=0;i<num_nodes*topodim;++i)
+	    {	      
+	      const wmesh_int_t ip	= icoo[3*l+0];
+	      const wmesh_int_t jp	= icoo[3*l+1];
+	      const wmesh_int_t kp	= icoo[3*l+2];
+	      wmesh_int_t id 		= perm[k_ld*kp+i_ld*ip+jp];
+
+	      //
+	      //
+	      //
+	      coo[i] 			= coogl[i]*idegree;
+	    }
+	  
+	  break;
+	}
+	
+      }
+#endif
+    
     
     status = wmesh_def(mesh__,
 		       topodim,

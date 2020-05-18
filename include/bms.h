@@ -223,6 +223,188 @@ extern "C"
    wmesh_int_p 		num_bfaces_);
 
 
+
+
+  
+  
+  //!
+  //! @brief Get the size of the needed buffer.
+  //!
+  wmesh_status_t
+  bms_c2e_buffer_size
+  (wmesh_int_t		c2n_size_,
+   const_wmesh_int_p	c2n_n_,
+   wmesh_int_p 		work_n_);
+  
+  //!
+  //! @brief Indexing of the edges.
+  //!
+  wmesh_status_t
+  bms_c2e
+  (wmesh_int_t		c2n_size_,   
+   const_wmesh_int_p 	c2n_ptr_,
+   const_wmesh_int_p 	c2n_m_,
+   const_wmesh_int_p 	c2n_n_,
+   const_wmesh_int_p 	c2n_v_,
+   const_wmesh_int_p 	c2n_ld_,
+				       
+   wmesh_int_t		c2e_size_,   
+   const_wmesh_int_p 	c2e_ptr_,
+   const_wmesh_int_p 	c2e_m_,
+   const_wmesh_int_p 	c2e_n_,
+   wmesh_int_p 		c2e_v_,
+   const_wmesh_int_p 	c2e_ld_,
+				       
+   wmesh_int_t		s_e2n_size_,   
+   const_wmesh_int_p	s_e2n_ptr_,
+   const_wmesh_int_p	s_e2n_m_,
+   const_wmesh_int_p	s_e2n_n_,
+   const_wmesh_int_p	s_e2n_v_,
+   const_wmesh_int_p	s_e2n_ld_,
+
+   wmesh_int_p		edge_idx_,
+   wmesh_int_t		work_n_,
+   wmesh_int_p		work_);
+
+
+  //!
+  //! @brief Get the size of the needed buffer.
+  //!
+  wmesh_status_t
+  bms_c2f_t_buffer_size
+  (wmesh_int_t		c2n_size_,
+   const_wmesh_int_p	c2n_n_,
+   wmesh_int_p 		work_n_);
+  
+  //!
+  //! @brief Indexing of the triangle faces.
+  //!
+  wmesh_status_t
+  bms_c2f_t
+  (wmesh_int_t		c2n_size_,   
+   const_wmesh_int_p 	c2n_ptr_,
+   const_wmesh_int_p 	c2n_m_,
+   const_wmesh_int_p 	c2n_n_,
+   const_wmesh_int_p 	c2n_v_,
+   const_wmesh_int_p 	c2n_ld_,
+						 
+   wmesh_int_t		c2t_size_,   
+   const_wmesh_int_p 	c2t_ptr_,
+   const_wmesh_int_p 	c2t_m_,
+   const_wmesh_int_p 	c2t_n_,
+   wmesh_int_p 		c2t_v_,
+   const_wmesh_int_p 	c2t_ld_,
+						 
+   wmesh_int_t		s_t2n_size_,   
+   const_wmesh_int_p	s_t2n_ptr_,
+   const_wmesh_int_p	s_t2n_m_,
+   const_wmesh_int_p	s_t2n_n_,
+   const_wmesh_int_p	s_t2n_v_,
+   const_wmesh_int_p	s_t2n_ld_,
+						 
+   wmesh_int_p		t_idx_,
+   wmesh_int_t		work_n_,
+   wmesh_int_p		work_);
+
+  
+  //!
+  //! @brief Get the size of the needed buffer.
+  //!
+  wmesh_status_t
+  bms_c2f_q_buffer_size
+  (wmesh_int_t			c2n_size_,
+   const_wmesh_int_p 		c2n_n_,						
+   wmesh_int_t*__restrict__ 	size_);
+  
+  //!
+  //! @brief Indexing of the quadrilateral faces.
+  //!
+  wmesh_status_t
+  bms_c2f_q
+  (wmesh_int_t		c2n_size_,
+   const_wmesh_int_p 	c2n_ptr_,
+   const_wmesh_int_p 	c2n_m_,
+   const_wmesh_int_p 	c2n_n_,
+   const_wmesh_int_p 	c2n_v_,
+   const_wmesh_int_p 	c2n_ld_,
+   
+   wmesh_int_t		c2q_size_,   
+   const_wmesh_int_p 	c2q_ptr_,
+   const_wmesh_int_p 	c2q_m_,
+   const_wmesh_int_p 	c2q_n_,
+   wmesh_int_p 		c2q_v_,
+   const_wmesh_int_p 	c2q_ld_,
+   
+   wmesh_int_t		s_q2n_size_,   
+   const_wmesh_int_p 	s_q2n_ptr_,
+   const_wmesh_int_p	s_q2n_m_,
+   const_wmesh_int_p	s_q2n_n_,
+   const_wmesh_int_p 	s_q2n_v_,
+   const_wmesh_int_p	s_q2n_ld_,
+						  
+   wmesh_int_p		quadrilateral_idx_,
+   wmesh_int_t		work_n_,
+   wmesh_int_p		work_);
+
+
+  
+  wmesh_status_t
+  bms_nodes_buffer_size(wmesh_int_t 	element_,
+			wmesh_int_t 	family_,
+			wmesh_int_t	degree_,
+			wmesh_int_p	work_n_);
+  
+  wmesh_status_t
+  bms_snodes(wmesh_int_t 	element_,
+	     wmesh_int_t 	family_,
+	     wmesh_int_t	degree_,
+	     wmesh_int_t	b_storage_,
+	     wmesh_int_t	b_m_,
+	     wmesh_int_t	b_n_,
+	     const_wmesh_int_p 	b_v_,
+	     wmesh_int_t	b_ld_,
+	     wmesh_int_t	c_storage_,
+	     wmesh_int_t	c_m_,
+	     wmesh_int_t	c_n_,
+	     float* 		c_v_,
+	     wmesh_int_t	c_ld_,
+	     wmesh_int_t	work_n_,
+	     float* 		work_);
+
+  wmesh_status_t
+  bms_dnodes(wmesh_int_t 	element_,
+	     wmesh_int_t 	family_,
+	     wmesh_int_t	degree_,
+	     wmesh_int_t	b_storage_,
+	     wmesh_int_t	b_m_,
+	     wmesh_int_t	b_n_,
+	     const_wmesh_int_p 	b_v_,
+	     wmesh_int_t	b_ld_,
+	     wmesh_int_t	c_storage_,
+	     wmesh_int_t	c_m_,
+	     wmesh_int_t	c_n_,
+	     double* 		c_v_,
+	     wmesh_int_t	c_ld_,
+	     wmesh_int_t	work_n_,
+	     double* 		work_);
+  
+
+  //
+  // Polynomials.
+  //
+  
+  wmesh_status_t bms_djacobip(wmesh_int_t 	alpha_,
+			      wmesh_int_t 	beta_,
+			      wmesh_int_t 	N_,
+			      wmesh_int_t 	x_n_,
+			      const double * 	x_,
+			      wmesh_int_t  	x_ld_,
+			      double * 		y_,
+			      wmesh_int_t  	y_ld_,
+			      wmesh_int_t 	work_n_,			   
+			      double * 		work_);
+  
+  
   //!
   //! @brief I/O
   //!
@@ -310,40 +492,130 @@ extern "C"
    const_wmesh_int_p  		nflags_,
    wmesh_int_t 			nflags_ld_);
 
-  
   wmesh_status_t
   bms_medit_close
   (int64_t		inm_);
   
 
-
   //!
   //! @brief Get the required size for the needed buffer.
   //!
-  wmesh_status_t bms_rmacro_buffer_size(wmesh_int_t 	element_,
-					wmesh_int_t 	degree_,
-					wmesh_int_p	work_n_,
-					wmesh_int_p	num_entities_);
-  wmesh_status_t bms_rmacro(    wmesh_int_t 		element_,
-				wmesh_int_t 		degree_,
-				wmesh_int_t 		num_nodes_,
-
-				wmesh_int_t 		c2n_size_,
-				const_wmesh_int_p	c2n_ptr_,
-				const_wmesh_int_p	c2n_m_,
-				const_wmesh_int_p	c2n_n_,
-				wmesh_int_p 		c2n_v_,
-				const_wmesh_int_p	c2n_ld_,
-				
-				wmesh_int_t 		icoo_m_,
-				wmesh_int_t 		icoo_n_,
-				wmesh_int_p 		icoo_v_,
-				wmesh_int_t 		icoo_ld_,
-				
-				wmesh_int_t		work_n_,
-				wmesh_int_p		work_);
-
+  wmesh_status_t
+  bms_rmacro_buffer_size
+  (wmesh_int_t 	element_,
+   wmesh_int_t 	degree_,
+   wmesh_int_p	work_n_,
+   wmesh_int_p	num_entities_);
   
+  wmesh_status_t
+  bms_rmacro
+  (wmesh_int_t 		element_,
+   wmesh_int_t 		degree_,
+   wmesh_int_t 		num_nodes_,
+       
+   wmesh_int_t 		c2n_size_,
+   const_wmesh_int_p	c2n_ptr_,
+   const_wmesh_int_p	c2n_m_,
+   const_wmesh_int_p	c2n_n_,
+   wmesh_int_p 		c2n_v_,
+   const_wmesh_int_p	c2n_ld_,
+				
+   wmesh_int_t 		icoo_m_,
+   wmesh_int_t 		icoo_n_,
+   wmesh_int_p 		icoo_v_,
+   wmesh_int_t 		icoo_ld_,
+				
+   wmesh_int_t		work_n_,
+   wmesh_int_p		work_);
+
+
+  wmesh_status_t bms_ordering_edge		(wmesh_int_t	degree_,
+						 wmesh_int_t	c_storage_,
+						 wmesh_int_t	c_m_,
+						 wmesh_int_t	c_n_,
+						 wmesh_int_p	c_v_,
+						 wmesh_int_t	c_ld_);
+  
+  wmesh_status_t bms_ordering_triangle		(wmesh_int_t 	degree_,
+						 wmesh_int_t 	c_storage_,
+						 wmesh_int_t	c_m_,
+						 wmesh_int_t	c_n_,
+						 wmesh_int_p 	c_v_,
+						 wmesh_int_t 	c_ld_,
+						 wmesh_int_t 	shift_);
+  
+  wmesh_status_t bms_ordering_quadrilateral	(wmesh_int_t 	degree_,
+						 wmesh_int_t 	c_storage_,
+						 wmesh_int_t	c_m_,
+						 wmesh_int_t	c_n_,
+						 wmesh_int_p 	c_v_,
+						 wmesh_int_t 	c_ld_,
+						 wmesh_int_t 	shift_);
+  
+  wmesh_status_t bms_ordering_face	(wmesh_int_t		element_,
+					 wmesh_int_t		degree_,
+					 wmesh_int_t		c_storage_,
+					 wmesh_int_t		c_m_,
+					 wmesh_int_t		c_n_,
+					 wmesh_int_p		c_v_,
+					 wmesh_int_t		c_ld_);
+  
+  wmesh_status_t bms_ordering_volume	(wmesh_int_t		element_,
+					 wmesh_int_t		degree_,
+					 
+					 wmesh_int_t		c_storage_,
+					 wmesh_int_t		c_m_,
+					 wmesh_int_t		c_n_,
+					 wmesh_int_p		c_v_,
+					 wmesh_int_t		c_ld_,
+					 
+					 wmesh_int_t 		s_e2n_m_,
+					 wmesh_int_t 		s_e2n_n_,
+					 const_wmesh_int_p 	s_e2n_v_,
+					 wmesh_int_t 		s_e2n_ld_,
+				     
+					 wmesh_int_t 		s_t2n_m_,
+					 wmesh_int_t 		s_t2n_n_,
+					 const_wmesh_int_p 	s_t2n_v_,
+					 wmesh_int_t 		s_t2n_ld_,
+				     
+					 wmesh_int_t 		s_q2n_m_,
+					 wmesh_int_t 		s_q2n_n_,
+					 const_wmesh_int_p 	s_q2n_v_,
+					 wmesh_int_t 		s_q2n_ld_);
+
+  wmesh_status_t bms_ordering(wmesh_int_t		element_,
+			      wmesh_int_t		degree_,
+			      wmesh_int_t		c_storage_,
+			      wmesh_int_t		c_m_,
+			      wmesh_int_t		c_n_,
+			      wmesh_int_p		c_v_,
+			      wmesh_int_t		c_ld_);
+
+
+
+  wmesh_status_t bms_s_e2n(wmesh_int_t 	dim_,
+			   wmesh_int_p	s_size_,
+			   wmesh_int_p	s_ptr_,
+			   wmesh_int_p	s_m_,
+			   wmesh_int_p	s_n_,
+			   wmesh_int_p	s_v_,
+			   wmesh_int_p	s_ld_);
+
+  wmesh_status_t bms_s_q2n(wmesh_int_p	s_size_,
+			   wmesh_int_p	s_ptr_,
+			   wmesh_int_p	s_m_,
+			   wmesh_int_p	s_n_,
+			   wmesh_int_p	s_v_,
+			   wmesh_int_p	s_ld_);
+  
+  wmesh_status_t bms_s_t2n(wmesh_int_p	s_size_,
+			   wmesh_int_p	s_ptr_,
+			   wmesh_int_p	s_m_,
+			   wmesh_int_p	s_n_,
+			   wmesh_int_p	s_v_,
+			   wmesh_int_p	s_ld_);
+    
 #ifdef __cplusplus
 }
 #endif

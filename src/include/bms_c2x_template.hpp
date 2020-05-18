@@ -186,7 +186,7 @@ wmesh_status_t bms_c2x_calculate(wmesh_int_t 				cell_type_,
 	      
 	      wmesh_int_t last_half_non_matched = start_half;
 
-	      wmesh_int_t x2n_dna[2];
+	      wmesh_int_t x2n_dna[2];	      
 	      if (next_half < 0 && next_half != default_hash)
 		{
 
@@ -194,72 +194,72 @@ wmesh_status_t bms_c2x_calculate(wmesh_int_t 				cell_type_,
 		  // Compute hash value.
 		  //
 		  bms_compare<XTYPE>::hash_dna(x2n,
-						  x2n_dna);
-		}
+					       x2n_dna);
 	      
-	      while (next_half < 0 && next_half != default_hash)
-		{		    
-		  wmesh_int_t tested_x2n_dna[4];
-		  wmesh_int_t tested_cell_type 	= GenericEncoding<wmesh_int_t,2>::Low(-next_half);
-		  wmesh_int_t tested_idx 	= GenericEncoding<wmesh_int_t,2>::Up(-next_half)-1;
+		  while (next_half < 0 && next_half != default_hash)
+		    {		    
+		      wmesh_int_t tested_x2n_dna[4];
+		      wmesh_int_t tested_cell_type 	= GenericEncoding<wmesh_int_t,2>::Low(-next_half);
+		      wmesh_int_t tested_idx 	= GenericEncoding<wmesh_int_t,2>::Up(-next_half)-1;
 		  
-		  half_decod(tested_idx,
-			     c2x_ld_[tested_cell_type],
-			     &tested_cell_idx,
-			     &tested_t_lidx);
+		      half_decod(tested_idx,
+				 c2x_ld_[tested_cell_type],
+				 &tested_cell_idx,
+				 &tested_t_lidx);
 		  
-		  //
-		  // We need to extract the next half xuadrilateral before we overwrite it.
-		  //
-		  const wmesh_int_t next_halfBackup = next_half;
-		  next_half = c2x_v_[c2x_ptr_[tested_cell_type] + tested_idx];
+		      //
+		      // We need to extract the next half xuadrilateral before we overwrite it.
+		      //
+		      const wmesh_int_t next_halfBackup = next_half;
+		      next_half = c2x_v_[c2x_ptr_[tested_cell_type] + tested_idx];
 
-		  get_c2n(c2n_m_[tested_cell_type],
-			  c2n_v_+c2n_ptr_[tested_cell_type],
-			  c2n_ld_[tested_cell_type],
-			  tested_cell_idx,
-			  tested_c2n);
+		      get_c2n(c2n_m_[tested_cell_type],
+			      c2n_v_+c2n_ptr_[tested_cell_type],
+			      c2n_ld_[tested_cell_type],
+			      tested_cell_idx,
+			      tested_c2n);
 		  
-		  get_x2n(tested_c2n,
-			  tested_t_lidx,
-			  tested_x2n,
-			  s_x2n_m_[tested_cell_type],
-			  s_x2n_n_[tested_cell_type],
-			  s_x2n_v_ + s_x2n_ptr_[tested_cell_type],
-			  s_x2n_ld_[tested_cell_type]);
+		      get_x2n(tested_c2n,
+			      tested_t_lidx,
+			      tested_x2n,
+			      s_x2n_m_[tested_cell_type],
+			      s_x2n_n_[tested_cell_type],
+			      s_x2n_v_ + s_x2n_ptr_[tested_cell_type],
+			      s_x2n_ld_[tested_cell_type]);
 		  
-		  bms_compare<XTYPE>::hash_dna(tested_x2n,
-					       tested_x2n_dna);
+		      bms_compare<XTYPE>::hash_dna(tested_x2n,
+						   tested_x2n_dna);
 		  
-		  bool are_same = bms_compare<XTYPE>::comp_dna(x2n_dna,
-							       tested_x2n_dna);
-		  if (are_same)
-		    {
-		      //
-		      // We need to rebuild the linked list.
-		      //
-		      if (last_half_non_matched != start_half)
+		      bool are_same = bms_compare<XTYPE>::comp_dna(x2n_dna,
+								   tested_x2n_dna);
+		      if (are_same)
 			{
-			  const wmesh_int_t shift = c2x_ptr_[GenericEncoding<wmesh_int_t,2>::Low(-last_half_non_matched)];
-			  c2x_v_[ shift + ( GenericEncoding<wmesh_int_t,2>::Up(-last_half_non_matched) - 1) ] = next_half;
-			}
+			  //
+			  // We need to rebuild the linked list.
+			  //
+			  if (last_half_non_matched != start_half)
+			    {
+			      const wmesh_int_t shift = c2x_ptr_[GenericEncoding<wmesh_int_t,2>::Low(-last_half_non_matched)];
+			      c2x_v_[ shift + ( GenericEncoding<wmesh_int_t,2>::Up(-last_half_non_matched) - 1) ] = next_half;
+			    }
 		      
-		      const wmesh_int_t at = c2x_ld_[tested_cell_type] * tested_cell_idx + tested_t_lidx;
-		      c2x_v_[c2x_ptr_[tested_cell_type] + at] = t_idx-1;
+			  const wmesh_int_t at = c2x_ld_[tested_cell_type] * tested_cell_idx + tested_t_lidx;
+			  c2x_v_[c2x_ptr_[tested_cell_type] + at] = t_idx-1;
 
-		      if (match_mode_)
+			  if (match_mode_)
+			    {
+			      break;
+			    }
+			}
+		      else
 			{
-			  break;
+			  //
+			  // this is NOT the same.
+			  //
+			  last_half_non_matched = next_halfBackup;
 			}
 		    }
-		  else
-		    {
-		      //
-		      // this is NOT the same.
-		      //
-		      last_half_non_matched = next_halfBackup;
-		    }
-		}		
+		}
 	    }
 	}
     }

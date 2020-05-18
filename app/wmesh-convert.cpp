@@ -39,6 +39,10 @@ int main(int 		argc,
   // Get verbose.
   //
   bool verbose = cmd.option("-v");
+  if (verbose)
+    {
+      cmd.disp_header(stdout);
+    }    
 
   //
   // Get output filename.
