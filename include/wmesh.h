@@ -17,6 +17,7 @@ extern "C"
 
   
   wmesh_status_t wmeshspace_def			(wmeshspace_t ** 	self__,
+						 wmesh_int_t 		family_,
 						 wmesh_int_t 		degree_,
 						 wmesh_t * 		mesh_);
   
@@ -52,9 +53,10 @@ extern "C"
   //!
   //! @brief Kill the mesh.
   //!
-  wmesh_status_t wmesh_rmacro_def(wmesh_t ** 	mesh__,
-				  wmesh_int_t 	element_,
-				  wmesh_int_t 	degree_);
+  wmesh_status_t wmesh_rmacro_def		(wmesh_t ** 	mesh__,
+						 wmesh_int_t 	element_,
+						 wmesh_int_t 	family_,
+						 wmesh_int_t 	degree_);
 
   wmesh_status_t wmesh_refine			(wmesh_t*    self_,			      
 						 wmesh_int_t degree,

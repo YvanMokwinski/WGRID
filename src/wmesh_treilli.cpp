@@ -3,7 +3,8 @@
 #include "wmesh.hpp"
 #include "bms.h"
 #include "wmesh_utils.hpp"
-
+#include "wmesh_nodes_family.h"
+#include "bms.hpp"
 extern "C"
 {  
   wmesh_status_t wmesh_rmacro_buffer_size(wmesh_int_t 	element_,
@@ -22,6 +23,7 @@ extern "C"
   
   wmesh_status_t wmesh_rmacro_def(wmesh_t ** 	mesh__,
 				  wmesh_int_t 	element_,
+				  wmesh_int_t 	nodes_family_,
 				  wmesh_int_t 	degree_)
   {
     
@@ -81,14 +83,16 @@ extern "C"
     wmesh_int_t c2n_ld[4];
     wmesh_int_p c2n_v;    
 
-        
-    double * coo = (double*)malloc(sizeof(double) * num_nodes * topodim);
-    if (!coo)
+    wmesh_int_t c_storage = WMESH_STORAGE_INTERLEAVE;
+    wmesh_int_t c_n = num_nodes;
+    wmesh_int_t c_m = topodim;
+    wmesh_int_t c_ld = c_m;
+    double * c_v = (double*)malloc(sizeof(double) * c_m * c_n);
+    if (!c_v)
       {
 	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);	
       }
 
-    
     //
     // Get the number of nodes per element.
     //
@@ -124,12 +128,15 @@ extern "C"
 	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
       }	    
 
-    wmesh_int_t icoo_n 		= num_nodes * topodim;
-    wmesh_int_t work_n_rem 	= work_n - icoo_n;
-    
-    wmesh_int_t icoo_ld		= topodim;
-    wmesh_int_p icoo 		= work;
-    wmesh_int_p work_rem 	= work + icoo_n;
+    wmesh_int_t current_work_n	= num_nodes * topodim;
+    wmesh_int_t work_n_rem 	= work_n - current_work_n;
+    wmesh_int_p work_rem 	= work + current_work_n;
+
+    wmesh_int_t b_storage 	= WMESH_STORAGE_INTERLEAVE;
+    wmesh_int_t b_m 		= topodim;
+    wmesh_int_t b_n 		= num_nodes;
+    wmesh_int_p b_v 		= work;
+    wmesh_int_t b_ld 		= b_m; 
     
     status = bms_rmacro(element_,
 			degree_,
@@ -141,22 +148,45 @@ extern "C"
 			c2n_n,
 			c2n_v,
 			c2n_ld,
-			
-			topodim,
-			num_nodes,
-			icoo,
-			icoo_ld,
+
+			b_m,
+			b_n,
+			b_v,
+			b_ld,
 			
 			work_n_rem,
 			work_rem);
+    
+    WMESH_STATUS_CHECK(status);
 
-    //
-    //
-    //
-    wmesh_int_t family = 0;
-    switch(family)
+    wmesh_int_t rwork_n = 2048;
+    double* rwork = (double*)malloc(sizeof(double)*rwork_n);
+
+    status = bms_dnodes(element_,
+			nodes_family_,
+			degree_,
+			
+			b_storage,
+			b_m,
+			b_n,
+			b_v,
+			b_ld,
+			
+			c_storage,
+			c_m,
+			c_n,
+			c_v,
+			c_ld,
+			
+			rwork_n,
+			rwork);
+    WMESH_STATUS_CHECK(status);
+    free(rwork);
+#if 0
+    
+    switch(nodes_family_)
       {
-      case 0:
+      case WMESH_NODES_FAMILY_LAGRANGE:
 	{
 	  double idegree = ((double)1.0)/((double)degree_);
 	  for (wmesh_int_t i=0;i<num_nodes*topodim;++i)
@@ -170,8 +200,7 @@ extern "C"
 	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ENUM);
 	}
       }
-    
-#if 0
+
     //
     //
     //
@@ -255,7 +284,6 @@ extern "C"
       }
 #endif
     
-    
     status = wmesh_def(mesh__,
 		       topodim,
 		       c2n_size,
@@ -264,10 +292,50 @@ extern "C"
 		       c2n_n,
 		       c2n_v,
 		       c2n_ld,
-		       topodim,
-		       num_nodes,
-		       coo,
-		       topodim);
+		       c_m,
+		       c_n,
+		       c_v,
+		       c_ld);
+
+    if (topodim==3)
+      {
+	for (wmesh_int_t k=0;k<mesh__[0]->m_c_c.m_size;++k)
+	  {
+	    for (wmesh_int_t j=0;j<mesh__[0]->m_c_c.m_n[k];++j)
+	      {
+		mesh__[0]->m_c_c.m_data[mesh__[0]->m_c_c.m_ptr[k] + mesh__[0]->m_c_c.m_ld[k]*j+0] = 4+k;
+	      }
+	  }
+      }
+    else if (topodim==2)
+      {
+	for (wmesh_int_t k=0;k<mesh__[0]->m_c_c.m_size;++k)
+	  {
+	    for (wmesh_int_t j=0;j<mesh__[0]->m_c_c.m_n[k];++j)
+	      {
+ 		mesh__[0]->m_c_c.m_data[mesh__[0]->m_c_c.m_ptr[k] + mesh__[0]->m_c_c.m_ld[k]*j+0] = 2+k;
+	      }
+	  }
+      }
+    else if (topodim==1)
+      {
+	for (wmesh_int_t k=0;k<mesh__[0]->m_c_c.m_size;++k)
+	  {
+	    for (wmesh_int_t j=0;j<mesh__[0]->m_c_c.m_n[k];++j)
+	      {
+			mesh__[0]->m_c_c.m_data[mesh__[0]->m_c_c.m_ptr[k] + mesh__[0]->m_c_c.m_ld[k]*j+0] = 1+k;
+	      }
+	  }
+      }
+    
+    status = bms_ordering_topoid(element_,
+				 degree_,
+				 mesh__[0]->m_n_c.n,
+				 mesh__[0]->m_n_c.v,
+				 mesh__[0]->m_n_c.ld);
+    WMESH_STATUS_CHECK( status );
+  
+
     
     return WMESH_STATUS_SUCCESS;
   };

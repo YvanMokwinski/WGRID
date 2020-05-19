@@ -332,6 +332,7 @@ extern "C"
   }
     
   wmesh_status_t wmeshspace_def(wmeshspace_t ** self__,
+				wmesh_int_t 	nodes_family_,
 				wmesh_int_t 	degree_,
 				wmesh_t * 	mesh_)
   {
@@ -352,6 +353,7 @@ extern "C"
 	  {
 	    status = wmesh_rmacro_def(&self_->m_patterns[l],
 				      4+l,
+				      nodes_family_,
 				      degree_);
 	    WMESH_STATUS_CHECK(status);
 	  }
@@ -362,6 +364,7 @@ extern "C"
 	  {
 	    status = wmesh_rmacro_def(&self_->m_patterns[l],
 				      2+l,
+				      nodes_family_,
 				      degree_);
 	    WMESH_STATUS_CHECK(status);
 	  }
@@ -371,14 +374,9 @@ extern "C"
 	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_CONFIG);
       }
     WMESH_STATUS_CHECK(status);
-
-
     
     wmesh_int_t topodim = mesh_->m_topology_dimension;
-
-
     wmesh_int_t degree = degree_;
-
     
     if (topodim==3)
       {

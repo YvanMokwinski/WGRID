@@ -107,7 +107,7 @@ int main(int 		argc,
 	}      
       return WMESH_STATUS_INVALID_ARGUMENT;
     }
-
+  
   wmesh_int_t dim;
   status = wmesh_element2topodim(element,
 				 &dim);
@@ -141,6 +141,7 @@ int main(int 		argc,
   double * c    = (double*)malloc(sizeof(double) * c_n * c_ld);  
   wmesh_int_t work_n = 1024;
   double * work = (double*)malloc(sizeof(double) * work_n);  
+
   status = bms_dnodes(element,
 		      nodes_family,
 		      degree,
@@ -153,10 +154,19 @@ int main(int 		argc,
 		      c_m,
 		      c_n,
 		      c,
-		      c_ld,
+		      c_ld,		      
 		      work_n,
 		      work);
   free(work);  
+  WMESH_STATUS_CHECK( status );
+
+  wmesh_int_p dof_types = (wmesh_int_p)malloc(sizeof(wmesh_int_t) * c_n);
+ 
+  status = bms_ordering_topoid(element,
+				     degree,
+				     c_n,
+				     dof_types,
+				     1);
   WMESH_STATUS_CHECK( status );
 
   //
@@ -178,7 +188,7 @@ int main(int 		argc,
 	{
 	  std::cout << " 0";
 	}
-      std::cout << " 0" << std::endl;
+      std::cout << " " << dof_types[j] << std::endl;
     }
   std::cout << " End" << std::endl;  
   return 0;

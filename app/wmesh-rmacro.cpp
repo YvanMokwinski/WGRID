@@ -854,8 +854,8 @@ wmesh_nodes_t nodes;
   wmesh_t* mesh;
   status = wmesh_rmacro_def(&mesh,
 			    element,
-			    degree,
-			    nodes_family);
+			    nodes_family,
+			    degree);
   WMESH_STATUS_CHECK(status);
   
   //

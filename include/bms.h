@@ -584,6 +584,21 @@ extern "C"
 					 const_wmesh_int_p 	s_q2n_v_,
 					 wmesh_int_t 		s_q2n_ld_);
 
+  wmesh_status_t bms_ordering_topoid(wmesh_int_t		element_,
+				     wmesh_int_t		degree_,
+				     wmesh_int_t		topoid_n_,
+				     wmesh_int_p		topoid_v_,
+				     wmesh_int_t		topoid_inc_);
+
+  wmesh_status_t bms_ordering_flat(wmesh_int_t		degree_,
+				   wmesh_int_t		b_storage_,
+				   wmesh_int_t		b_m_,
+				   wmesh_int_t		b_n_,
+				   const_wmesh_int_p	b_v_,
+				   wmesh_int_t		b_ld_,
+				   wmesh_int_p		flat_);
+
+  
   wmesh_status_t bms_ordering(wmesh_int_t		element_,
 			      wmesh_int_t		degree_,
 			      wmesh_int_t		c_storage_,

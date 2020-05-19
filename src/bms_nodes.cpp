@@ -58,6 +58,17 @@ void solve<float>(solve_params(float))
 	&info);
 }
 
+static inline wmesh_int_t flat3d(wmesh_int_t n_,wmesh_int_t l[])
+{
+  return l[0] + l[1]*n_ + l[2]*n_*n_;
+}
+
+
+static inline wmesh_int_t flat2d(wmesh_int_t n_,wmesh_int_t l[])
+{
+  return l[0] + l[1]*n_;
+}
+
 
 
 template<typename T>
@@ -394,6 +405,343 @@ wmesh_status_t wmesh_nodes_legendre(wmesh_int_t 		nspl_,
   return WMESH_STATUS_SUCCESS;
 }
 
+
+
+template<typename T>
+wmesh_status_t
+bms_nodes_pyramid(wmesh_int_t		degree_,
+
+		  wmesh_int_t		c_storage_,
+		  wmesh_int_t		c_m_,
+		  wmesh_int_t		c_n_,
+		  T*__restrict__ 	c_v_,
+		  wmesh_int_t		c_ld_,
+
+		  wmesh_int_t 		level2_,
+		  T 			shift_,
+		  T 			scal_,
+		  wmesh_int_p 		perm_,
+		  wmesh_int_t		work_n_,
+		  T* __restrict__ 	work_)  
+{
+  
+  static const wmesh_int_t s_rst_m  = 3;
+  static const wmesh_int_t s_rst_n  = 5;
+  static const wmesh_int_t s_rst_ld = s_rst_m; 
+  static const wmesh_int_t s_rst_v[] =  { 0,0,0,
+					  1,0,0,
+					  1,1,0,
+					  0,1,0,
+					  0,0,1};
+  
+  static const wmesh_int_t s_t2n[] = {0,1,4,
+				      1,2,4, 
+				      2,3,4, 
+				      3,0,4};
+
+  static const wmesh_int_t s_q2n[] = {0,3,2,1};
+  
+  static const wmesh_int_t s_e2n[] = {0,1,
+				      1,2,
+				      2,3,
+				      3,0,
+				      0,4,
+				      1,4,
+				      2,4,
+				      3,4};
+
+  static const wmesh_int_t s_t2n_diag[] = {0,2,4};
+  static const wmesh_int_t s_tet2n[] = {1,2,0,4,
+					3,0,2,4};
+
+  wmesh_int_t 		r_n_ 	= (degree_+1);
+
+  
+
+  wmesh_int_t r_inc_ = 1;
+  //  const wmesh_int_t   	n 	= (degree_>0)? degree_-1 : 0;
+  wmesh_status_t status;
+  T r_v_[512],w[512];
+  T one = 1.0;
+  T two	= 2.0;
+  T three= 3.0;
+  T six	= 6.0;
+  T eight= 8.0;
+  
+  T z_v_[512];
+  z_v_[0]  = -1.0;
+  status =  wmesh_nodes_legendre(degree_-1,
+				 WMESH_STORAGE_INTERLEAVE,
+				 z_v_+1,
+				 1, 
+				 w,
+				 1,
+				 work_n_,
+				 work_);
+  z_v_[degree_]  = 1.0; 
+  WMESH_STATUS_CHECK(status);
+  
+    wmesh_int_t ijk[3];
+    wmesh_int_t degree = degree_;
+  wmesh_int_t level = 0;
+  {
+    
+    //      shift_ = (z_v_[level] + one) / two;
+    //      scal_ = (z_v_[degree_ - level] + one) / two - shift_;
+    
+    std::cout << "degree " << degree << std::endl;
+
+    {
+      r_v_[0]  = -1.0;
+      status =  wmesh_nodes_legendre(degree-1,
+				     WMESH_STORAGE_INTERLEAVE,
+				     r_v_+1,
+				     1, 
+				       w,
+				       1,
+				       work_n_,
+				       work_);
+	r_v_[degree_]  = 1.0; 
+	WMESH_STATUS_CHECK(status);
+      }
+      
+      //
+      // nodes
+      //
+      for (wmesh_int_t j=0;j<s_rst_n;++j)
+	{
+	  
+	  for (wmesh_int_t i=0;i<s_rst_m;++i)
+	    {
+	      ijk[i] = level + s_rst_v[s_rst_ld*j+i] * degree;
+	    }
+	  
+	  wmesh_int_t idx = perm_[flat3d(r_n_,ijk)]-1;
+	  for (wmesh_int_t i=0;i<s_rst_m;++i)
+	    {
+	      c_v_[c_ld_*idx+i] = shift_ + s_rst_v[s_rst_ld*j+i] * scal_;
+	    }
+	}
+      
+      
+      //
+      // edges
+      //
+      for (wmesh_int_t ie=0;ie<8;++ie)
+	{
+	  wmesh_int_t node_0 = s_e2n[ie*2+0];
+	  wmesh_int_t node_1 = s_e2n[ie*2+1];
+	  std::cout << "node " << node_0  << " " << node_1 << std::endl;
+	  for (wmesh_int_t i=1;i<degree;++i)
+	    {
+	      T l0 	= one - (r_v_[ r_inc_* i ] + one) / two;
+	      T l1 	= (r_v_[ r_inc_* i ] + one) / two;
+	      
+	      wmesh_int_t s0 = degree - i;
+	      wmesh_int_t s1 = i;
+	      
+	      for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
+		{
+		  ijk[idim] = level + s0 * s_rst_v[s_rst_ld*node_0 + idim] + s1 * s_rst_v[s_rst_ld*node_1 + idim];
+		}
+	      
+	      wmesh_int_t idx = perm_[flat3d(r_n_,ijk)]-1;
+	      
+	      for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
+		{
+		  c_v_[c_ld_*idx+idim] = shift_ + (l0 * s_rst_v[s_rst_ld*node_0 + idim] + l1 * s_rst_v[s_rst_ld*node_1 + idim]) * scal_;
+		  //	      std::cout << "idim  " << idim << " = " << c_v_[c_ld_*idx+idim] << std::endl;
+		}	  
+	    }
+	}
+      
+      for (wmesh_int_t it=0;it<4;++it)
+	{
+	  wmesh_int_t node_0 = s_t2n[it*3+0];
+	  wmesh_int_t node_1 = s_t2n[it*3+1];
+	  wmesh_int_t node_2 = s_t2n[it*3+2];
+	  
+	  for (wmesh_int_t i=1;i<degree_;++i)
+	    {
+	      const auto ri = r_v_[i];
+	      for (wmesh_int_t j=1;j<degree_-i;++j)
+		{
+		  const auto rj	= r_v_[j*r_inc_];
+		  const auto rl	= r_v_[(degree_ - i - j)*r_inc_];
+
+		  T l1  = ( two * (one + ri) - (rj + rl) ) / six;
+		  T l2  = ( two * (one + rj) - (ri + rl) ) / six;
+		  T l0  = one - l1 - l2;
+
+		  wmesh_int_t s1  = i;
+		  wmesh_int_t s2  = j;
+		  wmesh_int_t s0  = degree_-s1 - s2;
+		  for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
+		    ijk[idim] = level +
+		      s0 * s_rst_v[s_rst_ld*node_0 + idim] +
+		      s1 * s_rst_v[s_rst_ld*node_1 + idim] +
+		      s2 * s_rst_v[s_rst_ld*node_2 + idim];
+	      
+		  wmesh_int_t idx = perm_[flat3d(r_n_,ijk)]-1;	  
+		  for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
+		    c_v_[idx * c_ld_ + idim] =
+		      shift_ + 
+		      ( l0 * s_rst_v[s_rst_ld*node_0 + idim] +
+			l1 * s_rst_v[s_rst_ld*node_1 + idim] +
+			l2 * s_rst_v[s_rst_ld*node_2 + idim] ) * scal_;
+		}
+	    }
+	}
+  
+
+      for (wmesh_int_t iq=0;iq<1;++iq)
+	{
+	  wmesh_int_t node_0 = s_q2n[iq*4+0];
+	  wmesh_int_t node_1 = s_q2n[iq*4+1];
+	  wmesh_int_t node_2 = s_q2n[iq*4+2];
+	  wmesh_int_t node_3 = s_q2n[iq*4+3];
+	
+	  for (wmesh_int_t i=1;i<degree_;++i)
+	    {
+	      const auto ri = (r_v_[i*r_inc_]+one)/two;
+	      for (wmesh_int_t j=1;j<degree_;++j)
+		{
+		  const auto rj = (r_v_[j*r_inc_]+one) / two;
+	       
+		  T l0  = (one - ri)*(one - rj);
+		  T l1   = ri*(one - rj);
+		  T l2  = ri*rj;
+		  T l3  = (one - ri)*rj;
+#if 0	     
+		  wmesh_int_t s0  = (degree_ - i)*(degree_ - j);
+		  wmesh_int_t s1  = i*(degree_ - j);
+		  wmesh_int_t s2  = i * j ;
+		  wmesh_int_t s3  = (degree_ - i) * j;
+#endif
+		  ijk[0] = j;
+		  ijk[1] = i;
+		  ijk[2] = 0;
+#if 0
+		  for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
+		    ijk[idim] = level + 
+		      s0 * s_rst_v[s_rst_ld*node_0 + idim] +
+		      s1 * s_rst_v[s_rst_ld*node_1 + idim] +
+		      s2 * s_rst_v[s_rst_ld*node_2 + idim] + 
+		      s3 * s_rst_v[s_rst_ld*node_3 + idim];
+#endif	      
+		  std::cout << "ddddddddddddddddd " << ijk[0] << " " << ijk[1] << " " << ijk[2] << std::endl;
+		  wmesh_int_t idx = perm_[flat3d(r_n_,ijk)]-1;
+	      
+		  for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
+		    c_v_[idx * c_ld_ + idim] =
+		      shift_ + (l0 * s_rst_v[s_rst_ld*node_0 + idim] +
+				l1 * s_rst_v[s_rst_ld*node_1 + idim] +
+				l2 * s_rst_v[s_rst_ld*node_2 + idim] + 
+				l3 * s_rst_v[s_rst_ld*node_3 + idim]) * scal_;		
+		}
+	    }
+	}	
+    }
+
+
+  {      
+    wmesh_int_t node_0 = s_t2n_diag[3*0+0];
+    wmesh_int_t node_1 = s_t2n_diag[3*0+1];
+    wmesh_int_t node_2 = s_t2n_diag[3*0+2];
+    
+    for (wmesh_int_t i=1;i<degree_;++i)
+      {
+	const auto ri = r_v_[i];
+	for (wmesh_int_t j=1;j<degree_-i;++j)
+	  {
+	    const auto rj	= r_v_[j*r_inc_];
+	    const auto rl	= r_v_[(degree_ - i - j)*r_inc_];
+	    
+	    T l1  = ( two * (one + ri) - (rj + rl) ) / six;
+	    T l2  = ( two * (one + rj) - (ri + rl) ) / six;
+	    T l0  = one - l1 - l2;
+	      
+	    wmesh_int_t s1  = i;
+	    wmesh_int_t s2  = j;
+	    wmesh_int_t s0  = degree_-s1 - s2;
+	    for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
+	      ijk[idim] = level +
+		s0 * s_rst_v[s_rst_ld*node_0 + idim] +
+		s1 * s_rst_v[s_rst_ld*node_1 + idim] +
+		s2 * s_rst_v[s_rst_ld*node_2 + idim];
+	      
+	    wmesh_int_t idx = perm_[flat3d(r_n_,ijk)]-1;	  
+	    for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
+	      c_v_[idx * c_ld_ + idim] =
+		shift_ + 
+		( l0 * s_rst_v[s_rst_ld*node_0 + idim] +
+		  l1 * s_rst_v[s_rst_ld*node_1 + idim] +
+		  l2 * s_rst_v[s_rst_ld*node_2 + idim] ) * scal_;
+	  }
+      }
+  }
+
+  
+  for (wmesh_int_t itet=0;itet<2;++itet)
+    {
+      
+      wmesh_int_t node_0 = s_tet2n[4*itet+0];
+      wmesh_int_t node_1 = s_tet2n[4*itet+1];
+      wmesh_int_t node_2 = s_tet2n[4*itet+2];
+      wmesh_int_t node_3 = s_tet2n[4*itet+3];      
+      for (wmesh_int_t i=1;i<degree_;++i)
+	{
+	  const auto ri = r_v_[i*r_inc_];
+	  for (wmesh_int_t j=1;j<degree_-i;++j)
+	    {
+	      const auto rj	= r_v_[j*r_inc_];	      
+	      for (wmesh_int_t k=1;k<degree_-i-j;++k)
+		{
+		  const auto rk	= r_v_[k*r_inc_];
+		  
+		  const auto rl	= r_v_[(degree_ - i - j - k)*r_inc_];
+		  
+		  T l1  = ( two + three * ri - (rj + rk + rl) ) / eight;
+		  T l2  = ( two + three * rj - (ri + rk + rl) ) / eight;
+		  T l3  = ( two + three * rk - (ri + rj + rl) ) / eight;
+		  T l0  = one - l1 - l2 - l3;
+
+		  wmesh_int_t s1  = i;
+		  wmesh_int_t s2  = j;
+		  wmesh_int_t s3  = k;
+		  wmesh_int_t s0  = degree_ - s1 - s2 - s3;
+		  for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
+		    ijk[idim] = level +
+		      s0 * s_rst_v[s_rst_ld*node_0 + idim] +
+		      s1 * s_rst_v[s_rst_ld*node_1 + idim] +
+		      s2 * s_rst_v[s_rst_ld*node_2 + idim] +
+		      s3 * s_rst_v[s_rst_ld*node_3 + idim];
+
+		  wmesh_int_t idx = perm_[flat3d(r_n_,ijk)]-1;	  
+		  for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
+		    {
+		      c_v_[idx * c_ld_ + idim] =
+			shift_ + 
+			( l0 * s_rst_v[s_rst_ld*node_0 + idim] +
+			  l1 * s_rst_v[s_rst_ld*node_1 + idim] +
+			  l2 * s_rst_v[s_rst_ld*node_2 + idim] +
+			  l3 * s_rst_v[s_rst_ld*node_3 + idim]) * scal_;
+		      std:: cout << " " << idim <<  " " << c_v_[idx * c_ld_ + idim] << std::endl;
+
+		    }
+
+		}
+	    }
+	}
+      
+    }
+      
+
+  
+  
+  return WMESH_STATUS_SUCCESS;
+}
+
 template<typename T>
 wmesh_status_t
 bms_nodes(wmesh_int_t 		element_,
@@ -510,31 +858,64 @@ bms_nodes(wmesh_int_t 		element_,
 	  }
        	std::cout << "---- " << std::endl;
 #endif
-	wmesh_int_t iwork_n = n1d*n1d*n1d;
-	wmesh_int_p iwork = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*iwork_n);
-	status = bms_transform(element_,
-			       n1d,
-			       p1d,
-			       1,
-			       
-			       b_storage_,
-			       b_m_,
-			       b_n_,
-			       b_v_,
-			       b_ld_,
-			       
-			       c_storage_,
-			       c_m_,
-			       c_n_,
-			       c_v_,					 
-			       c_ld_,
-			       
-			       iwork_n,
-			       iwork);
-	
+	if (element_ == WMESH_ELEMENT_PYRAMID)
+	  {
+	    wmesh_int_p perm = (wmesh_int_p)malloc(n1d*n1d*n1d*sizeof(wmesh_int_t));
+	    
+	    status =  bms_ordering_flat(degree_,
+					b_storage_,
+					b_m_,
+					b_n_,
+					b_v_,
+					b_ld_,
+					perm);
+	    WMESH_STATUS_CHECK(status);
 
-	free(iwork);
-	WMESH_STATUS_CHECK(status);
+	    wmesh_int_t level = 0;
+	    T shift = 0.0;
+	    T scal  = 1.0;
+	    status  = bms_nodes_pyramid(degree_,			      			      
+					c_storage_,
+					c_m_,
+				       c_n_,
+				       c_v_,
+				       c_ld_,				       
+				       level,
+				       shift,
+				       scal,
+				       perm,
+				       work_n_,
+				       work_);
+	    WMESH_STATUS_CHECK(status);
+	  }
+	else
+	  {
+
+	    wmesh_int_t iwork_n = n1d*n1d*n1d;
+	    wmesh_int_p iwork = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*iwork_n);
+	    status = bms_transform(element_,
+				   n1d,
+				   p1d,
+				   1,
+			       
+				   b_storage_,
+				   b_m_,
+				   b_n_,
+				   b_v_,
+				   b_ld_,
+			       
+				   c_storage_,
+				   c_m_,
+				   c_n_,
+				   c_v_,					 
+				   c_ld_,
+			       
+				   iwork_n,
+				   iwork);	
+	    free(iwork);
+	    WMESH_STATUS_CHECK(status);
+
+	  }
 #if 0
 	for (wmesh_int_t j=0;j<c_n_;++j)
 	  {

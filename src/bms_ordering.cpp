@@ -3,6 +3,48 @@
 #include "wmesh-enums.h"
 extern "C"
 {
+  static wmesh_status_t bms_ordering_topoid_calculate(wmesh_int_t 	num_dofs_0_,
+						      wmesh_int_t 	num_dofs_1_,
+						      wmesh_int_t 	num_dofs_2t_,
+						      wmesh_int_t 	num_dofs_2q_,
+						      wmesh_int_t 	num_dofs_3_,
+						      wmesh_int_t 	topoid_n_,
+						      wmesh_int_p 	topoid_v_,
+						      wmesh_int_t 	topoid_inc_)
+    
+  {
+    for (wmesh_int_t i=0;i<num_dofs_0_;++i)
+      {
+	topoid_v_[0] = 0;
+	topoid_v_ += topoid_inc_;
+      }
+
+    for (wmesh_int_t i=0;i<num_dofs_1_;++i)
+      {
+	topoid_v_[0] = 1;
+	topoid_v_ += topoid_inc_;
+      }
+    
+    for (wmesh_int_t i=0;i<num_dofs_2t_;++i)
+      {
+	topoid_v_[0] = 2;
+	topoid_v_ += topoid_inc_;
+      }
+    
+    for (wmesh_int_t i=0;i<num_dofs_2q_;++i)
+      {
+	topoid_v_[0] = 2;
+	topoid_v_ += topoid_inc_;
+      }
+    
+    for (wmesh_int_t i=0;i<num_dofs_3_;++i)
+      {
+	topoid_v_[0] = 3;
+	topoid_v_ += topoid_inc_;
+      }
+    
+    return WMESH_STATUS_SUCCESS;
+  }
 
   wmesh_status_t bms_ordering_triangle(wmesh_int_t 	degree_,
 				       wmesh_int_t 	c_storage_,
@@ -83,6 +125,7 @@ extern "C"
     return WMESH_STATUS_SUCCESS;
   }
 
+  
 
   wmesh_status_t bms_ordering_quadrilateral(wmesh_int_t 	degree_,
 					    wmesh_int_t 	c_storage_,
@@ -1187,7 +1230,190 @@ extern "C"
       }  
     WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ENUM);
   };	  
- 
+
+
+  
+  wmesh_status_t bms_ordering_topoid(wmesh_int_t		element_,
+				     wmesh_int_t		degree_,
+				     wmesh_int_t		topoid_n_,
+				     wmesh_int_p		topoid_v_,
+				     wmesh_int_t		topoid_inc_)
+  {
+    
+
+    WMESH_CHECK_POINTER(topoid_v_);
+
+    wmesh_int_t num_dofs_0 = 0;
+    wmesh_int_t num_dofs_1 = 0;
+    wmesh_int_t num_dofs_2t = 0;
+    wmesh_int_t num_dofs_2q = 0;
+    wmesh_int_t num_dofs_3 = 0;
+    
+    switch(element_)
+      {      
+      case WMESH_ELEMENT_TRIANGLE:
+	{
+	  const wmesh_int_t num_nodes = 3;
+	  const wmesh_int_t num_edges = 3;
+    
+	  num_dofs_0  = num_nodes;
+	  num_dofs_1  = ((degree_>0) ? degree_-1 : 0) * num_edges;
+	  num_dofs_2t = ((degree_>0) ? ((degree_-1)*(degree_-2))/2 : 1);
+	  num_dofs_2q = 0;
+	  num_dofs_3  = 0;
+	  return  bms_ordering_topoid_calculate(num_dofs_0,
+						num_dofs_1,
+						num_dofs_2t,
+						num_dofs_2q,
+						num_dofs_3,
+						topoid_n_,
+						topoid_v_,
+						topoid_inc_);
+
+	}
+      case WMESH_ELEMENT_QUADRILATERAL:
+	{
+	  const wmesh_int_t num_nodes = 4;
+	  const wmesh_int_t num_edges = 4;
+    
+	  num_dofs_0  = num_nodes;
+	  num_dofs_1  = ((degree_>0) ? degree_-1 : 0)*num_edges;
+	  num_dofs_2t = 0;
+	  num_dofs_2q = ( (degree_>0) ? ((degree_-1)*(degree_-1)) : 1);
+	  num_dofs_3  = 0;
+	  return  bms_ordering_topoid_calculate(num_dofs_0,
+						num_dofs_1,
+						num_dofs_2t,
+						num_dofs_2q,
+						num_dofs_3,
+						topoid_n_,
+						topoid_v_,
+						topoid_inc_);
+
+	}
+
+      case WMESH_ELEMENT_EDGE:
+	{
+	  const wmesh_int_t num_nodes = 2;
+	  const wmesh_int_t num_edges = 1;
+	  
+	  num_dofs_0  = num_nodes;
+	  num_dofs_1  = ( (degree_>0) ? degree_-1 : 1) * num_edges;
+	  num_dofs_2t = 0;
+	  num_dofs_2q = 0;
+	  num_dofs_3  = 0;
+	  return  bms_ordering_topoid_calculate(num_dofs_0,
+						num_dofs_1,
+						num_dofs_2t,
+						num_dofs_2q,
+						num_dofs_3,
+						topoid_n_,
+						topoid_v_,
+						topoid_inc_);
+
+	}
+	
+      case WMESH_ELEMENT_TETRAHEDRON:
+	{
+	  const wmesh_int_t num_nodes = 4;
+	  const wmesh_int_t num_edges = 6;
+	  const wmesh_int_t num_triangles = 4;
+
+    
+	  num_dofs_0  = num_nodes;
+	  num_dofs_1  = num_edges * (degree_-1);
+	  num_dofs_2t = num_triangles * (( (degree_-1) * (degree_-2) ) / 2);
+	  num_dofs_2q = 0;
+	  num_dofs_3  = (degree_>0) ? ( (degree_-1)*(degree_-2)*(degree_-3) ) / 6 : 1;
+	  return  bms_ordering_topoid_calculate(num_dofs_0,
+						num_dofs_1,
+						num_dofs_2t,
+						num_dofs_2q,
+						num_dofs_3,
+						topoid_n_,
+						topoid_v_,
+						topoid_inc_);
+
+	}
+      case WMESH_ELEMENT_PYRAMID:
+	{
+	  const wmesh_int_t num_nodes = 5;
+	  const wmesh_int_t num_edges = 8;
+	  const wmesh_int_t num_triangles = 4;
+	  const wmesh_int_t num_quadrilaterals = 1;
+    
+	  num_dofs_0  = num_nodes;
+	  num_dofs_1  = num_edges * (degree_-1);
+	  num_dofs_2t = num_triangles * (( (degree_-1) * (degree_-2) ) / 2);
+	  num_dofs_2q = num_quadrilaterals * (( (degree_-1) * (degree_-1) ));
+	  num_dofs_3  = (degree_>0) ? ( (degree_-2)*(degree_-1)*(2*degree_-3) ) / 6 : 1;
+
+	  return  bms_ordering_topoid_calculate(num_dofs_0,
+						num_dofs_1,
+						num_dofs_2t,
+						num_dofs_2q,
+						num_dofs_3,
+						topoid_n_,
+						topoid_v_,
+						topoid_inc_);
+
+	}
+      case WMESH_ELEMENT_WEDGE:
+	{
+	  const wmesh_int_t num_nodes = 6;
+	  const wmesh_int_t num_edges = 9;
+	  const wmesh_int_t num_triangles = 2;
+	  const wmesh_int_t num_quadrilaterals = 3;
+    
+	  num_dofs_0  = num_nodes;
+	  num_dofs_1  = num_edges * (degree_-1);
+	  num_dofs_2t = num_triangles * (( (degree_-1) * (degree_-2) ) / 2);
+	  num_dofs_2q = num_quadrilaterals * (( (degree_-1) * (degree_-1) ));
+	  num_dofs_3  = (degree_>0) ? ( (degree_-1)*(degree_-1)*(degree_-2) ) / 2 : 1;
+
+	  return  bms_ordering_topoid_calculate(num_dofs_0,
+						num_dofs_1,
+						num_dofs_2t,
+						num_dofs_2q,
+						num_dofs_3,
+						topoid_n_,
+						topoid_v_,
+						topoid_inc_);
+
+	}
+      case WMESH_ELEMENT_HEXAHEDRON:
+	{
+	  const wmesh_int_t num_nodes = 8;
+	  const wmesh_int_t num_edges = 12;
+
+	  const wmesh_int_t num_quadrilaterals = 6;
+    
+	  num_dofs_0  = num_nodes;
+	  num_dofs_1  = num_edges * (degree_-1);
+	  num_dofs_2t = 0;
+	  num_dofs_2q = num_quadrilaterals * (( (degree_-1) * (degree_-1) ));
+	  num_dofs_3  = (degree_>0) ? ( (degree_-1)*(degree_-1)*(degree_-1) ) : 1;
+	  return  bms_ordering_topoid_calculate(num_dofs_0,
+						num_dofs_1,
+						num_dofs_2t,
+						num_dofs_2q,
+						num_dofs_3,
+						topoid_n_,
+						topoid_v_,
+						topoid_inc_);
+
+	}
+	
+      case WMESH_ELEMENT_NODE:
+	{
+	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_CONFIG);
+	  break;
+	}
+
+      }  
+    WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ENUM);
+  };	  
+
 
   
 };
