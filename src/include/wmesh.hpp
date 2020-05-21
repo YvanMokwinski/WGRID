@@ -36,11 +36,9 @@ extern "C"
   wmesh_status_t wmesh_build_s_e2n		(wmesh_int_sparsemat_t* 	self_,
 						 wmesh_int_t 			dim_);
   
-  wmesh_status_t wmesh_build_s_t2n		(wmesh_int_sparsemat_t* 	self_,
-						 wmesh_int_t 			dim_);
+  wmesh_status_t wmesh_build_s_t2n		(wmesh_int_sparsemat_t* 	self_);
   
-  wmesh_status_t wmesh_build_s_q2n		(wmesh_int_sparsemat_t* 	self_,
-						 wmesh_int_t 			dim_);
+  wmesh_status_t wmesh_build_s_q2n		(wmesh_int_sparsemat_t* 	self_);
 
   struct wmesh_t
   {
@@ -234,6 +232,17 @@ static  inline void get_q2n(const_wmesh_int_p		c2n_,
 	x2n_[i] = c2n_[s_x2n_v_[s_x2n_ld_ * x_lidx_ + i]];
       }
   };
+
+
+  wmesh_int_t 		wmesh_read_medit	(wmesh_t**self_,
+						 bool is_binary_,
+						 const char * filename,
+						 ...);
+  
+  wmesh_status_t 	wmesh_write_medit	(const wmesh_t* 	self_,
+						 bool  			is_binary_,
+						 const char * 		filename_,
+						 ...);
 
   struct wmeshspace_t
   {

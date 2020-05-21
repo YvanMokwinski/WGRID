@@ -1,5 +1,7 @@
 #pragma once
 
+#include "bms.h"
+
 template<typename T>
 wmesh_status_t bms_transform(wmesh_int_t 		element_,
 			     wmesh_int_t 		r_n_,					 

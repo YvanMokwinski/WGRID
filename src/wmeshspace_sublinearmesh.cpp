@@ -6,7 +6,7 @@
 #include "wmesh-types.hpp"
 #include "wmesh-math.hpp"
 #include "wmesh-status.h"
-#include "wmesh_medit.hpp"
+#include "wmesh.hpp"
 #include "wmesh_utils.hpp"
 #include "wmesh-blas.h"
 #include "bms.h"
@@ -73,7 +73,7 @@ wmesh_status_t bms_jacobip(wmesh_int_t 	alpha_,
   
   // Initial values P_0(x) and P_1(x)
   const T gamma0 = Pow2<T>(ab1)*Gamma<T>(a1)*Gamma<T>(b1)/Factorial<T>(ab1);
-  const T y0 = r1 / wmesh_math<T>::sqrt(gamma0);
+  const T y0 = r1 / wmesh_math<T>::xsqrt(gamma0);
   for (wmesh_int_t i=0;i<x_n_;++i)
     {
       y_[i * y_ld_] = y0;
@@ -89,21 +89,22 @@ wmesh_status_t bms_jacobip(wmesh_int_t 	alpha_,
       gamma1 = (a1)*(b1)/(ab+3.0)*gamma0;
       for (wmesh_int_t i=0;i<x_n_;++i)
 	{      
-	  y_[i*y_ld_] = ((ab+r2)*x_[i]/r2 + (alpha_-beta_)/r2) / sqrt(gamma1);
+	  y_[i*y_ld_] = ((ab+r2)*x_[i]/r2 + (alpha_-beta_)/r2) / wmesh_math<T>::xsqrt(gamma1);
 	}
       if (N_>1)
 	{
 	  BLAS_dcopy(&x_n_,y_,&y_ld_,pi,&n1);
 	  //  auto pi = y;
 	  // Repeat value in recurrence.
-	  aold = r2 / (r2+ab) * sqrt((a1)*(b1)/(ab+r3));	  
+	  aold = r2 / (r2+ab) * wmesh_math<T>::xsqrt((a1)*(b1)/(ab+r3));	  
 	  // Forward recurrence using the symmetry of the recurrence.
 	  for (int i=1; i<=(N_-1); ++i)
 	    {
 	      h1 = r2*i+ab;
-	      anew = r2/(h1+r2)*sqrt((i+1)*(i+ab1)*(i+a1)*(i+b1)/(h1+r1)/(h1+r3));
+	      T ri = static_cast<T>(i);
+	      anew = r2/(h1+r2)*wmesh_math<T>::xsqrt( (ri+1.0)*(ri+ab1)*(ri+a1)*(ri+b1)/(h1+r1)/(h1+r3));
 	      bnew = -(alpha_*alpha_-beta_*beta_) / ( h1*(h1+r2) );
-
+	      
 	      for (wmesh_int_t i=0;i<x_n_;++i)
 		{
 		  y_[i*y_ld_] = (x_[i]-bnew) * pi[i] - aold*pii[i];

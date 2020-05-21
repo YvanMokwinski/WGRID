@@ -4,8 +4,8 @@
 #include "bms.h"
 #include "wmesh-blas.h"
 #include "wmesh-math.hpp"
-#include "wmesh_nodes.h"
-#include "wmesh_nodes.h"
+//#include "wmesh_nodes.h"
+//#include "wmesh_nodes.h"
 
 #include <iostream>
 void usage(const char * appname_)
@@ -564,7 +564,7 @@ wmesh_status_t bms_vandermonde(wmesh_int_t 		element_,
 int main(int 		argc,
 	 char** 	argv)
 {
-#ifdef EXPERIMENT
+#if 1
 
 #if 0
 wmesh_nodes_t nodes;
@@ -609,8 +609,6 @@ wmesh_nodes_t nodes;
   exit(1);
 #endif  
 
-
-
   wmesh_int_t d = 1;
   wmesh_int_t ndofs = ((d+1)*(d+2))/2;
   
@@ -623,7 +621,7 @@ wmesh_nodes_t nodes;
   
   double *vandermonde_dofs = (double*)malloc(sizeof(double)*ndofs * ndofs);
   double *vandermonde_eval = (double*)malloc(sizeof(double)*ndofs * ev_n);
-  printf("yo\n");  
+  printf("yo1\n");  
   {
     // (VV^-1)^{-T}  VE^T
     double rs[]{0,0,1,0,0,1};
@@ -643,7 +641,7 @@ wmesh_nodes_t nodes;
 			     work);
     free(work);
   }
-  printf("yo\n");  
+  printf("yo2\n");  
   
   {
     wmesh_int_t work_n 	= 20 * ev_n;
@@ -852,7 +850,7 @@ wmesh_nodes_t nodes;
   // Read the mesh.
   //
   wmesh_t* mesh;
-  status = wmesh_rmacro_def(&mesh,
+  status = wmesh_def_rmacro(&mesh,
 			    element,
 			    nodes_family,
 			    degree);

@@ -2,7 +2,6 @@
 #include <string.h>
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
-#include "wmesh_medit.hpp"
 #include <chrono>
 #include <iostream>
 #include "wmesh.hpp"
@@ -52,8 +51,9 @@ extern "C"
     
   };
 
-  wmesh_status_t wmesh_extrusion	(wmesh_t ** 			self__,
+  wmesh_status_t wmesh_def_extrusion	(wmesh_t ** 			self__,
 					 const wmesh_t * 		surface_,
+
 					 wmesh_int_t 			nz_,
 					 wmesh_int_t 			ndz_,
 					 const double*__restrict__	dz_,

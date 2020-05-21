@@ -88,3 +88,27 @@ inline wmesh_status_t bms_template_elements_num_entities(wmesh_int_t 		num_eleme
     }
   return WMESH_STATUS_SUCCESS;
 }
+
+template <wmesh_int_t ELEMENT> inline wmesh_int_t bms_template_ndofs(wmesh_int_t d_){ return -1; }
+
+template <> inline wmesh_int_t bms_template_ndofs<WMESH_ELEMENT_EDGE>(wmesh_int_t d_) { return d_+1; }
+template <> inline wmesh_int_t bms_template_ndofs<WMESH_ELEMENT_TRIANGLE>(wmesh_int_t d_) { return ((d_+1)*(d_+2)) / 2; }
+template <> inline wmesh_int_t bms_template_ndofs<WMESH_ELEMENT_QUADRILATERAL>(wmesh_int_t d_) { return ((d_+1)*(d_+1)); }
+template <> inline wmesh_int_t bms_template_ndofs<WMESH_ELEMENT_TETRAHEDRON>(wmesh_int_t d_) { return ((d_+1)*(d_+2)*(d_+3)) / 6; }
+template <> inline wmesh_int_t bms_template_ndofs<WMESH_ELEMENT_PYRAMID>(wmesh_int_t d_) { return ((d_+2)*(d_+1)*(2*d_+3)) / 6; }
+template <> inline wmesh_int_t bms_template_ndofs<WMESH_ELEMENT_WEDGE>(wmesh_int_t d_) { return ((d_+1)*(d_+1)*(d_+2)) / 2; }
+template <> inline wmesh_int_t bms_template_ndofs<WMESH_ELEMENT_HEXAHEDRON>(wmesh_int_t d_) { return (d_+1)*(d_+1)*(d_+1); }
+
+
+template <wmesh_int_t ELEMENT> inline wmesh_int_t bms_template_ndofs_interior(wmesh_int_t d_){ return -1;}
+
+template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_EDGE>(wmesh_int_t d_) { return (d_>0) ?d_-1 : 1; }
+template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_TRIANGLE>(wmesh_int_t d_) { return (d_>0) ?((d_-1)*(d_-2)) / 2 : 1; }
+template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_QUADRILATERAL>(wmesh_int_t d_) { return (d_>0) ?((d_-1)*(d_-1)) : 1; }
+template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_TETRAHEDRON>(wmesh_int_t d_) { return (d_>0) ?((d_-1)*(d_-2)*(d_-3)) / 6 : 1; }
+template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_PYRAMID>(wmesh_int_t d_) { return (d_>0) ?((d_-2)*(d_-1)*(2*d_-3)) / 6 : 1; }
+template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_WEDGE>(wmesh_int_t d_) { return (d_>0) ?((d_-1)*(d_-1)*(d_-2)) / 2 : 1; }
+template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_HEXAHEDRON>(wmesh_int_t d_) { return (d_>0) ? (d_-1)*(d_-1)*(d_-1) : 1; }
+
+
+

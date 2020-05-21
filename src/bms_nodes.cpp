@@ -1,11 +1,10 @@
-#include "wmesh_nodes_family.h"
-#include "bms.h"
-#include <iostream>
-#include <math.h>
-#include "wmesh-status.h"
-#include "wmesh-blas.h"
-#include "wmesh.h"
 #include "bms.hpp"
+#include "wmesh-math.hpp"
+#include "wmesh-blas.h"
+
+#ifndef NDEBUG
+#include <iostream>
+#endif
 #define solve_params(_type) wmesh_int_t*n,_type*jacM,_type*wr,_type*wi,_type*vl,_type*vr,_type*work,wmesh_int_t*work_n_
 template<typename T>
 void solve(solve_params(T));
@@ -149,11 +148,11 @@ wmesh_status_t bms_nodes_legendre(wmesh_int_t 		nspl_,
     }
   for (wmesh_int_t i=0;i<n-1;++i)
     {
-      jacM[i+i*n+1]=sqrt(b[1+i]);
+      jacM[i+i*n+1]=wmesh_math<T>::xsqrt(b[1+i]);
     }
   for (wmesh_int_t i=1;i<n;++i)
     {
-      jacM[i+i*n-1]=sqrt(b[i]);
+      jacM[i+i*n-1]=wmesh_math<T>::xsqrt(b[i]);
     }
 
   //
@@ -422,10 +421,6 @@ bms_nodes(wmesh_int_t 		element_,
 	  }
 	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ENUM);	
       }
-    case WMESH_NODES_FAMILY_BEZIER:
-      {
-	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_CONFIG);	
-      }
 
     }
   
@@ -497,16 +492,13 @@ extern "C"
 	  return WMESH_STATUS_SUCCESS;
 	}
 	
-      case WMESH_NODES_FAMILY_BEZIER:
-	{
-	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_CONFIG);	
-	}
 
       }
   
     return WMESH_STATUS_INVALID_ENUM;  
   };
 
+  
   wmesh_status_t
   bms_snodes(wmesh_int_t 	element_,
 	     wmesh_int_t 	family_,

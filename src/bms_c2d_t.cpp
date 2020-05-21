@@ -141,7 +141,7 @@ static  inline void get_c2t(wmesh_int_t 	m_,
 };
 
 
-static inline wmesh_status_t wmesh_space_indexing_triangles_calculate(wmesh_int_t 			c2n_ptr_,
+static inline wmesh_status_t bms_c2d_t_calculate(wmesh_int_t 			c2n_ptr_,
 									   wmesh_int_t 			c2n_m_,
 								      wmesh_int_t 			c2n_n_,
 								      const_wmesh_int_p		c2n_v_,
@@ -258,7 +258,7 @@ static inline wmesh_status_t wmesh_space_indexing_triangles_calculate(wmesh_int_
 
 extern "C"
 {
-  wmesh_status_t  wmesh_space_indexing_triangles(wmesh_int_t 		c2n_size_,
+  wmesh_status_t  bms_c2d_t(wmesh_int_t 		c2n_size_,
 						 const_wmesh_int_p 	c2n_ptr_,
 						 const_wmesh_int_p 	c2n_m_,
 						 const_wmesh_int_p 	c2n_n_,
@@ -327,7 +327,7 @@ extern "C"
     
     for (wmesh_int_t cell_type=0;cell_type<c2n_size_;++cell_type)
       {	
-	wmesh_status_t status = wmesh_space_indexing_triangles_calculate(c2n_ptr_[cell_type],
+	wmesh_status_t status = bms_c2d_t_calculate(c2n_ptr_[cell_type],
 									 c2n_m_[cell_type],
 									 c2n_n_[cell_type],
 									 c2n_v_,

@@ -1,15 +1,7 @@
-#include <stdlib.h>
-#include <string.h>
-#include "wmesh-types.hpp"
-#include "wmesh-status.h"
-#include "wmesh_medit.hpp"
-//#include "wfe_element.hpp"
-#include <chrono>
-#include <iostream>
 #include "wmesh.hpp"
-#include "GenericEncoding.hpp"
 #include "wmesh_utils.hpp"
-using namespace std::chrono;
+#include <iostream>
+#include <string.h>
 
 
 extern "C"
@@ -163,13 +155,13 @@ extern "C"
 	    //
 	    // 1.b/ Local triangles to nodes.
 	    //
-	    status  = wmesh_build_s_t2n(&self_->m_s_t2n, dimension);
+	    status  = wmesh_build_s_t2n(&self_->m_s_t2n);
 	    WMESH_STATUS_CHECK(status);
 	    
 	    //
 	    // 1.c/ Local quadrilaterals to nodes.
 	    //
-	    status = wmesh_build_s_q2n(&self_->m_s_q2n, dimension);
+	    status = wmesh_build_s_q2n(&self_->m_s_q2n);
 	    WMESH_STATUS_CHECK(status);	    
 	  }
       }
@@ -270,13 +262,13 @@ extern "C"
 	    //
 	    // 1.b/ Local triangles to nodes.
 	    //
-	    status  = wmesh_build_s_t2n(&self_->m_s_t2n, dimension);
+	    status  = wmesh_build_s_t2n(&self_->m_s_t2n);
 	    WMESH_STATUS_CHECK(status);
 	    
 	    //
 	    // 1.c/ Local quadrilaterals to nodes.
 	    //
-	    status = wmesh_build_s_q2n(&self_->m_s_q2n, dimension);
+	    status = wmesh_build_s_q2n(&self_->m_s_q2n);
 	    WMESH_STATUS_CHECK(status);	    
 	  }
       }
@@ -572,6 +564,7 @@ extern "C"
     return 0;
   }
 #endif
+
   
   wmesh_status_t wmesh_write(const wmesh_t* 		self_,
 			      const char * 		filename_)

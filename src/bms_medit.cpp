@@ -6,7 +6,7 @@
 #include <iostream>
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
-#include "wmesh_medit.hpp"
+#include "wmesh.hpp"
 #include "libmeshb7.h"
 #include <chrono>
 

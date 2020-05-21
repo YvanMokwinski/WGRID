@@ -1,14 +1,7 @@
 #include "app.hpp"
-#include <math.h>
-#include <stdlib.h>
 #include "bms.h"
-#include "wmesh-blas.h"
-#include "wmesh-math.hpp"
-#include "wmesh_nodes.h"
-#include "wmesh_nodes.h"
-#include "wmesh_utils.hpp"
-
 #include <iostream>
+
 void usage(const char * appname_)
 {
   fprintf(stderr,"//\n");
@@ -114,7 +107,7 @@ int main(int 		argc,
   WMESH_STATUS_CHECK(status);
 
   wmesh_int_t ndofs;
-  status = wfe_ndofs(element,
+  status = bms_ndofs(element,
 		     degree,
 		     &ndofs);
   WMESH_STATUS_CHECK(status);

@@ -3,14 +3,14 @@
 #include <array>
 #include "wmesh.hpp"
 
-static inline wmesh_status_t wmesh_space_indexing_interior_calculate(wmesh_int_t 			c2d_i_ptr_,
-								     wmesh_int_t 			c2d_i_m_,
-								     wmesh_int_t 			c2d_i_n_,
-								     wmesh_int_p			c2d_i_v_,
-								     wmesh_int_t 			c2d_i_ld_,
-								     wmesh_int_t 			dof_idx_)
+static inline wmesh_status_t bms_c2d_i_calculate(wmesh_int_t 			c2d_i_ptr_,
+						 wmesh_int_t 			c2d_i_m_,
+						 wmesh_int_t 			c2d_i_n_,
+						 wmesh_int_p			c2d_i_v_,
+						 wmesh_int_t 			c2d_i_ld_,
+						 wmesh_int_t 			dof_idx_)
 {
-
+  
   for (wmesh_int_t cell_idx = 0;cell_idx < c2d_i_n_;++cell_idx)
     {	  
       for (wmesh_int_t ldof=0;ldof<c2d_i_m_;++ldof)
@@ -26,13 +26,13 @@ static inline wmesh_status_t wmesh_space_indexing_interior_calculate(wmesh_int_t
 
 extern "C"
 {
-  wmesh_status_t  wmesh_space_indexing_interior(wmesh_int_t 		c2d_i_size_,
-						const_wmesh_int_p 	c2d_i_ptr_,
-						const_wmesh_int_p 	c2d_i_m_,
-						const_wmesh_int_p 	c2d_i_n_,
-						wmesh_int_p 		c2d_i_v_,
-						const_wmesh_int_p 	c2d_i_ld_,
-						wmesh_int_p 		dof_idx_origin_)
+  wmesh_status_t  bms_c2d_i(wmesh_int_t 	c2d_i_size_,
+			    const_wmesh_int_p 	c2d_i_ptr_,
+			    const_wmesh_int_p 	c2d_i_m_,
+			    const_wmesh_int_p 	c2d_i_n_,
+			    wmesh_int_p 	c2d_i_v_,
+			    const_wmesh_int_p 	c2d_i_ld_,
+			    wmesh_int_p 	dof_idx_origin_)
   {
 
     WMESH_CHECK_POINTER(c2d_i_ptr_);    
@@ -45,7 +45,7 @@ extern "C"
     wmesh_int_t dof_idx_origin = dof_idx_origin_[0];
     for (wmesh_int_t i=0;i<c2d_i_size_;++i)
       {	
-	wmesh_status_t status = wmesh_space_indexing_interior_calculate(c2d_i_ptr_[i],
+	wmesh_status_t status = bms_c2d_i_calculate(c2d_i_ptr_[i],
 									c2d_i_m_[i],
 									c2d_i_n_[i],
 									c2d_i_v_,

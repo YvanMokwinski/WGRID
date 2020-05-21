@@ -3,7 +3,7 @@
 #include <string.h>
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
-#include "wmesh_medit.hpp"
+#include "wmesh.hpp"
 #include "wmesh_utils.hpp"
 #include "bms.h"
 
@@ -247,24 +247,25 @@ extern "C"
     
     if (num_dofs_per_node > 0)
       {
-	status = wmesh_space_indexing_nodes(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-					    WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_n),
-					    self_->m_num_nodes,
-					    num_dofs_per_node,
-					    dof_idx);
+	status = bms_c2d_n(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
+			   WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_n),
+			   self_->m_num_nodes,
+			   num_dofs_per_node,
+			   dof_idx);
 	WMESH_STATUS_CHECK(status);
 	dof_idx += self_->m_num_nodes * num_dofs_per_node;	  
       }
 
     if (num_dofs_per_edge > 0)
       {
-	status =  wmesh_space_indexing_edges(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-					     WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2e),
-					     WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_e),
-					     WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_e2n),
-					     self_->m_num_edges,
-					     num_dofs_per_edge,
-					     dof_idx);
+	status =  bms_c2d_e(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
+			    WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2e),
+			    WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_e),
+			    WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_e2n),
+			    self_->m_num_edges,
+			    num_dofs_per_edge,
+			    dof_idx);
+	
 	WMESH_STATUS_CHECK(status);
 	dof_idx += self_->m_num_edges * num_dofs_per_edge;
       }
@@ -273,35 +274,36 @@ extern "C"
       {
 	if (num_dofs_per_triangle > 0)
 	  {
-	    status =  wmesh_space_indexing_triangles(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-						     WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2f_t),
-						     WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_t),
-						     WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_t2n),
-						     self_->m_num_triangles,
-						     degree_,
-						     num_dofs_per_triangle,
-						     dof_idx);
+	    status =  bms_c2d_t(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
+				WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2f_t),
+				WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_t),
+				WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_t2n),
+				self_->m_num_triangles,
+				degree_,
+				num_dofs_per_triangle,
+				dof_idx);
 	    WMESH_STATUS_CHECK(status);
 	    dof_idx += self_->m_num_triangles * num_dofs_per_triangle;
 	  }
 	
 	if (num_dofs_per_quadrilateral > 0)
 	  {
-	    status = wmesh_space_indexing_quadrilaterals(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-							 WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2f_q),
-							 WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_q),
-							 WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_q2n),
-							 self_->m_num_quadrilaterals,
-							 degree_,
-							 num_dofs_per_quadrilateral,
-							 dof_idx);
+	    status = bms_c2d_q(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
+			       WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2f_q),
+			       WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_q),
+			       WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_q2n),
+			       self_->m_num_quadrilaterals,
+			       degree_,
+			       num_dofs_per_quadrilateral,
+			       dof_idx);
 	    WMESH_STATUS_CHECK(status);
 	    dof_idx += self_->m_num_quadrilaterals * num_dofs_per_quadrilateral;
 	  }
       }
 
-    status =  wmesh_space_indexing_interior(WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_i),
-					    &dof_idx);
+    status =  bms_c2d_i(WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_i),
+			&dof_idx);
+    
     WMESH_STATUS_CHECK(status);
 #if 0
     printf("c2d_i \n");
@@ -346,7 +348,7 @@ extern "C"
       {
 	for (wmesh_int_t l=0;l<mesh_->m_c2n.m_size;++l)
 	  {
-	    status = wmesh_rmacro_def(&self_->m_patterns[l],
+	    status = wmesh_def_rmacro(&self_->m_patterns[l],
 				      4+l,
 				      nodes_family_,
 				      degree_);
@@ -357,7 +359,7 @@ extern "C"
       {
 	for (wmesh_int_t l=0;l<mesh_->m_c2n.m_size;++l)
 	  {
-	    status = wmesh_rmacro_def(&self_->m_patterns[l],
+	    status = wmesh_def_rmacro(&self_->m_patterns[l],
 				      2+l,
 				      nodes_family_,
 				      degree_);

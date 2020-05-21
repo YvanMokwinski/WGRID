@@ -2,7 +2,6 @@
 #include <string.h>
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
-#include "wmesh_medit.hpp"
 #include <chrono>
 #include <iostream>
 #include "wmesh.hpp"
@@ -12,6 +11,7 @@
 #include <math.h>
 
 #include "wmesh-blas.h"
+#include "wmesh-math.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -413,7 +413,7 @@ void FiniteElementSegmentHermite_EvalDDt(const char*			transpose_,
 	{
 	  norm += self_[idim]*self_[idim];
 	} } 
-    norm = sqrt(norm);
+    norm = wmesh_math<double>::xsqrt(norm);
     { wmesh_int_t  idim =0;
       for (idim =0;idim<dim_;++idim)
 	{
@@ -825,7 +825,7 @@ bool wmesh_bspline_findEdge(const wmesh_bspline_t*  self_,
 	{
 	  s1[0] = xx;
 	  wmesh_bspline_eval_ddt(self_,s1,i,nn);
-	  double s3 = sqrt(nn[0]*nn[0]+nn[1]*nn[1]+nn[2]*nn[2]);
+	  double s3 = wmesh_math<double>::xsqrt(nn[0]*nn[0]+nn[1]*nn[1]+nn[2]*nn[2]);
 	  if (s3>mx)
 	    mx=s3;
 	  
@@ -1265,7 +1265,7 @@ wmesh_status_t wmesh_bspline_ddef(wmesh_bspline_t**		self__,
 		    {
 		      s+=coo[idim]*coo[idim];
 		    } }
-		tmp[i] = sqrt(s);
+		tmp[i] = wmesh_math<double>::xsqrt(s);
 	      }
 	    } 
 	  const double iedge_length 			= BLAS_ddot((wmesh_int_p)&nbCubaturePoints,w1d,(wmesh_int_p)&nequal1,tmp,(wmesh_int_p)&nequal1);

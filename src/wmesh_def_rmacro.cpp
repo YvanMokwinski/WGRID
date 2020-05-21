@@ -1,15 +1,9 @@
-
-
-
 #include "wmesh.hpp"
-#include "bms.h"
-
-#include "wmesh_nodes_family.h"
 #include "bms.hpp"
 extern "C"
 {
 
-  wmesh_status_t wmesh_rmacro_def(wmesh_t ** 	mesh__,
+  wmesh_status_t wmesh_def_rmacro(wmesh_t ** 	mesh__,
 				  wmesh_int_t 	element_,
 				  wmesh_int_t 	nodes_family_,
 				  wmesh_int_t 	degree_)

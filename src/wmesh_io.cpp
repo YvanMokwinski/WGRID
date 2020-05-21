@@ -6,15 +6,31 @@
 #include <iostream>
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
-#include "wmesh_medit.hpp"
 
 #include <chrono>
 //#include "wfe_element.h"
 #include "bms.h"
+#include <array>
+#include <string.h>
+#include <stdarg.h>
+#include <valarray>
+#include <iostream>
+#include "wmesh-types.hpp"
+#include "wmesh-status.h"
+#include "wmesh.hpp"
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+
+  using namespace std::chrono;
 
 using namespace std::chrono;
 
-wmesh_status_t wmesh_write_medit(const wmesh_t* 		self_,
+extern "C"
+{
+
+  wmesh_status_t wmesh_write_medit(const wmesh_t* 		self_,
 				   bool 			is_binary_,
 				   const char * 		filename_,
 				   ...)
@@ -411,64 +427,198 @@ wmesh_status_t wmesh_write_medit(const wmesh_t* 		self_,
 			    nflags_v,
 			    1);
     
-#if 0
-    status = wmesh_factory	(self__,
-				 num_nodes,
-				 c2n_size,
-				 c2n_ptr,
-				 c2n_m,
-				 c2n_n,
-				 c2n_v,
-				 c2n_ld,
-				 c_c_v,
-				 1,//c_c_ld,
-				 coo_v,
-				 coo_ld,
-				 nflags_v,
-				 1, // nflags_ld,
-				 bf2n_size,
-				 bf2n_ptr,
-				 bf2n_m,
-				 bf2n_n,
-				 bf2n_v,
-				 bf2n_ld,
-				 bf_c_v,
-				 1);//bf_c_ld);
-
-#if 0    
-    wmesh_int_t c_c_size = self_->m_c2n.m_size;
-    wmesh_int_t c_c_ld[4] = {1,1,1,1};
-    wmesh_int_t c_c_ptr[5];
-    wmesh_int_t c_c_m[4] = {1,1,1,1};
-    wmesh_int_t c_c_n[4] = {0,0,0,0};
-    for (wmesh_int_t i=0;i<self_->m_c2n.m_size;++i)
-      {
-	c_c_n[i] = self_->m_c2n.m_n[i];
-      }
-    c_c_ptr[0] = 0;
-    for (wmesh_int_t i=0;i<self_->m_c2n.m_size;++i)
-      {
-	c_c_ptr[i+1] = c_c_ptr[i+1] + c_c_n[i] * c_c_ld[i];
-      }
-    
-    wmesh_int_t bf_c_size = self_->m_bf2n.m_size;
-    wmesh_int_t bf_c_ld[4] = {1,1,1,1};
-    wmesh_int_t bf_c_ptr[5];
-    wmesh_int_t bf_c_m[4] = {1,1,1,1};
-    wmesh_int_t bf_c_n[4] = {0,0,0,0};
-    wmesh_int_p bf_c_v = self_->m_flag_bfaces;	
-    for (wmesh_int_t i=0;i<self_->m_bf2n.m_size;++i)
-      {
-	bf_c_n[i] = self_->m_bf2n.m_n[i];
-      }
-	
-    bf_c_ptr[0] = 0;
-    for (wmesh_int_t i=0;i<self_->m_bf2n.m_size;++i)
-      {
-	bf_c_ptr[i+1] = bf_c_ptr[i+1] + bf_c_n[i] * bf_c_ld[i];
-      }
-#endif
-#endif
     return WMESH_STATUS_SUCCESS;  
   };
 
+
+
+
+
+  typedef enum __eVtkElement{ ERROR=0,
+			      VERTEX=1,
+			      POLYVERTEX=2,
+			      LINE=3,
+			      POLYLINE=4,
+			      TRIANGLE=5,
+			      TRIANGLE_STRIP=6,
+			      POLYGON=7,
+			      PIXEL=8,
+			      QUAD=9,
+			      TETRA=10,
+			      VOXEL=11,
+			      HEXA=12,
+			      WEDGE=13,
+			      PYRAMID=14,
+			      QUADRATICEDGE=21,
+			      QUADRATICTRIANGLE=22,
+			      QUADRATICQUAD=23,
+			      QUADRATICTETRA=24,
+			      QUADRATICHEXA=25,
+			      ALL} eVtkElement;
+
+  
+  
+    wmesh_status_t wmesh_write_vtk(const wmesh_t* 	self__,
+				   const char * 		filename_,
+				   ...)
+    {
+      wmesh_t*self_ = (wmesh_t*)self__;
+
+      wmesh_str_t filename;
+    
+      { va_list args;
+	va_start(args,filename_);
+	vsprintf(filename,filename_,args);
+	va_end(args); }
+    
+      std::ofstream out(filename);
+      out.precision(15);
+      out.setf(std::ios::scientific);
+    
+      out << "# vtk DataFile Version 3.0"
+	  << std::endl
+	  << "vtk output"
+	  << std::endl
+	  << "ASCII"
+	  << std::endl
+	  << "DATASET UNSTRUCTURED_GRID"
+	  << std::endl
+	  << "POINTS "
+	  << self_->m_num_nodes
+	  << " double"
+	  << std::endl;
+
+      // geometry
+      for (wmesh_int_t i=0;i<self_->m_num_nodes;++i)
+	{
+	  for (wmesh_int_t j=0;j<self_->m_coo_m;++j)
+	    {
+	      out << " " << self_->m_coo[self_->m_coo_ld*i+j];
+	    }
+	  out << std::endl;
+	}
+    
+      unsigned long long int total_numCellsData = 0;
+      wmesh_int_t num_cells = 0;
+      for (wmesh_int_t i=0;i<self_->m_c2n.m_size;++i)
+	{
+	  num_cells += self_->m_c2n.m_n[i];
+	}
+      // topology
+      for (wmesh_int_t i=0;i<self_->m_c2n.m_size;++i)
+	{
+	  wmesh_int_t m = self_->m_c2n.m_m[i];
+	  wmesh_int_t n = self_->m_c2n.m_n[i];
+	  total_numCellsData += n * ( 1 + m );
+	}
+      
+      out << "CELLS "
+	  << num_cells
+	  << " "
+	  << total_numCellsData
+	  << std::endl;
+    
+      for (wmesh_int_t i=0;i<self_->m_c2n.m_size;++i)
+	{
+	  wmesh_int_t m = self_->m_c2n.m_m[i];
+	  wmesh_int_t n = self_->m_c2n.m_n[i];
+	  wmesh_int_t ld = self_->m_c2n.m_ld[i];
+	  wmesh_int_t ptr = self_->m_c2n.m_ptr[i];
+	  const_wmesh_int_p x = self_->m_c2n.m_data + ptr;
+	  for (wmesh_int_t idx =0;idx<n;++idx)
+	    {
+	      out << m;
+	      for (wmesh_int_t j=0;j<m;++j)
+		{
+		  out << " " << x[idx * ld + j]-1;
+		}
+	      out << std::endl;
+	    }	
+	}
+
+
+    
+      out << "CELL_TYPES " << num_cells << std::endl;
+
+    
+      if (self_->m_topology_dimension == 3)
+	{    
+	  if (self_->m_c2n.m_n[0]>0)
+	    {
+	      for (wmesh_int_t idx =0;idx<self_->m_c2n.m_n[0];++idx)
+		{
+		  out << TETRA << std::endl;
+		}
+	    }
+	  if (self_->m_c2n.m_n[1]>0)
+	    {
+	      for (wmesh_int_t idx =0;idx<self_->m_c2n.m_n[1];++idx)
+		{
+		  out << PYRAMID << std::endl;
+		}
+	    }
+	  if (self_->m_c2n.m_n[2]>0)
+	    {
+	      for (wmesh_int_t idx =0;idx<self_->m_c2n.m_n[2];++idx)
+		{
+		  out << WEDGE << std::endl;
+		}
+	    }
+	  if (self_->m_c2n.m_n[3]>0)
+	    {
+	      for (wmesh_int_t idx =0;idx<self_->m_c2n.m_n[3];++idx)
+		{
+		  out << HEXA << std::endl;
+		}
+	    }
+	}
+      else if (self_->m_topology_dimension == 2)
+	{
+	  if (self_->m_c2n.m_n[0]>0)
+	    {
+	      for (wmesh_int_t idx =0;idx<self_->m_c2n.m_n[0];++idx)
+		{
+		  out << TRIANGLE << std::endl;
+		}
+	    }
+	  if (self_->m_c2n.m_n[1]>0)
+	    {
+	      for (wmesh_int_t idx =0;idx<self_->m_c2n.m_n[1];++idx)
+		{
+		  out << QUAD << std::endl;
+		}
+	    }
+	}
+      else if (self_->m_topology_dimension == 1)
+	{
+	  if (self_->m_c2n.m_n[0]>0)
+	    {
+	      for (wmesh_int_t idx =0;idx<self_->m_c2n.m_n[0];++idx)
+		{
+		  out << LINE << std::endl;
+		}
+	    }
+	}
+    
+      out << "CELL_DATA " << num_cells << std::endl;
+      out << "SCALARS scalars int 1"  << std::endl;
+      out << "LOOKUP_TABLE default"  << std::endl;
+
+      for (wmesh_int_t s = 0;s<self_->m_c_c.m_size ;++s)
+	{
+	  for (wmesh_int_t j = 0;j < self_->m_c_c.m_n[ s ];++j)
+	    {
+	      for (wmesh_int_t i = 0;i < self_->m_c_c.m_m[ s ];++i)
+		{
+		  out << self_->m_c_c.m_data[self_->m_c_c.m_ptr[s] + self_->m_c_c.m_ld[s] * j + i ] << std::endl;
+		}
+	    }
+	}
+
+      out.close();
+      return WMESH_STATUS_SUCCESS;  
+    }
+
+  
+
+}

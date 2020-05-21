@@ -113,12 +113,12 @@ int main(int 		argc,
   
   double dz[1]= {1.0/((double)nbRotations)};
 
-  status =  wmesh_extrusion(&mesh,
-			    surface,
-			    nbRotations,
-			    1,
-			    dz,
-			    bface_ids);
+  status =  wmesh_def_extrusion(&mesh,
+				surface,
+				nbRotations,
+				1,
+				dz,
+				bface_ids);
   
   WMESH_STATUS_CHECK(status);
 

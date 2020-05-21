@@ -1,8 +1,5 @@
+#include "app.hpp"
 #include "wmesh.h"
-
-#include <math.h>
-#include <stdlib.h>
-#include "cmdline.hpp"
 
 void usage(const char * appname_)
 {

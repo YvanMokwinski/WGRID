@@ -1,11 +1,10 @@
 #include <limits>
 #include <iostream>
-#include <array>
 #include "wmesh.hpp"
 
 
 
-static inline wmesh_status_t wmesh_space_indexing_edges_calculate(wmesh_int_t 			c2n_ptr_,
+static inline wmesh_status_t bms_c2d_e_calculate(wmesh_int_t 			c2n_ptr_,
 								  wmesh_int_t 			c2n_m_,
 								  wmesh_int_t 			c2n_n_,
 								  const_wmesh_int_p		c2n_v_,
@@ -99,7 +98,7 @@ static inline wmesh_status_t wmesh_space_indexing_edges_calculate(wmesh_int_t 		
 
 extern "C"
 {
-  wmesh_status_t  wmesh_space_indexing_edges(wmesh_int_t 	c2n_size_,
+  wmesh_status_t  bms_c2d_e(wmesh_int_t 	c2n_size_,
 					     const_wmesh_int_p 	c2n_ptr_,
 					     const_wmesh_int_p 	c2n_m_,
 					     const_wmesh_int_p 	c2n_n_,
@@ -157,7 +156,7 @@ extern "C"
     
     for (wmesh_int_t cell_type=0;cell_type<c2n_size_;++cell_type)
       {	
-	wmesh_status_t status = wmesh_space_indexing_edges_calculate(c2n_ptr_[cell_type],
+	wmesh_status_t status = bms_c2d_e_calculate(c2n_ptr_[cell_type],
 								     c2n_m_[cell_type],
 								     c2n_n_[cell_type],
 								     c2n_v_,

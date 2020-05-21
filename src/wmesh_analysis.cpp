@@ -2,7 +2,6 @@
 #include <string.h>
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
-#include "wmesh_medit.hpp"
 #include "bms.h"
 #include "wmesh.hpp"
 #include <chrono>
@@ -11,8 +10,6 @@
 using namespace std::chrono;
 extern "C"
 {
-  
-
 
   wmesh_status_t wmesh_c2e_calculate(const wmesh_int_sparsemat_t* 	c2n_,
 				     wmesh_int_sparsemat_t* 		c2e_,
@@ -244,19 +241,16 @@ extern "C"
 				num_bfacets_);
   }
 
-
-
-
-    wmesh_status_t wmesh_c2e(const wmesh_t* 		self_,
+  
+  wmesh_status_t wmesh_c2e(const wmesh_t* 		self_,
 			   wmesh_int_sparsemat_t* 	c2e_,				     
 			   wmesh_int_p 			num_edges_)
-  {    
+  {
     return wmesh_c2e_calculate(&self_->m_c2n,
 			       c2e_,
 			       &self_->m_s_e2n,
 			       num_edges_);
   }
-
 
   wmesh_status_t wmesh_c2f(const wmesh_t* 		self_,
 			   wmesh_int_sparsemat_t* 	c2f_t_,
@@ -269,15 +263,10 @@ extern "C"
 				c2f_q_);
   }
 
-  
-
-  
   using timing_t = high_resolution_clock::time_point;
   inline timing_t timing_stop(){ return high_resolution_clock::now(); }
   inline timing_t timing_start(){ return high_resolution_clock::now(); }
   inline double timing_seconds(timing_t&t,timing_t&t1){ return duration_cast<duration<double>>(t1-t).count(); }
-
-
   
   wmesh_status_t wmesh_analysis(wmesh_t*    self_)
   {

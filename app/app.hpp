@@ -1,14 +1,13 @@
 #pragma once 
 #include "wmesh.h"
-#include "wmesh_nodes_family.h"
+
 #include <string.h>
 
 //!
 //! @brief element names for applications.
 //!
 static const char * s_wmesh_nodes_family_names[WMESH_NODES_FAMILY_ALL]
-= {"bezier",
-   "lagrange",
+= {"lagrange",
    "gausslobatto"};
 
 //!

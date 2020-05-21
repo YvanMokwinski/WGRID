@@ -9,7 +9,7 @@ template <typename T> struct wmesh_math
   //! @brief Compute the squared root.
   //! @param x_ The value from which we compute the squared root.
   //! @return The squared root.
-  static constexpr real_t sqrt(const real_t&x_) noexcept;
+  static constexpr real_t xsqrt(const real_t&x_) noexcept;
   //! @brief Compute the absolute value.
   //! @param x_ The value from which we compute the absolue value.
   //! @return The absolute value.
@@ -50,7 +50,7 @@ template <> struct wmesh_math<double>
     return pow(x_,y_);
   };
   //! @copydoc wmesh_math::sqrt(const real_t&x_)
-  static double sqrt(const double&x_) noexcept
+  static double xsqrt(const double&x_) noexcept
   {
     return  sqrt(x_);
   };
@@ -90,7 +90,7 @@ template <> struct wmesh_math<float>
     return powf(x_,y_);
   };
   //! @copydoc wmesh_math::sqrt(const real_t&x_)
-  static constexpr float sqrt(const float&x_) noexcept
+  static constexpr float xsqrt(const float&x_) noexcept
   {
     return sqrtf(x_);
   };
@@ -131,7 +131,7 @@ template <> struct wmesh_math<long double>
     return powl(x_,y_);
   };
   //! @copydoc wmesh_math::sqrt(const real_t&x_)
-  static constexpr long double sqrt(const long double&x_) noexcept
+  static constexpr long double xsqrt(const long double&x_) noexcept
   {
     return sqrtl(x_);
   };
