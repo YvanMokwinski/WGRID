@@ -4,6 +4,10 @@
 #include <string.h>
 extern "C"
 {
+
+
+
+
   
 #define bms_s_init						\
   memcpy(s_size_,&s_size,sizeof(wmesh_int_t));			\

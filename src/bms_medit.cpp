@@ -13,19 +13,19 @@
 
 namespace Medit
 {
-  template<typename _int_t> static int GmfType();
-  template<typename _int_t> static int GmfVecType();
-  template<> int GmfType<int>()		{return GmfInt;};
-  template<> int GmfType<long>()	{return GmfLong;};
-  template<> int GmfType<long long>()	{return GmfLong;};
-  template<> int GmfType<double>()	{return GmfDouble;};
-  template<> int GmfType<float>()	{return GmfFloat;};
-
-  template<> int GmfVecType<int>()		{return GmfIntVec;};
-  template<> int GmfVecType<long>()		{return GmfLongVec;};
-  template<> int GmfVecType<long long>()	{return GmfLongVec;};
-  template<> int GmfVecType<double>()		{return GmfDoubleVec;};
-  template<> int GmfVecType<float>()		{return GmfFloatVec;};
+  template<typename _int_t> static inline int GmfType();
+  template<typename _int_t> static inline int GmfVecType();
+  template<> inline int GmfType<int>()		{return GmfInt;};
+  template<> inline int GmfType<long>()	{return GmfLong;};
+  template<> inline int GmfType<long long>()	{return GmfLong;};
+  template<> inline int GmfType<double>()	{return GmfDouble;};
+  template<> inline int GmfType<float>()	{return GmfFloat;};
+  
+  template<> inline int GmfVecType<int>()	{return GmfIntVec;};
+  template<> inline int GmfVecType<long>()	{return GmfLongVec;};
+  template<> inline int GmfVecType<long long>()	{return GmfLongVec;};
+  template<> inline int GmfVecType<double>()	{return GmfDoubleVec;};
+  template<> inline int GmfVecType<float>()	{return GmfFloatVec;};
 };
 
 #ifdef GMF_CHECK_STATUS

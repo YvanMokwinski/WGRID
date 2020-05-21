@@ -2,9 +2,10 @@
 #define WMESH_ENUMS_H
 
 
-#define WMESH_STORAGE_BLOCK             0
-#define WMESH_STORAGE_INTERLEAVE        1
-
+#define WMESH_TOPODIM_NODE 		0
+#define WMESH_TOPODIM_EDGE 		1
+#define WMESH_TOPODIM_FACE 		2
+#define WMESH_TOPODIM_VOLUME 		3
 
 #define WMESH_ELEMENT_NODE 		0
 #define WMESH_ELEMENT_EDGE 		1
@@ -16,6 +17,7 @@
 #define WMESH_ELEMENT_HEXAHEDRON	7
 #define WMESH_ELEMENT_ALL		8
 
-
+#define WMESH_STORAGE_BLOCK             0
+#define WMESH_STORAGE_INTERLEAVE        1
 
 #endif

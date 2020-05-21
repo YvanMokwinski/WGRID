@@ -1220,9 +1220,10 @@ wmesh_status_t wmesh_bspline_ddef(wmesh_bspline_t**		self__,
 	BLAS_dcopy((wmesh_int_p)&numEdges,&self_->m_derivatives[dim_+idim],(wmesh_int_p)&dimension,dofValues+3+idim*4,(wmesh_int_p)&nequal4);
       } }
 
-  
-  BLAS_dgemm("N",
-	     "N",
+
+  char N[1] = {'N'};
+  BLAS_dgemm(N,
+	     N,
 	     (wmesh_int_p)&nbCubaturePoints,
 	     (wmesh_int_p)&numEdges_X_dim,
 	     (wmesh_int_p)&nequal4,

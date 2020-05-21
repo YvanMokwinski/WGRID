@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include "wmesh.hpp"
+#include "bms.h"
 #include "wmesh_utils.hpp"
 
 static inline wmesh_int_t a_max4(const_wmesh_int_p s_,wmesh_int_p p_)
@@ -1623,8 +1624,8 @@ extern "C"
     // Topoloigical dimension.
     //
     wmesh_int_t topodim;
-    status = wmesh_element2topodim(element_,
-				   &topodim);
+    status = bms_element2topodim(element_,
+				 &topodim);
     WMESH_STATUS_CHECK(status);
     
     wmesh_int_t

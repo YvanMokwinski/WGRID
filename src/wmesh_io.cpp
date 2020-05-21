@@ -82,7 +82,7 @@ wmesh_status_t wmesh_write_medit(const wmesh_t* 		self_,
 				      self_->m_c_c.m_ld);    
     WMESH_STATUS_CHECK(status);
     
-    
+#if 0    
     if (self_->m_bf2n.m_size > 0)
       {
 	status = bms_write_medit_topology(inm,					
@@ -101,7 +101,7 @@ wmesh_status_t wmesh_write_medit(const wmesh_t* 		self_,
 	
 	WMESH_STATUS_CHECK(status);
       }
-
+#endif
     //
     // Close.
     //

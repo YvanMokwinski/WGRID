@@ -347,46 +347,53 @@ extern "C"
    wmesh_int_p		work_);
 
 
-  
-  wmesh_status_t
-  bms_nodes_buffer_size(wmesh_int_t 	element_,
-			wmesh_int_t 	family_,
-			wmesh_int_t	degree_,
-			wmesh_int_p	work_n_);
+  wmesh_status_t bms_nodes_buffer_sizes(wmesh_int_t 	element_,
+					wmesh_int_t 	family_,
+					wmesh_int_t	degree_,			
+					wmesh_int_p	iwork_n_,
+					wmesh_int_p 	rwork_n_);
   
   wmesh_status_t
   bms_snodes(wmesh_int_t 	element_,
 	     wmesh_int_t 	family_,
 	     wmesh_int_t	degree_,
+	     
 	     wmesh_int_t	b_storage_,
 	     wmesh_int_t	b_m_,
 	     wmesh_int_t	b_n_,
 	     const_wmesh_int_p 	b_v_,
 	     wmesh_int_t	b_ld_,
+
 	     wmesh_int_t	c_storage_,
 	     wmesh_int_t	c_m_,
 	     wmesh_int_t	c_n_,
 	     float* 		c_v_,
 	     wmesh_int_t	c_ld_,
-	     wmesh_int_t	work_n_,
-	     float* 		work_);
+	     wmesh_int_t	iwork_n_,
+	     wmesh_int_p 	iwork_,
+	     wmesh_int_t	rwork_n_,
+	     float* __restrict__ rwork_);
 
   wmesh_status_t
   bms_dnodes(wmesh_int_t 	element_,
 	     wmesh_int_t 	family_,
 	     wmesh_int_t	degree_,
+	     
 	     wmesh_int_t	b_storage_,
 	     wmesh_int_t	b_m_,
 	     wmesh_int_t	b_n_,
 	     const_wmesh_int_p 	b_v_,
 	     wmesh_int_t	b_ld_,
+
 	     wmesh_int_t	c_storage_,
 	     wmesh_int_t	c_m_,
 	     wmesh_int_t	c_n_,
 	     double* 		c_v_,
 	     wmesh_int_t	c_ld_,
-	     wmesh_int_t	work_n_,
-	     double* 		work_);
+	     wmesh_int_t	iwork_n_,
+	     wmesh_int_p 	iwork_,
+	     wmesh_int_t	rwork_n_,
+	     double* __restrict__ rwork_);
   
 
   //
@@ -596,7 +603,8 @@ extern "C"
 				   wmesh_int_t		b_n_,
 				   const_wmesh_int_p	b_v_,
 				   wmesh_int_t		b_ld_,
-				   wmesh_int_p		flat_);
+				   wmesh_int_p		p_v_,
+				   wmesh_int_t		p_inc_);
 
   
   wmesh_status_t bms_ordering(wmesh_int_t		element_,
@@ -630,7 +638,39 @@ extern "C"
 			   wmesh_int_p	s_n_,
 			   wmesh_int_p	s_v_,
 			   wmesh_int_p	s_ld_);
-    
+
+  wmesh_status_t bms_topodim2elements	(wmesh_int_t 	topodim_,
+					 wmesh_int_p 	num_elements_,
+					 wmesh_int_p 	elements_);
+  
+  wmesh_status_t bms_topodim2numtypes	(wmesh_int_t 	topodim_,
+					 wmesh_int_p 	ntypes_);
+  
+  wmesh_status_t bms_element2topodim	(wmesh_int_t 	element_,
+					 wmesh_int_p 	topodim_);
+
+  wmesh_status_t
+  bms_elements_num_hyperfaces(wmesh_int_t 		topodim_,
+				wmesh_int_p 		num_hyperfaces_);
+
+
+  
+  wmesh_status_t
+  bms_elements_num_entities(wmesh_int_t 		num_elements_,
+			    const_wmesh_int_p 		elements_,
+			    wmesh_int_t 		entity_,
+			    wmesh_int_p 		num_entities_);
+
+  wmesh_status_t
+  bms_elements_num_nodes(wmesh_int_t 		num_elements_,
+			 const_wmesh_int_p 	elements_,
+			 wmesh_int_p 		num_nodes_);
+  
+wmesh_status_t
+  bms_elements_num_edges(wmesh_int_t 		num_elements_,
+			   const_wmesh_int_p 	elements_,
+			 wmesh_int_p 		num_edges_);
+  
 #ifdef __cplusplus
 }
 #endif

@@ -3,312 +3,16 @@
 #include "wmesh-enums.h"
 #include <iostream>
 
-static inline wmesh_int_t bms_ordering_flat3d(wmesh_int_t n_,wmesh_int_t l[])
+static inline wmesh_int_t flat3d(wmesh_int_t n_,wmesh_int_t l[])
 {
   return l[0] + l[1]*n_ + l[2]*n_*n_;
 }
 
 
-static inline wmesh_int_t bms_ordering_flat2d(wmesh_int_t n_,wmesh_int_t l[])
+static inline wmesh_int_t flat2d(wmesh_int_t n_,wmesh_int_t l[])
 {
   return l[0] + l[1]*n_;
 }
-
-
-template<typename T>
-wmesh_status_t
-bms_transform_pyramid(wmesh_int_t 		r_n_,
-		      const T*__restrict__	r_v_,
-		      wmesh_int_t 		r_inc_,
-		  
-		      wmesh_int_t		c_storage_,
-		      wmesh_int_t		c_m_,
-		      wmesh_int_t		c_n_,
-		      T*__restrict__ 	c_v_,
-		      wmesh_int_t		c_ld_,
-
-		      const_wmesh_int_p		p_v_,
-		      wmesh_int_t 		p_inc_)  
-{
-  static const wmesh_int_t s_rst_m  = 3;
-  static const wmesh_int_t s_rst_n  = 5;
-  static const wmesh_int_t s_rst_ld = s_rst_m; 
-  static const wmesh_int_t s_rst_v[] =  { 0,0,0,
-					  1,0,0,
-					  1,1,0,
-					  0,1,0,
-					  0,0,1};
-  
-  static const wmesh_int_t s_t2n[] = {0,1,4,
-				      1,2,4, 
-				      2,3,4, 
-				      3,0,4};
-
-  static const wmesh_int_t s_q2n[] = {0,3,2,1};
-  
-  static const wmesh_int_t s_e2n[] = {0,1,
-				      1,2,
-				      2,3,
-				      3,0,
-				      0,4,
-				      1,4,
-				      2,4,
-				      3,4};
-
-  static const wmesh_int_t s_t2n_diag[] = {0,2,4};
-  static const wmesh_int_t s_tet2n[] = {1,2,0,4,
-					3,0,2,4};
-
-  static constexpr const T one(1);
-  static constexpr const T two(2);
-  static constexpr const T three(3);
-  static constexpr const T six(6);
-  static constexpr const T eight(8);  
-
-		  
-
-  wmesh_int_t ijk[3];
-  wmesh_int_t degree = r_n_ - 1;
-  
-  //
-  // nodes
-  //
-  for (wmesh_int_t j=0;j<s_rst_n;++j)
-    {
-      
-      for (wmesh_int_t i=0;i<s_rst_m;++i)
-	{
-	  ijk[i] = s_rst_v[s_rst_ld*j+i] * degree;
-	}
-	  
-      wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)]-1;
-      for (wmesh_int_t i=0;i<s_rst_m;++i)
-	{
-	  c_v_[c_ld_*idx+i] = s_rst_v[s_rst_ld*j+i];
-	}
-    }
-      
-      
-  //
-  // edges
-  //
-  for (wmesh_int_t ie=0;ie<8;++ie)
-    {
-      wmesh_int_t node_0 = s_e2n[ie*2+0];
-      wmesh_int_t node_1 = s_e2n[ie*2+1];
-      // std::cout << "node " << node_0  << " " << node_1 << std::endl;
-      for (wmesh_int_t i=1;i<degree;++i)
-	{
-	  T l0 	= one - (r_v_[ r_inc_* i ] + one) / two;
-	  T l1 	= (r_v_[ r_inc_* i ] + one) / two;
-	      
-	  wmesh_int_t s0 = degree - i;
-	  wmesh_int_t s1 = i;
-	      
-	  for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
-	    {
-	      ijk[idim] = s0 * s_rst_v[s_rst_ld*node_0 + idim] + s1 * s_rst_v[s_rst_ld*node_1 + idim];
-	    }
-	      
-	  wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)]-1;
-	      
-	  for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
-	    {
-	      c_v_[c_ld_*idx+idim] = (l0 * s_rst_v[s_rst_ld*node_0 + idim] + l1 * s_rst_v[s_rst_ld*node_1 + idim]);
-	      //	      std::cout << "idim  " << idim << " = " << c_v_[c_ld_*idx+idim] << std::endl;
-	    }	  
-	}
-    }
-
-  //
-  // boundary triangles
-  //
-  for (wmesh_int_t it=0;it<4;++it)
-    {
-      wmesh_int_t node_0 = s_t2n[it*3+0];
-      wmesh_int_t node_1 = s_t2n[it*3+1];
-      wmesh_int_t node_2 = s_t2n[it*3+2];
-	  
-      for (wmesh_int_t i=1;i<degree;++i)
-	{
-	  const auto ri = r_v_[i];
-	  for (wmesh_int_t j=1;j<degree-i;++j)
-	    {
-	      const auto rj	= r_v_[j*r_inc_];
-	      const auto rl	= r_v_[(degree - i - j)*r_inc_];
-
-	      T l1  = ( two * (one + ri) - (rj + rl) ) / six;
-	      T l2  = ( two * (one + rj) - (ri + rl) ) / six;
-	      T l0  = one - l1 - l2;
-
-	      wmesh_int_t s1  = i;
-	      wmesh_int_t s2  = j;
-	      wmesh_int_t s0  = degree-s1 - s2;
-	      for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
-		ijk[idim] = 
-		  s0 * s_rst_v[s_rst_ld*node_0 + idim] +
-		  s1 * s_rst_v[s_rst_ld*node_1 + idim] +
-		  s2 * s_rst_v[s_rst_ld*node_2 + idim];
-	      
-	      wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)]-1;	  
-	      for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
-		c_v_[idx * c_ld_ + idim] =
-		  
-		  ( l0 * s_rst_v[s_rst_ld*node_0 + idim] +
-		    l1 * s_rst_v[s_rst_ld*node_1 + idim] +
-		    l2 * s_rst_v[s_rst_ld*node_2 + idim] );
-	    }
-	}
-    }
-  
-
-  for (wmesh_int_t iq=0;iq<1;++iq)
-    {
-      wmesh_int_t node_0 = s_q2n[iq*4+0];
-      wmesh_int_t node_1 = s_q2n[iq*4+1];
-      wmesh_int_t node_2 = s_q2n[iq*4+2];
-      wmesh_int_t node_3 = s_q2n[iq*4+3];
-	
-      for (wmesh_int_t i=1;i<degree;++i)
-	{
-	  const auto ri = (r_v_[i*r_inc_]+one)/two;
-	  for (wmesh_int_t j=1;j<degree;++j)
-	    {
-	      const auto rj = (r_v_[j*r_inc_]+one) / two;
-	       
-	      T l0  = (one - ri)*(one - rj);
-	      T l1   = ri*(one - rj);
-	      T l2  = ri*rj;
-	      T l3  = (one - ri)*rj;
-#if 0	     
-	      wmesh_int_t s0  = (degree - i)*(degree - j);
-	      wmesh_int_t s1  = i*(degree - j);
-	      wmesh_int_t s2  = i * j ;
-	      wmesh_int_t s3  = (degree - i) * j;
-#endif
-
-	      ijk[0] = j;
-	      ijk[1] = i;
-	      ijk[2] = 0;
-
-#if 0
-	      for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
-		ijk[idim] = 
-		  s0 * s_rst_v[s_rst_ld*node_0 + idim] +
-		  s1 * s_rst_v[s_rst_ld*node_1 + idim] +
-		  s2 * s_rst_v[s_rst_ld*node_2 + idim] + 
-		  s3 * s_rst_v[s_rst_ld*node_3 + idim];
-#endif	      
-	      //	      std::cout << "ddddddddddddddddd " << ijk[0] << " " << ijk[1] << " " << ijk[2] << std::endl;
-	      wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)]-1;
-	      
-	      for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
-		c_v_[idx * c_ld_ + idim] =
-		  (l0 * s_rst_v[s_rst_ld*node_0 + idim] +
-			    l1 * s_rst_v[s_rst_ld*node_1 + idim] +
-			    l2 * s_rst_v[s_rst_ld*node_2 + idim] + 
-			    l3 * s_rst_v[s_rst_ld*node_3 + idim]);		
-	    }
-	}
-    }	
-
-
-
-  {      
-    wmesh_int_t node_0 = s_t2n_diag[3*0+0];
-    wmesh_int_t node_1 = s_t2n_diag[3*0+1];
-    wmesh_int_t node_2 = s_t2n_diag[3*0+2];
-    
-    for (wmesh_int_t i=1;i<degree;++i)
-      {
-	const auto ri = r_v_[i];
-	for (wmesh_int_t j=1;j<degree-i;++j)
-	  {
-	    const auto rj	= r_v_[j*r_inc_];
-	    const auto rl	= r_v_[(degree - i - j)*r_inc_];
-	    
-	    T l1  = ( two * (one + ri) - (rj + rl) ) / six;
-	    T l2  = ( two * (one + rj) - (ri + rl) ) / six;
-	    T l0  = one - l1 - l2;
-	      
-	    wmesh_int_t s1  = i;
-	    wmesh_int_t s2  = j;
-	    wmesh_int_t s0  = degree-s1 - s2;
-	    for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
-	      ijk[idim] = 
-		s0 * s_rst_v[s_rst_ld*node_0 + idim] +
-		s1 * s_rst_v[s_rst_ld*node_1 + idim] +
-		s2 * s_rst_v[s_rst_ld*node_2 + idim];
-	      
-	    wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)]-1;	  
-	    for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
-	      c_v_[idx * c_ld_ + idim] =
-		
-		( l0 * s_rst_v[s_rst_ld*node_0 + idim] +
-		  l1 * s_rst_v[s_rst_ld*node_1 + idim] +
-		  l2 * s_rst_v[s_rst_ld*node_2 + idim] );
-	  }
-      }
-  }
-
-  
-  for (wmesh_int_t itet=0;itet<2;++itet)
-    {
-      
-      wmesh_int_t node_0 = s_tet2n[4*itet+0];
-      wmesh_int_t node_1 = s_tet2n[4*itet+1];
-      wmesh_int_t node_2 = s_tet2n[4*itet+2];
-      wmesh_int_t node_3 = s_tet2n[4*itet+3];      
-      for (wmesh_int_t i=1;i<degree;++i)
-	{
-	  const auto ri = r_v_[i*r_inc_];
-	  for (wmesh_int_t j=1;j<degree-i;++j)
-	    {
-	      const auto rj	= r_v_[j*r_inc_];	      
-	      for (wmesh_int_t k=1;k<degree-i-j;++k)
-		{
-		  const auto rk	= r_v_[k*r_inc_];
-		  
-		  const auto rl	= r_v_[(degree - i - j - k)*r_inc_];
-		  
-		  T l1  = ( two + three * ri - (rj + rk + rl) ) / eight;
-		  T l2  = ( two + three * rj - (ri + rk + rl) ) / eight;
-		  T l3  = ( two + three * rk - (ri + rj + rl) ) / eight;
-		  T l0  = one - l1 - l2 - l3;
-
-		  wmesh_int_t s1  = i;
-		  wmesh_int_t s2  = j;
-		  wmesh_int_t s3  = k;
-		  wmesh_int_t s0  = degree - s1 - s2 - s3;
-		  for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
-		    ijk[idim] = 
-		      s0 * s_rst_v[s_rst_ld*node_0 + idim] +
-		      s1 * s_rst_v[s_rst_ld*node_1 + idim] +
-		      s2 * s_rst_v[s_rst_ld*node_2 + idim] +
-		      s3 * s_rst_v[s_rst_ld*node_3 + idim];
-
-		  wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)]-1;	  
-		  for (wmesh_int_t idim=0;idim<s_rst_m;++idim)
-		    {
-		      c_v_[idx * c_ld_ + idim] =
-			
-			( l0 * s_rst_v[s_rst_ld*node_0 + idim] +
-			  l1 * s_rst_v[s_rst_ld*node_1 + idim] +
-			  l2 * s_rst_v[s_rst_ld*node_2 + idim] +
-			  l3 * s_rst_v[s_rst_ld*node_3 + idim]);
-		      //		      std:: cout << " " << idim <<  " " << c_v_[idx * c_ld_ + idim] << std::endl;
-
-		    }
-
-		}
-	    }
-	}
-      
-    }
-  
-  return WMESH_STATUS_SUCCESS;
-}
-
 
 template<typename T>
 static wmesh_status_t bms_transform_tetrahedron(wmesh_int_t 		r_n_,
@@ -319,8 +23,8 @@ static wmesh_status_t bms_transform_tetrahedron(wmesh_int_t 		r_n_,
 						wmesh_int_t		c_n_,
 						T*			c_v_,
 						wmesh_int_t		c_ld_,
-						const_wmesh_int_p	p_v_,
-						wmesh_int_t		p_inc_)
+						wmesh_int_p 		perm_,
+						wmesh_int_t		perm_ld_)
 {
   static constexpr const T s_T0(0);
   static constexpr const T s_T1(1);
@@ -340,7 +44,7 @@ static wmesh_status_t bms_transform_tetrahedron(wmesh_int_t 		r_n_,
 	  ijk[0] = i;
 	  ijk[1] = j;
 	  ijk[2] = 0;
-	  wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(n_,ijk)]-1;
+	  wmesh_int_t idx = perm_[perm_ld_*flat3d(n_,ijk)]-1;
 	  if(c_storage_ == WMESH_STORAGE_INTERLEAVE)
 	    {
 	      
@@ -366,7 +70,7 @@ static wmesh_status_t bms_transform_tetrahedron(wmesh_int_t 		r_n_,
 	  ijk[0] = 0;
 	  ijk[1] = j;
 	  ijk[2] = k;
-	  wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(n_,ijk)]-1;
+	  wmesh_int_t idx = perm_[perm_ld_*flat3d(n_,ijk)]-1;
 
 	  wmesh_int_t l = m - j - k;
 	  if(c_storage_ == WMESH_STORAGE_INTERLEAVE)
@@ -392,7 +96,7 @@ static wmesh_status_t bms_transform_tetrahedron(wmesh_int_t 		r_n_,
 	  ijk[0] = i;
 	  ijk[1] = 0;
 	  ijk[2] = k;
-	  wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(n_,ijk)]-1;
+	  wmesh_int_t idx = perm_[perm_ld_*flat3d(n_,ijk)]-1;
 
 
 	  wmesh_int_t l = m - i - k;
@@ -418,7 +122,7 @@ static wmesh_status_t bms_transform_tetrahedron(wmesh_int_t 		r_n_,
 	  ijk[0] = i;
 	  ijk[1] = j;
 	  ijk[2] = m - i - j;
-	  wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(n_,ijk)]-1;
+	  wmesh_int_t idx = perm_[perm_ld_*flat3d(n_,ijk)]-1;
 	  
 	  wmesh_int_t l = m - i - j;	  
 	  T xi = (s_T1*d_+s_T2*r_v_[r_inc_*i]-r_v_[r_inc_*j]-r_v_[r_inc_*l]) / s_T3;
@@ -450,7 +154,7 @@ static wmesh_status_t bms_transform_tetrahedron(wmesh_int_t 		r_n_,
 	      ijk[1] = j;
 	      ijk[2] = k;
 	      
-	      wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(n_,ijk)]-1;
+	      wmesh_int_t idx = perm_[perm_ld_*flat3d(n_,ijk)]-1;
 	      wmesh_int_t l = m - i - j - k;
 	      if(c_storage_ == WMESH_STORAGE_INTERLEAVE)
 		{
@@ -484,10 +188,10 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 			     T * __restrict__		c_v_,					 
 			     wmesh_int_t		c_ld_,
 			     
-			     const_wmesh_int_p		p_v_,
-			     wmesh_int_t		p_inc_) 
+			     const_wmesh_int_p		perm_,
+			     wmesh_int_t		perm_ld_) 
 {
-  
+
   static constexpr const T one(1.0);
   static constexpr const T two(2.0);
   static constexpr const T six(6.0);
@@ -495,14 +199,88 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
   WMESH_CHECK_POSITIVE(r_n_);
   WMESH_CHECK_POINTER(r_v_);
   WMESH_CHECK(r_inc_ >= 1);
- 
-  wmesh_int_t c_dim 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_m_ : c_n_;
   
-  WMESH_CHECK( (c_dim == 2) || (c_dim ==3) );   
+  
+  wmesh_int_t b_dim 	= (b_storage_ == WMESH_STORAGE_INTERLEAVE) ? b_m_ : b_n_;
+  wmesh_int_t c_dim 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_m_ : c_n_;
+  wmesh_int_t b_count 	= (b_storage_ == WMESH_STORAGE_INTERLEAVE) ? b_n_ : b_m_;
+  wmesh_int_t c_count 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_n_ : c_m_;
+  
+  WMESH_CHECK( (b_dim == 2) || (b_dim ==3) );  
+  WMESH_CHECK( b_dim == c_dim );  
+  WMESH_CHECK( b_count == c_count );  
+  
+  WMESH_CHECK(b_ld_ >= b_m_);
   WMESH_CHECK(c_ld_ >= c_m_);
   
+  wmesh_int_t required_iwork_n = (b_dim == 2) ? r_n_ * r_n_ : r_n_ * r_n_ * r_n_;
+  if (iwork_n_ < required_iwork_n)
+    {
+      std::cerr << "// WMESH::ERROR iwork_n_ = " << iwork_n_
+		<< ", required_iwork_n_ = " << required_iwork_n
+		<< ", r_n_ = " << r_n_
+		<< std::endl;
+      WMESH_CHECK(iwork_n_ >= required_iwork_n);
+    }
+  
+  WMESH_CHECK_POINTER(iwork_);
+
+  for (wmesh_int_t i=0;i<required_iwork_n;++i)
+    {
+      iwork_[i] = 0;
+    }
+
+
   wmesh_int_t degree = r_n_ - 1;
-  wmesh_int_t ijk[3];  
+  wmesh_int_t ijk[3];
+  
+  wmesh_status_t status =  bms_ordering_flat(degree_,
+					     b_storage_,
+					     b_m_,
+					     b_n_,
+					     b_v_,
+					     b_ld_,
+					     iwork_);  
+  WMESH_STATUS_CHECK(status);
+
+#if 0
+  switch(b_storage_)
+    {
+    case WMESH_STORAGE_INTERLEAVE:
+      {
+	for (wmesh_int_t j=0;j<b_count;++j)
+	  {
+	    for (wmesh_int_t i=0;i<b_dim;++i)
+	      {
+		ijk[i] = b_v_[b_ld_ * j + i];
+	      }
+
+	    wmesh_int_t flat  = (b_dim==2) ? flat2d(r_n_,ijk) : flat3d(r_n_,ijk);
+	    work_[flat] = j + 1;
+	    //	    std::cout << "perm["  << flat << "] = "  << j+1 <<  ",  "  << ijk[0] << " "  << ijk[1] << " "  << ijk[2] << std::endl;
+	  }
+	break;
+      }
+    case WMESH_STORAGE_BLOCK:
+      {
+	for (wmesh_int_t j=0;j<b_count;++j)
+	  {
+	    for (wmesh_int_t i=0;i<b_dim;++i)
+	      {
+		ijk[i] = b_v_[b_ld_ * i + j];
+	      }
+	    wmesh_int_t flat  = (b_dim==2) ? flat2d(r_n_,ijk) : flat3d(r_n_,ijk);
+	    work_[flat] = j + 1;
+	  }
+	break;
+      }
+    default:
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ENUM);
+      }
+    }
+#endif  
+  
   if (element_ == WMESH_ELEMENT_TRIANGLE)
     {
       switch(c_storage_)
@@ -516,7 +294,7 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 		for (wmesh_int_t j=0;j<r_n_-i;++j)
 		  {
 		    ijk[1] = j;
-		    wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat2d(r_n_,ijk)] - 1;
+		    wmesh_int_t idx = iwork_[flat2d(r_n_,ijk)] - 1;
 		    
 		    const auto rj	= r_v_[j*r_inc_];
 		    const auto rl	= r_v_[(degree - i - j)*r_inc_];	  
@@ -536,8 +314,8 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 		for (wmesh_int_t j=0;j<=degree-i;++j)
 		  {
 		    ijk[1] = j;
-		    WMESH_CHECK(p_v_[p_inc_*bms_ordering_flat2d(r_n_,ijk)] > 0);
-		    wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat2d(r_n_,ijk)] - 1;
+		    WMESH_CHECK(iwork_[flat2d(r_n_,ijk)] > 0);
+		    wmesh_int_t idx = iwork_[flat2d(r_n_,ijk)] - 1;
 		    
 		    const auto rj	= r_v_[j*r_inc_];
 		    const auto rl	= r_v_[(degree-i-j)*r_inc_];	  
@@ -562,7 +340,7 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 	{
 	case WMESH_STORAGE_INTERLEAVE:
 	  {	
-	    if (2 == c_dim)
+	    if (2 == b_dim)
 	      {
 		
 		for (wmesh_int_t i=0;i<=degree;++i)
@@ -574,9 +352,9 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 			const auto rj	= (r_v_[j*r_inc_]+one)/two;
 			ijk[1] = j;
 #ifndef NDEBUG			    
-			WMESH_CHECK(p_v_[p_inc_*bms_ordering_flat2d(r_n_,ijk)] > 0);
+			WMESH_CHECK(iwork_[flat2d(r_n_,ijk)] > 0);
 #endif
-			wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat2d(r_n_,ijk)] - 1;
+			wmesh_int_t idx = iwork_[flat2d(r_n_,ijk)] - 1;
 			c_v_[c_ld_ * idx + 0] = ri;
 			c_v_[c_ld_ * idx + 1] = rj;
 		      }
@@ -586,7 +364,7 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 	    else
 	      {
 #ifndef NDEBUG			    
-		WMESH_CHECK(3 == c_dim);
+		WMESH_CHECK(3 == b_dim);
 #endif
 		//		std::cout << "hello degree="  << degree << std::endl;
 		for (wmesh_int_t i=0;i<r_n_;++i)
@@ -601,10 +379,10 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 			  {
 			    ijk[2] = k;
 #ifndef NDEBUG			    
-			    WMESH_CHECK(p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)] > 0);
+			    WMESH_CHECK(iwork_[flat3d(r_n_,ijk)] > 0);
 #endif
-			    wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)] - 1;
-			    // std::cout << " >  idx = " << idx + 1 << ", c_ld_ = " << c_ld_ << ", flat = "<< bms_ordering_flat3d(r_n_,ijk) << std::endl;
+			    wmesh_int_t idx = iwork_[flat3d(r_n_,ijk)] - 1;
+			    // std::cout << " >  idx = " << idx + 1 << ", c_ld_ = " << c_ld_ << ", flat = "<< flat3d(r_n_,ijk) << std::endl;
 			    const auto rk = (r_v_[k*r_inc_]+one)/two;			
 			    c_v_[c_ld_*idx+0] = ri;
 			    c_v_[c_ld_*idx+1] = rj;
@@ -620,7 +398,7 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 	  
 	case WMESH_STORAGE_BLOCK:
 	  {
-	    if (2 == c_dim)
+	    if (2 == b_dim)
 	      {	    
 		for (wmesh_int_t i=0;i<=degree;++i)
 		  {
@@ -631,9 +409,9 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 			const auto rj	= (r_v_[j*r_inc_]+one)/two;
 			ijk[1] = j;
 #ifndef NDEBUG			    
-			WMESH_CHECK(p_v_[p_inc_*bms_ordering_flat2d(r_n_,ijk)] > 0);
+			WMESH_CHECK(iwork_[flat2d(r_n_,ijk)] > 0);
 #endif
-			wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat2d(r_n_,ijk)] - 1;
+			wmesh_int_t idx = iwork_[flat2d(r_n_,ijk)] - 1;
 			c_v_[c_ld_ * 0 + idx] = ri;
 			c_v_[c_ld_ * 1 + idx] = rj;
 		      }
@@ -643,7 +421,7 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 	    else
 	      {
 #ifndef NDEBUG			    		
-		WMESH_CHECK(3 == c_dim);
+		WMESH_CHECK(3 == b_dim);
 #endif
 		for (wmesh_int_t i=0;i<=degree;++i)
 		  {
@@ -657,9 +435,9 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 			  {
 			    ijk[2] = k;
 #ifndef NDEBUG			    		
-			    WMESH_CHECK(p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)] > 0);
+			    WMESH_CHECK(iwork_[flat3d(r_n_,ijk)] > 0);
 #endif
-			    wmesh_int_t idx = p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)] - 1;			
+			    wmesh_int_t idx = iwork_[flat3d(r_n_,ijk)] - 1;			
 			    const auto rk = (r_v_[k*r_inc_]+one)/two;			
 			    c_v_[c_ld_*0+idx] = ri;
 			    c_v_[c_ld_*1+idx] = rj;
@@ -687,7 +465,7 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 	case WMESH_STORAGE_INTERLEAVE:
 	  {	
 #ifndef NDEBUG			    		
-	    WMESH_CHECK(3 == c_dim);
+	    WMESH_CHECK(3 == b_dim);
 #endif
 	    for (wmesh_int_t i=0;i<=degree;++i)
 	      {
@@ -702,9 +480,9 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 			ijk[2] = k;
 			const auto rk		= r_v_[k*r_inc_];	  
 #ifndef NDEBUG			    		
-			WMESH_CHECK(p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)] > 0);
+			WMESH_CHECK(iwork_[flat3d(r_n_,ijk)] > 0);
 #endif
-			wmesh_int_t idx 	= p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)] - 1;		    
+			wmesh_int_t idx 	= iwork_[flat3d(r_n_,ijk)] - 1;		    
 			
 			const auto rl		= r_v_[(degree-i-j)*r_inc_];	  
 			c_v_[c_ld_ * idx + 0] 	= ( two * (one + ri) - (rj + rl) ) / six;
@@ -731,9 +509,9 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 			ijk[2] = k;
 			const auto rk		= r_v_[k*r_inc_];
 #ifndef NDEBUG			    		
-			WMESH_CHECK(p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)] > 0);
+			WMESH_CHECK(iwork_[flat3d(r_n_,ijk)] > 0);
 #endif
-			wmesh_int_t idx 	= p_v_[p_inc_*bms_ordering_flat3d(r_n_,ijk)] - 1;		    
+			wmesh_int_t idx 	= iwork_[flat3d(r_n_,ijk)] - 1;		    
 
 			const auto rl		= r_v_[(degree-i-j)*r_inc_];	  
 			c_v_[c_ld_ * 0 + idx] 	= ( two * (one + ri) - (rj + rl) ) / six;
@@ -755,6 +533,7 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
     }
   else if (element_ == WMESH_ELEMENT_PYRAMID)
     {
+#if 0
       wmesh_status_t status =  bms_transform_pyramid(r_n_,
 						     r_v_,
 						     r_inc_,
@@ -763,9 +542,10 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 						     c_n_,
 						     c_v_,
 						     c_ld_,
-						     p_v_,
-						     p_inc_);
-      WMESH_STATUS_CHECK(status);      
+						     iwork_);
+      WMESH_STATUS_CHECK(status);
+#endif
+      WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_CONFIG);
     }
   else if (element_ == WMESH_ELEMENT_TETRAHEDRON)
     {
@@ -777,8 +557,7 @@ wmesh_status_t bms_transform(wmesh_int_t 		element_,
 							 c_n_,
 							 c_v_,
 							 c_ld_,
-							 p_v_,
-							 p_inc_);
+							 iwork_);
       WMESH_STATUS_CHECK(status);      
     }
   return WMESH_STATUS_SUCCESS;
@@ -791,20 +570,33 @@ wmesh_status_t bms_transform<float>(wmesh_int_t 		element_,
 				    const float*__restrict__	r_,
 				    wmesh_int_t			r_inc_,
 				    
+				    wmesh_int_t			b_storage_,
+				    wmesh_int_t			b_m_,
+				    wmesh_int_t			b_n_,
+				    const_wmesh_int_p		b_v_,
+				    wmesh_int_t			b_ld_,
+				    
 				    wmesh_int_t			c_storage_,
 				    wmesh_int_t			c_m_,
 				    wmesh_int_t			c_n_,
 				    float * __restrict__	c_v_,					 
 				    wmesh_int_t			c_ld_,
 				    
-				    const_wmesh_int_p 		p_v_,
-				    wmesh_int_t			p_inc_) ;
+				    wmesh_int_t 		work_n_,
+				    wmesh_int_p			work_) ;
+
 
 template
 wmesh_status_t bms_transform<double>(wmesh_int_t 		element_,
-				     wmesh_int_t 		r_n_,					 
+				    wmesh_int_t 		r_n_,					 
 				    const double*__restrict__	r_,
 				    wmesh_int_t			r_inc_,
+				    
+				    wmesh_int_t			b_storage_,
+				    wmesh_int_t			b_m_,
+				    wmesh_int_t			b_n_,
+				    const_wmesh_int_p		b_v_,
+				    wmesh_int_t			b_ld_,
 				    
 				    wmesh_int_t			c_storage_,
 				    wmesh_int_t			c_m_,
@@ -812,8 +604,30 @@ wmesh_status_t bms_transform<double>(wmesh_int_t 		element_,
 				    double * __restrict__	c_v_,					 
 				    wmesh_int_t			c_ld_,
 				    
-				    const_wmesh_int_p 		p_v_,
-				    wmesh_int_t			p_inc_);
+				    wmesh_int_t 		work_n_,
+				    wmesh_int_p			work_) ;
+
+
+template
+wmesh_status_t bms_transform<wmesh_int_t>(wmesh_int_t 		element_,
+				    wmesh_int_t 		r_n_,					 
+				    const wmesh_int_t*__restrict__	r_,
+				    wmesh_int_t			r_inc_,
+				    
+				    wmesh_int_t			b_storage_,
+				    wmesh_int_t			b_m_,
+				    wmesh_int_t			b_n_,
+				    const_wmesh_int_p		b_v_,
+				    wmesh_int_t			b_ld_,
+				    
+				    wmesh_int_t			c_storage_,
+				    wmesh_int_t			c_m_,
+				    wmesh_int_t			c_n_,
+				    wmesh_int_t * __restrict__	c_v_,					 
+				    wmesh_int_t			c_ld_,
+				    
+				    wmesh_int_t 		work_n_,
+				    wmesh_int_p			work_) ;
 
 
 extern "C"
@@ -824,18 +638,17 @@ extern "C"
 				   wmesh_int_t		b_n_,
 				   const_wmesh_int_p	b_v_,
 				   wmesh_int_t		b_ld_,
-				   wmesh_int_p		p_v_,
-				   wmesh_int_t		p_inc_)
+				   wmesh_int_p		flat_)
   {
-    wmesh_int_t r_n_ 		= degree_ + 1;
-    wmesh_int_t b_dim 		= (b_storage_ == WMESH_STORAGE_INTERLEAVE) ? b_m_ : b_n_;
+    wmesh_int_t r_n_ = degree_ + 1;
+    wmesh_int_t b_dim 	= (b_storage_ == WMESH_STORAGE_INTERLEAVE) ? b_m_ : b_n_;
     wmesh_int_t b_count 	= (b_storage_ == WMESH_STORAGE_INTERLEAVE) ? b_n_ : b_m_;  
     WMESH_CHECK( (b_dim == 2) || (b_dim ==3) );    
     WMESH_CHECK(b_ld_ >= b_m_);
   
     for (wmesh_int_t i=0;i<b_count;++i)
       {
-	p_v_[p_inc_*i] = 0;
+	flat_[i] = 0;
       }
   
     wmesh_int_t ijk[3];
@@ -850,8 +663,8 @@ extern "C"
 		  ijk[i] = b_v_[b_ld_ * j + i];
 		}
 
-	      wmesh_int_t flat  = (b_dim==2) ? bms_ordering_flat2d(r_n_,ijk) : bms_ordering_flat3d(r_n_,ijk);
-	      p_v_[p_inc_*flat] = j + 1;
+	      wmesh_int_t flat  = (b_dim==2) ? flat2d(r_n_,ijk) : flat3d(r_n_,ijk);
+	      flat_[flat] = j + 1;
 	    }
 	  break;
 	}
@@ -863,8 +676,8 @@ extern "C"
 		{
 		  ijk[i] = b_v_[b_ld_ * i + j];
 		}
-	      wmesh_int_t flat  = (b_dim==2) ? bms_ordering_flat2d(r_n_,ijk) : bms_ordering_flat3d(r_n_,ijk);
-	      p_v_[p_inc_*flat] = j + 1;
+	      wmesh_int_t flat  = (b_dim==2) ? flat2d(r_n_,ijk) : flat3d(r_n_,ijk);
+	      flat_[flat] = j + 1;
 	    }
 	  break;
 	}

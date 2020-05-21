@@ -51,31 +51,26 @@ extern "C"
     wmesh_int_t elements[4];
     wmesh_int_t c2d_n_m[4];//  {4,5,6,8};
     wmesh_int_t c2d_n_ptr[4+1];
-    status = wmesh_topodim2elements(topodim_,
-				    &c2d_size,
-				    elements);
+    status = bms_topodim2elements(topodim_,
+				  &c2d_size,
+				  elements);
     WMESH_STATUS_CHECK(status);    
     
-    status = wmesh_elements_num_nodes(c2d_size,
-				      elements,
-				      c2d_n_m);
+    status = bms_elements_num_nodes(c2d_size,
+				    elements,
+				    c2d_n_m);
     WMESH_STATUS_CHECK(status);
-    
-    c2d_n_m[0] *= num_ldofs_[0];
-    c2d_n_m[1] *= num_ldofs_[1];
-    c2d_n_m[2] *= num_ldofs_[2];
-    c2d_n_m[3] *= num_ldofs_[3];
 
-    c2d_n_ptr[0] = c2d_->m_ptr[0] + shifts_[0]; 
-    c2d_n_ptr[1] = c2d_->m_ptr[1] + shifts_[1]; 
-    c2d_n_ptr[2] = c2d_->m_ptr[2] + shifts_[2]; 
-    c2d_n_ptr[3] = c2d_->m_ptr[3] + shifts_[3];
-    c2d_n_ptr[4] = c2d_->m_ptr[4];
+    wmesh_int_t n = ( topodim_ * (topodim_ -1) ) / 2 +  1;
+    for (wmesh_int_t i=0;i<n;++i)      
+      c2d_n_m[i] *= num_ldofs_[i];
+
+    for (wmesh_int_t i=0;i<n;++i)      
+      c2d_n_ptr[i] = c2d_->m_ptr[i] + shifts_[i]; 
+    c2d_n_ptr[n] = c2d_->m_ptr[n];
     
-    shifts_[0] += c2d_n_m[0];
-    shifts_[1] += c2d_n_m[1];
-    shifts_[2] += c2d_n_m[2];
-    shifts_[3] += c2d_n_m[3];
+    for (wmesh_int_t i=0;i<n;++i)      
+    shifts_[i] += c2d_n_m[i];
     
     return wmesh_int_sparsemat_new(c2d_n_,
 				   c2d_size,
@@ -97,14 +92,14 @@ extern "C"
     wmesh_int_t elements[4];
     wmesh_int_t c2d_e_m[4];
     wmesh_int_t c2d_e_ptr[4+1];
-    status = wmesh_topodim2elements(topodim_,
-				    &c2d_e_size,
-				    elements);
+    status = bms_topodim2elements(topodim_,
+				  &c2d_e_size,
+				  elements);
     WMESH_STATUS_CHECK(status);    
     
-    status = wmesh_elements_num_edges(c2d_e_size,
-				      elements,
-				      c2d_e_m);
+    status = bms_elements_num_edges(c2d_e_size,
+				    elements,
+				    c2d_e_m);
     WMESH_STATUS_CHECK(status);
 
     for (wmesh_int_t i=0;i<c2d_e_size;++i)
@@ -208,8 +203,8 @@ extern "C"
     wmesh_int_t c2d_i_ptr[4+1];
     wmesh_int_t c2d_i_size;
     
-    status = wmesh_topodim2numtypes(topodim_,
-				    &c2d_i_size);
+    status = bms_topodim2numtypes(topodim_,
+				  &c2d_i_size);
     WMESH_STATUS_CHECK(status);
     
     for (wmesh_int_t i=0;i<c2d_i_size;++i)

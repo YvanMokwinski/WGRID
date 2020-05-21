@@ -109,8 +109,8 @@ int main(int 		argc,
     }
   
   wmesh_int_t dim;
-  status = wmesh_element2topodim(element,
-				 &dim);
+  status = bms_element2topodim(element,
+			       &dim);
   WMESH_STATUS_CHECK(status);
 
   wmesh_int_t ndofs;
@@ -139,8 +139,22 @@ int main(int 		argc,
   WMESH_STATUS_CHECK( status );
   
   double * c    = (double*)malloc(sizeof(double) * c_n * c_ld);  
-  wmesh_int_t work_n = 1024;
-  double * work = (double*)malloc(sizeof(double) * work_n);  
+
+
+
+    wmesh_int_t rwork_n;
+    wmesh_int_t iwork_n;
+
+    status = bms_nodes_buffer_sizes(element,
+				    nodes_family,
+				    degree,
+				    &iwork_n,
+				    &rwork_n);
+   
+    WMESH_STATUS_CHECK(status);
+
+    wmesh_int_p iwork = (iwork_n > 0) ? (wmesh_int_p)malloc(sizeof(wmesh_int_t)*iwork_n) : nullptr;
+    double* __restrict__ rwork = (rwork_n>0)?(double* __restrict__ )malloc(sizeof(double)*rwork_n):nullptr;
 
   status = bms_dnodes(element,
 		      nodes_family,
@@ -154,10 +168,15 @@ int main(int 		argc,
 		      c_m,
 		      c_n,
 		      c,
-		      c_ld,		      
-		      work_n,
-		      work);
-  free(work);  
+		      c_ld,
+		      iwork_n,
+		      iwork,
+		      rwork_n,
+		      rwork);
+  
+  if (iwork) free(iwork);
+  if (rwork) free(rwork);
+
   WMESH_STATUS_CHECK( status );
 
   wmesh_int_p dof_types = (wmesh_int_p)malloc(sizeof(wmesh_int_t) * c_n);

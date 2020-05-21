@@ -130,7 +130,8 @@ extern "C"
 
   static constexpr wmesh_nodes_t s_nbits_element = 3;
   static constexpr wmesh_nodes_t s_nbits_family  = 3;
-  
+
+#if 0
   wmesh_int_t wmesh_nodes_degree(const wmesh_nodes_t *  self_)
   {
     static constexpr wmesh_nodes_t z = ((~s_zero) >> (s_nbits-3))<<(s_nbits_element + s_nbits_family);
@@ -170,7 +171,7 @@ extern "C"
     self_[0] = element_ + (family_ << s_nbits_family) + (degree_ << (s_nbits_family + s_nbits_element));
     return WMESH_STATUS_SUCCESS;
   };
-
+#endif
 #if 0
   wmesh_status_t wmesh_snodes(WMESH_NODES_INTERFACE_PARAMS(float))
   {

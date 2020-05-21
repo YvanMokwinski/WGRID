@@ -1,26 +1,14 @@
-#include <stdlib.h>
-#include <iostream>
+
+
+
 #include "wmesh.hpp"
 #include "bms.h"
-#include "wmesh_utils.hpp"
+
 #include "wmesh_nodes_family.h"
 #include "bms.hpp"
 extern "C"
-{  
-  wmesh_status_t wmesh_rmacro_buffer_size(wmesh_int_t 	element_,
-					  wmesh_int_t 	degree_,
-					  wmesh_int_p	work_n_,
-					  wmesh_int_p	num_entities_)
-  {
-    wmesh_status_t status;
-    status = bms_rmacro_buffer_size(element_,
-				    degree_,
-				    work_n_,
-				    num_entities_);
-    WMESH_STATUS_CHECK(status);
-    return WMESH_STATUS_SUCCESS;    
-  }
-  
+{
+
   wmesh_status_t wmesh_rmacro_def(wmesh_t ** 	mesh__,
 				  wmesh_int_t 	element_,
 				  wmesh_int_t 	nodes_family_,
@@ -29,52 +17,49 @@ extern "C"
     
     WMESH_CHECK_POINTER(mesh__);
     wmesh_status_t status;
-    
-    wmesh_int_t
+    wmesh_int_t 
       topodim,
       numtypes,
-      work_n,
       num_elements_of_topodim,
       elements_of_topodim[WMESH_ELEMENT_ALL],
       num_entities[WMESH_ELEMENT_ALL];
-    
 
     //
+    // Get topology dimension.
     //
-    //
-    status = wmesh_element2topodim(element_,
-				   &topodim);
+    status = bms_element2topodim(element_,
+				 &topodim);
     WMESH_STATUS_CHECK(status);
 
     //
+    // Get number of types.
     //
-    //
-    status = wmesh_topodim2numtypes(topodim,
+    status = bms_topodim2numtypes(topodim,
 				    &numtypes);
     WMESH_STATUS_CHECK(status);
 
     //
+    // Get elements.
     //
-    //
-    status = wmesh_topodim2elements(topodim,
-				    &num_elements_of_topodim,
-				    elements_of_topodim);
+    status = bms_topodim2elements(topodim,
+				  &num_elements_of_topodim,
+				  elements_of_topodim);
     WMESH_STATUS_CHECK(status);
 
 
-    //
-    //
-    //
+    
     for (wmesh_int_t i=0;i<WMESH_ELEMENT_ALL;++i)
       {
 	num_entities[i] = 0;
       }
+
+    wmesh_int_t iwork_n;
     status = bms_rmacro_buffer_size(element_,
 				    degree_,
-				    &work_n,
+				    &iwork_n,
 				    num_entities);
     WMESH_STATUS_CHECK(status);
-    
+
     wmesh_int_t num_nodes = num_entities[WMESH_ELEMENT_NODE];    
     wmesh_int_t c2n_size = num_elements_of_topodim;
     wmesh_int_t c2n_ptr[5];
@@ -96,12 +81,12 @@ extern "C"
     //
     // Get the number of nodes per element.
     //
-    status = wmesh_elements_num_nodes(c2n_size,
-				      elements_of_topodim,
-				      c2n_m);
+    status = bms_elements_num_nodes(c2n_size,
+				    elements_of_topodim,
+				    c2n_m);
 
     //
-    // Get the elements.
+    // Set c2n_n.
     //
     for (wmesh_int_t i=0;i<c2n_size;++i)
       {
@@ -121,22 +106,18 @@ extern "C"
 	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
       }
     
-    
-    wmesh_int_p work = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*work_n);
-    if (!work)
+   
+    wmesh_int_p iwork = (iwork_n > 0) ? (wmesh_int_p)malloc(sizeof(wmesh_int_t)*iwork_n) : nullptr;
+    if (iwork_n > 0 && !iwork)
       {
 	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
       }	    
 
-    wmesh_int_t current_work_n	= num_nodes * topodim;
-    wmesh_int_t work_n_rem 	= work_n - current_work_n;
-    wmesh_int_p work_rem 	= work + current_work_n;
-
-    wmesh_int_t b_storage 	= WMESH_STORAGE_INTERLEAVE;
-    wmesh_int_t b_m 		= topodim;
-    wmesh_int_t b_n 		= num_nodes;
-    wmesh_int_p b_v 		= work;
-    wmesh_int_t b_ld 		= b_m; 
+    const wmesh_int_t 	b_storage 	= WMESH_STORAGE_INTERLEAVE;
+    const wmesh_int_t 	b_m 		= topodim;
+    const wmesh_int_t 	b_n 		= num_nodes;
+    const wmesh_int_t 	b_ld 		= b_m; 
+    wmesh_int_p 	b_v		= (wmesh_int_p)malloc((b_m * b_n)*sizeof(wmesh_int_t));
     
     status = bms_rmacro(element_,
 			degree_,
@@ -154,14 +135,46 @@ extern "C"
 			b_v,
 			b_ld,
 			
-			work_n_rem,
-			work_rem);
+			iwork_n,
+			iwork);
     
     WMESH_STATUS_CHECK(status);
+        
+    wmesh_int_t rwork_n;
+    wmesh_int_t next_iwork_n;
 
-    wmesh_int_t rwork_n = 2048;
-    double* rwork = (double*)malloc(sizeof(double)*rwork_n);
+    status = bms_nodes_buffer_sizes(element_,
+				    nodes_family_,
+				    degree_,
+				    &next_iwork_n,
+				    &rwork_n);
+   
+    WMESH_STATUS_CHECK(status);
+    if (next_iwork_n > iwork_n)
+      {
+	iwork_n = next_iwork_n;
+	if (iwork)
+	  {
+	    wmesh_int_p next_iwork = (wmesh_int_p)realloc(iwork,iwork_n*sizeof(wmesh_int_t));
+	    if (!next_iwork)
+	      {
+		WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
+	      }
+	    iwork = next_iwork;
+	  }
+	else
+	  {
+	    iwork = (wmesh_int_p)malloc(iwork_n*sizeof(wmesh_int_t));	    
+	  }
+      }
+    
+    double* __restrict__ rwork = (rwork_n>0)?(double* __restrict__ )malloc(sizeof(double)*rwork_n):nullptr;
+    if (rwork_n > 0 && !rwork)
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
+      }	    
 
+    
     status = bms_dnodes(element_,
 			nodes_family_,
 			degree_,
@@ -177,112 +190,16 @@ extern "C"
 			c_n,
 			c_v,
 			c_ld,
-			
+
+			iwork_n,
+			iwork,
 			rwork_n,
 			rwork);
+
     WMESH_STATUS_CHECK(status);
-    free(rwork);
-#if 0
-    
-    switch(nodes_family_)
-      {
-      case WMESH_NODES_FAMILY_LAGRANGE:
-	{
-	  double idegree = ((double)1.0)/((double)degree_);
-	  for (wmesh_int_t i=0;i<num_nodes*topodim;++i)
-	    {
-	      coo[i] = icoo[i]*idegree;
-	    }
-	  break;
-	}
-      default:
-	{
-	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ENUM);
-	}
-      }
 
-    //
-    //
-    //
-    wmesh_int_t family = WFE_NODES_FAMILY_LAGRANGE;
-    switch(family)
-      {
-      case WFE_NODES_FAMILY_LAGRANGE:
-	{
-	  double idegree = ((double)1.0)/((double)degree_);
-	  for (wmesh_int_t i=0;i<num_nodes*topodim;++i)
-	    {
-	      coo[i] = icoo[i]*idegree;
-	    }
-	  break;
-	}
-	
-      case WFE_NODES_FAMILY_LAGRANGEBUBBLE:
-	{
-	  WMESH_STATUS_CHECK(WMESH_STATUS_NOT_IMPLEMENTED);
-	  break;
-	}
-	
-      case WFE_NODES_FAMILY_GAUSSLOBATTO:
-	{
-	  //
-	  //
-	  //
-	  wmesh_nodes_icoo_gauss_lobatto(dim,
-					 num_nodes,
-					 icoo,
-					 dim);
-	  
-	  //
-	  //
-	  //
-	  const wmesh_int_t k_ld = (degree_+1)*(degree_+1);
-	  const wmesh_int_t i_ld = (degree_+1);
-	  wmesh_nodes_coo_gauss_lobatto(dim,
-					num_nodes,
-					coo,
-					dim,
-					dim,
-					num_nodes,
-					icoo,
-					dim);
-	  
-	  for (wmesh_int_t idx=0;idx<num_nodes;++idx)
-	    {
-	      for (wmesh_int_t idim=0;idim<topodim;++idim)
-		{
-		  ijk[idim] = icoo[topodim*idx + idim];
-		}
-	      if (topodim==3)
-		perm[NxN * ijk[2] + N * ijk[0] + ijk[1]] = 1+idx;
-	      else if (topodim==2)
-		perm[N * ijk[0] + ijk[1]] = 1+idx;
-	      else if (topodim==1)
-		perm[ijk[0]] = 1+idx;
-	    }
-
-	  //
-	  // 
-	  //	  
-	  double idegree = ((double)1.0)/((double)degree_);
-	  for (wmesh_int_t i=0;i<num_nodes*topodim;++i)
-	    {	      
-	      const wmesh_int_t ip	= icoo[3*l+0];
-	      const wmesh_int_t jp	= icoo[3*l+1];
-	      const wmesh_int_t kp	= icoo[3*l+2];
-	      wmesh_int_t id 		= perm[k_ld*kp+i_ld*ip+jp];
-
-	      //
-	      //
-	      //
-	      coo[i] 			= coogl[i]*idegree;
-	    }
-	  
-	  break;
-	}
-	
-      }
-#endif
+    if (rwork) { free(rwork); } rwork_n = 0; rwork = nullptr;
+    if (iwork) { free(iwork); } iwork_n = 0; iwork = nullptr;
     
     status = wmesh_def(mesh__,
 		       topodim,
@@ -297,6 +214,12 @@ extern "C"
 		       c_v,
 		       c_ld);
 
+
+
+    
+    //
+    // Set some topological code for fun.
+    //
     if (topodim==3)
       {
 	for (wmesh_int_t k=0;k<mesh__[0]->m_c_c.m_size;++k)
@@ -327,15 +250,16 @@ extern "C"
 	      }
 	  }
       }
-    
+
+    //
+    // Set the topological dimension of the freedom's support.
+    //
     status = bms_ordering_topoid(element_,
 				 degree_,
 				 mesh__[0]->m_n_c.n,
 				 mesh__[0]->m_n_c.v,
 				 mesh__[0]->m_n_c.ld);
     WMESH_STATUS_CHECK( status );
-  
-
     
     return WMESH_STATUS_SUCCESS;
   };

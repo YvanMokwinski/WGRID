@@ -63,16 +63,16 @@ extern "C"
     wmesh_int_t c2c_ptr[4+1];
     // wmesh_int_t c2c_n[4];
     
-    status = wmesh_topodim2elements(topodim_,
-				    &c2c_size,
-				    elements);
+    status = bms_topodim2elements(topodim_,
+				  &c2c_size,
+				  elements);
 
     WMESH_STATUS_CHECK(status);
 
-    status = wmesh_elements_num_hyperfaces(topodim_,
-					   c2c_m);
+    status = bms_elements_num_hyperfaces(topodim_,
+					 c2c_m);
     WMESH_STATUS_CHECK(status);
-
+    
     status = wmesh_int_sparsemat_init(c2c_size,
 				      c2c_ptr,
 				      c2c_m,
