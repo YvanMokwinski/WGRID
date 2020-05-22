@@ -242,12 +242,12 @@ extern "C"
   };
 
   wmesh_status_t bms_write_medit_geometry(int64_t 			inm_,
-						 wmesh_int_t			coo_m_,
-						 wmesh_int_t			coo_n_,
-						 const double *__restrict__ 	coo_,
-						 wmesh_int_t 			coo_ld_,
-						 const_wmesh_int_p  		nflags_,
-						 wmesh_int_t 			nflags_ld_)
+					  wmesh_int_t			coo_m_,
+					  wmesh_int_t			coo_n_,
+					  const double *__restrict__ 	coo_,
+					  wmesh_int_t 			coo_ld_,
+					  const_wmesh_int_p  		nflags_,
+					  wmesh_int_t 			nflags_ld_)
   {
     int gmf_status;
     WMESH_CHECK( (inm_!=0) );
