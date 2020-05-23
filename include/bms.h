@@ -523,10 +523,39 @@ extern "C"
 	     double* __restrict__ rwork_);
   
 
+  
+  wmesh_status_t
+  bms_cubature_num_nodes(wmesh_int_t	element_,
+			 wmesh_int_t	family_,
+			 wmesh_int_t	degree_,
+			 wmesh_int_p	num_nodes_);
+
+  
+  wmesh_status_t bms_cubature_buffer_size(wmesh_int_t 	element_,
+					  wmesh_int_t 	family_,
+					  wmesh_int_t	n1d_,			
+					  wmesh_int_p 	rwork_n_);
+  
+  wmesh_status_t
+  bms_cubature(wmesh_int_t 		element_,
+	       wmesh_int_t 		family_,
+	       wmesh_int_t		n1d_,
+	       
+	       wmesh_int_t		c_storage_,
+	       wmesh_int_t		c_m_,
+	       wmesh_int_t		c_n_,
+	       double* 			c_v_,
+	       wmesh_int_t		c_ld_,
+	       
+	       wmesh_int_t		w_n_,
+	       double* 			w_v_,
+	       wmesh_int_t		w_inc_,
+	       
+	       wmesh_int_t		rwork_n_,
+	       double* __restrict__ 	rwork_);  
   //
   // Polynomials.
   //
-  
   wmesh_status_t bms_djacobip(wmesh_int_t 	alpha_,
 			      wmesh_int_t 	beta_,
 			      wmesh_int_t 	N_,

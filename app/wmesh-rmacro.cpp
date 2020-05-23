@@ -8,6 +8,256 @@
 //#include "wmesh_nodes.h"
 
 #include <iostream>
+
+template<typename T>
+wmesh_status_t bms_template_element_nodes(wmesh_int_t 		element_,
+					  wmesh_int_t		c_storage_,
+					  wmesh_int_t		c_m_,
+					  wmesh_int_t		c_n_,
+					  T*__restrict__ 	c_v_,
+					  wmesh_int_t		c_ld_)
+{
+
+  T*__restrict__ r = c_v_ + (c_storage_ == WMESH_STORAGE_BLOCK) ? c_ld_ * 0 : 0;
+  T*__restrict__ s = c_v_ + (c_storage_ == WMESH_STORAGE_BLOCK) ? c_ld_ * 1 : 1;
+  T*__restrict__ t = c_v_ + (c_storage_ == WMESH_STORAGE_BLOCK) ? c_ld_ * 2 : 2;
+  const wmesh_int_t inc = (c_storage_ == WMESH_STORAGE_BLOCK) ? 1 : c_ld_;
+  
+  switch(element_)
+    {
+    case WMESH_ELEMENT_NODE:
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
+	break;
+      }
+  
+#ifdef SET1
+#error SET1 already defined
+#endif
+#define SET1(_i,_a)					\
+  r[inc*(_i)] = (_a)
+
+    case WMESH_ELEMENT_EDGE:
+      {
+	SET1(0, static_cast<T>(-1) );
+	SET1(1, static_cast<T>(1)) ;
+	return WMESH_STATUS_SUCCESS;
+      }
+
+#undef SET1
+
+#ifdef SET2
+#error SET2 already defined
+#endif
+#define SET2(_i,_a,_b)				\
+      r[inc*(_i)] = (_a);			\
+      s[inc*(_i)] = (_b)
+      
+    case WMESH_ELEMENT_TRIANGLE:
+      {
+	SET2(0, static_cast<T>(0), static_cast<T>(0) );
+	SET2(1, static_cast<T>(1), static_cast<T>(0) );
+	SET2(2, static_cast<T>(0), static_cast<T>(1) );
+	return WMESH_STATUS_SUCCESS;
+      }
+
+    case WMESH_ELEMENT_QUADRILATERAL:
+      {
+	SET2(0, static_cast<T>(-1), static_cast<T>(-1) );
+	SET2(1, static_cast<T>(1), static_cast<T>(-1) );
+	SET2(2, static_cast<T>(1), static_cast<T>(1) );
+	SET2(3, static_cast<T>(-1), static_cast<T>(1) );
+	return WMESH_STATUS_SUCCESS;
+      }
+      
+    case WMESH_ELEMENT_TETRAHEDRON:
+      {
+	SET3(0, static_cast<T>(0), static_cast<T>(0), static_cast<T>(0) );
+	SET3(1, static_cast<T>(1), static_cast<T>(0), static_cast<T>(0) );
+	SET3(2, static_cast<T>(0), static_cast<T>(1), static_cast<T>(0) );
+	SET3(3, static_cast<T>(0), static_cast<T>(0), static_cast<T>(1) );
+	return WMESH_STATUS_SUCCESS;
+      }
+
+#undef SET2
+      
+#ifdef SET3
+#error SET3 already defined
+#endif
+#define SET3(_i,_a,_b,_c)				\
+      r[inc*(_i)] = (_a);				\
+      s[inc*(_i)] = (_b);				\
+      t[inc*(_i)] = (_c)
+      
+    case WMESH_ELEMENT_PYRAMID:
+      {
+	SET3(0, static_cast<T>(-1), static_cast<T>(-1), static_cast<T>(0) );
+	SET3(1, static_cast<T>(1), static_cast<T>(-1), static_cast<T>(0) );
+	SET3(2, static_cast<T>(1), static_cast<T>(1), static_cast<T>(0) );
+	SET3(3, static_cast<T>(-1), static_cast<T>(1), static_cast<T>(0) );
+	SET3(4, static_cast<T>(0), static_cast<T>(0), static_cast<T>(1) );
+	return WMESH_STATUS_SUCCESS;
+      }
+      
+    case WMESH_ELEMENT_WEDGE:
+      {
+	SET3(0, static_cast<T>(0), static_cast<T>(0), static_cast<T>(0) );
+	SET3(1, static_cast<T>(1), static_cast<T>(0), static_cast<T>(0) );
+	SET3(2, static_cast<T>(0), static_cast<T>(1), static_cast<T>(0) );
+
+	SET3(3, static_cast<T>(0), static_cast<T>(0), static_cast<T>(1) );
+	SET3(4, static_cast<T>(1), static_cast<T>(0), static_cast<T>(1) );
+	SET3(5, static_cast<T>(0), static_cast<T>(1), static_cast<T>(1) );
+	return WMESH_STATUS_SUCCESS;
+      }
+
+    case WMESH_ELEMENT_HEXAHEDRON:
+      {
+	SET3(0, static_cast<T>(-1), static_cast<T>(-1), static_cast<T>(-1) );
+	SET3(1, static_cast<T>(1), static_cast<T>(-1), static_cast<T>(-1) );
+	SET3(2, static_cast<T>(1), static_cast<T>(1), static_cast<T>(-1) );
+	SET3(3, static_cast<T>(-1), static_cast<T>(1), static_cast<T>(-1) );
+	SET3(4, static_cast<T>(-1), static_cast<T>(-1), static_cast<T>(1) );
+	SET3(5, static_cast<T>(1), static_cast<T>(-1), static_cast<T>(1) );
+	SET3(6, static_cast<T>(1), static_cast<T>(1), static_cast<T>(1) );
+	SET3(7, static_cast<T>(-1), static_cast<T>(1), static_cast<T>(1) );
+	return WMESH_STATUS_SUCCESS;
+      }
+
+#undef SET3
+
+    }
+
+  return WMESH_STATUS_INVALID_ENUM;
+}
+
+
+
+wmesh_status_t bms_ordering_element_nodes(wmesh_int_t 	element_,
+					  wmesh_int_t	c_storage_,
+					  wmesh_int_t	c_m_,
+					  wmesh_int_t	c_n_,
+					  wmesh_int_p  	c_v_,
+					  wmesh_int_t	c_ld_)
+{  
+  wmesh_int_p  r = c_v_ + ( (c_storage_ == WMESH_STORAGE_BLOCK) ? c_ld_ * 0 : 0);
+  wmesh_int_p  s = c_v_ + ( (c_storage_ == WMESH_STORAGE_BLOCK) ? c_ld_ * 1 : 1);
+  wmesh_int_p  t = c_v_ + ( (c_storage_ == WMESH_STORAGE_BLOCK) ? c_ld_ * 2 : 2);
+  const wmesh_int_t inc = (c_storage_ == WMESH_STORAGE_BLOCK) ? 1 : c_ld_;
+  static constexpr wmesh_int_t s_0 = 0;
+  static constexpr wmesh_int_t s_1 = 1;
+  switch(element_)
+    {
+    case WMESH_ELEMENT_NODE:
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
+	break;
+      }
+  
+#ifdef SET1
+#error SET1 already defined
+#endif
+#define SET1(_i,_a)				\
+      r[inc*(_i)] = (_a)
+      
+    case WMESH_ELEMENT_EDGE:
+      {
+	SET1(0, s_0 );
+	SET1(1, s_1) ;
+	return WMESH_STATUS_SUCCESS;
+      }
+      
+#undef SET1
+      
+#ifdef SET2
+#error SET2 already defined
+#endif
+#define SET2(_i,_a,_b)				\
+      r[inc*(_i)] = (_a);			\
+      s[inc*(_i)] = (_b)
+      
+    case WMESH_ELEMENT_TRIANGLE:
+      {
+	SET2(0, s_0, s_0 );
+	SET2(1, s_1, s_0 );
+	SET2(2, s_0, s_1 );
+	return WMESH_STATUS_SUCCESS;
+      }
+
+    case WMESH_ELEMENT_QUADRILATERAL:
+      {
+	SET2(0, s_0, s_0 );
+	SET2(1, s_1, s_0 );
+	SET2(2, s_1, s_1 );
+	SET2(3, s_0, s_1 );
+	return WMESH_STATUS_SUCCESS;
+      }
+      
+
+#undef SET2
+      
+#ifdef SET3
+#error SET3 already defined
+#endif
+#define SET3(_i,_a,_b,_c)			\
+      r[inc*(_i)] = (_a);			\
+      s[inc*(_i)] = (_b);			\
+      t[inc*(_i)] = (_c)
+      
+    case WMESH_ELEMENT_TETRAHEDRON:
+      {
+	SET3(0, s_0, s_0, s_0 );
+	SET3(1, s_1, s_0, s_0 );
+	SET3(2, s_0, s_1, s_0 );
+	SET3(3, s_0, s_0, s_1 );
+	return WMESH_STATUS_SUCCESS;
+      }
+
+    case WMESH_ELEMENT_PYRAMID:
+      {
+	SET3(0, s_0, s_0, s_0 );
+	SET3(1, s_1, s_0, s_0 );
+	SET3(2, s_1, s_1, s_0 );
+	SET3(3, s_0, s_1, s_0 );
+	SET3(4, s_0, s_0, s_1 );
+	return WMESH_STATUS_SUCCESS;
+      }
+
+    case WMESH_ELEMENT_WEDGE:
+      {
+	SET3(0, s_0, s_0, s_0 );
+	SET3(1, s_1, s_0, s_0 );
+	SET3(2, s_0, s_1, s_0 );
+
+	SET3(3, s_0, s_0, s_1 );
+	SET3(4, s_1, s_0, s_1 );
+	SET3(5, s_0, s_1, s_1 );
+	return WMESH_STATUS_SUCCESS;
+      }
+
+    case WMESH_ELEMENT_HEXAHEDRON:
+      {
+	SET3(0, s_0, s_0, s_0 );
+	SET3(1, s_1, s_0, s_0 );
+	SET3(2, s_1, s_1, s_0 );
+	SET3(3, s_0, s_1, s_0 );
+	SET3(4, s_0, s_0, s_1 );
+	SET3(5, s_1, s_0, s_1 );
+	SET3(6, s_1, s_1, s_1 );
+	SET3(7, s_0, s_1, s_1 );
+	return WMESH_STATUS_SUCCESS;
+      }
+      
+#undef SET3
+    }
+
+  return WMESH_STATUS_INVALID_ENUM;
+}
+
+
+
+
+			   
 void usage(const char * appname_)
 {
   fprintf(stderr,"//\n");
@@ -564,6 +814,106 @@ wmesh_status_t bms_vandermonde(wmesh_int_t 		element_,
 int main(int 		argc,
 	 char** 	argv)
 {
+
+
+  {
+
+    wmesh_int_t topodim = 3;
+    wmesh_int_t q_element = WMESH_ELEMENT_PYRAMID;
+
+    wmesh_int_t q_family  = WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE;
+    wmesh_int_t q_degree  = 11;
+
+    wmesh_int_t q_storage;
+    wmesh_int_t q_m;
+    wmesh_int_t q_n;
+    double *  	q_v;
+    wmesh_int_t q_ld;
+
+    wmesh_int_t q_w_n;
+    double *  	q_w_v;
+    wmesh_int_t q_w_inc = 1;
+    
+    wmesh_int_t q_num_nodes,n1d;
+    
+    wmesh_status_t status = bms_cubature_num_nodes(WMESH_ELEMENT_EDGE,
+						   q_family,
+						   q_degree,
+						   &n1d);
+    WMESH_STATUS_CHECK(status);
+    status = bms_cubature_num_nodes(q_element,
+				    q_family,
+				    q_degree,
+				    &q_num_nodes);
+    
+    WMESH_STATUS_CHECK(status);
+    //    std::cout << "q_num_nodes " << q_num_nodes << std::endl;
+    q_w_n 	= q_num_nodes;
+    q_w_inc     = 1;
+    
+    q_n 	= q_num_nodes;
+    q_m         = topodim;
+    q_ld        = q_m;
+    q_storage 	= WMESH_STORAGE_INTERLEAVE;
+
+    q_v   	= (double*)malloc(sizeof(double)* q_n * q_m);
+    q_w_v   	= (double*)malloc(sizeof(double)* q_n);
+    
+    wmesh_int_t rwork_n;
+    status =  bms_cubature_buffer_size(q_element,
+				       q_family,
+				       n1d,		
+				       &rwork_n);
+    
+    //    std::cout << "rwork_n_ " << q_num_nodes << std::endl;    
+    WMESH_STATUS_CHECK(status);
+    double * rwork = (rwork_n > 0) ? (double*)malloc(sizeof(double)*rwork_n) : nullptr;
+    if (rwork_n > 0 && !rwork)
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
+      }
+    
+    status = bms_cubature(q_element,
+			  q_family,
+			  n1d,
+			  
+			  q_storage,
+			  q_m,
+			  q_n,
+			  q_v,
+			  q_ld,
+			  
+			  q_w_n,
+			  q_w_v,
+			  q_w_inc,
+			  
+			  rwork_n,
+			  rwork);
+    std::cout << "MeshVersionFormatted" << std::endl;
+    std::cout << "1" << std::endl;
+    std::cout << "Dimension" << std::endl;
+    std::cout << topodim << std::endl;
+    std::cout << "Vertices" << std::endl;
+    std::cout << q_n << std::endl;
+    for (wmesh_int_t j=0;j<q_n;++j)
+      {
+	for (wmesh_int_t i=0;i<q_m;++i)
+	  {	    
+	    std::cout << " " << q_v[q_ld*j+i];
+	  }
+	std::cout << " 0" << std::endl;
+      }
+    std::cout << "End" << std::endl;
+    
+    if (rwork)
+      {
+	free(rwork);
+	rwork = nullptr;
+      }
+    WMESH_STATUS_CHECK(status);
+    return 0;
+  }
+  
 #if 1
 
 #if 0
