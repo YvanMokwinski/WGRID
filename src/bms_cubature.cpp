@@ -325,21 +325,41 @@ wmesh_status_t bms_template_cubature_transform(wmesh_int_t 	element_,
   const T*__restrict__ 	rst_v_,
   wmesh_int_t		rst_ld_;
 #endif
-{
-  const T one = static_cast<T>(1);
-  const T two = static_cast<T>(2);
-  const T three = static_cast<T>(3);
-  const T four = static_cast<T>(4);
-
-  T*  r = c_v_ + ((c_storage_ == WMESH_STORAGE_BLOCK) ? c_ld_ * 0 : 0);
-  T*  s = c_v_ + ((c_storage_ == WMESH_STORAGE_BLOCK) ? c_ld_ * 1 : 1);
-  T*  t = c_v_ + ((c_storage_ == WMESH_STORAGE_BLOCK) ? c_ld_ * 2 : 2);
-  wmesh_int_t inc = (c_storage_ == WMESH_STORAGE_BLOCK) ? 1 : c_ld_;
 #if 0  
-  T*  r_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 0 : 0;
-  T*  s_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 1 : 1;
-  T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
+T*  r_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 0 : 0;
+T*  s_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 1 : 1;
+T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
 #endif  
+
+{
+
+  WMESH_CHECK_POSITIVE(q_r_n_);
+  WMESH_CHECK_POINTER(q_r_v_);
+  WMESH_CHECK_POSITIVE(q_r_inc_);
+
+  WMESH_CHECK_POINTER(q_w_v_);
+  WMESH_CHECK_POSITIVE(q_w_inc_);
+
+  WMESH_CHECK_POSITIVE(c_m_);
+  WMESH_CHECK_POSITIVE(c_n_);
+  WMESH_CHECK_POINTER(c_v_);
+  WMESH_CHECK(c_ld_ >= c_m_);
+
+  WMESH_CHECK_POINTER(w_v_);
+  WMESH_CHECK_POSITIVE(w_inc_);
+  
+  static constexpr T s_one 	= static_cast<T>(1);
+  static constexpr T s_two 	= static_cast<T>(2);
+  static constexpr T s_three 	= static_cast<T>(3);
+  static constexpr T s_four 	= static_cast<T>(4);
+
+  const bool c_is_block = c_storage_ == WMESH_STORAGE_BLOCK;
+  
+  T*  r = c_v_ + ( c_is_block ? c_ld_ * 0 : 0);
+  T*  s = c_v_ + ( c_is_block ? c_ld_ * 1 : 1);
+  T*  t = c_v_ + ( c_is_block ? c_ld_ * 2 : 2);
+  const wmesh_int_t inc = c_is_block  ? 1 : c_ld_;
+
   switch(element_)
     {
     case WMESH_ELEMENT_NODE:
@@ -359,9 +379,9 @@ wmesh_status_t bms_template_cubature_transform(wmesh_int_t 	element_,
 	  {
 	    for (wmesh_int_t i=0;i<q_r_n_;++i)
 	      {
-		r[ ( j * q_r_n_ + i ) * inc] 	= ( one + q_r_v_[i*q_r_inc_] ) * 0.5;
-		s[ ( j * q_r_n_ + i ) * inc] 	= ( one - q_r_v_[i*q_r_inc_] ) * ( one - q_r_v_[j*q_r_inc_] ) * 0.25;		
-		w_v_[ ( j * q_r_n_ + i ) * w_inc_] 	= ( one - q_r_v_[i*q_r_inc_] ) * q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * 0.125;
+		r[ ( j * q_r_n_ + i ) * inc] 	= ( s_one + q_r_v_[i*q_r_inc_] ) * 0.5;
+		s[ ( j * q_r_n_ + i ) * inc] 	= ( s_one - q_r_v_[i*q_r_inc_] ) * ( s_one - q_r_v_[j*q_r_inc_] ) * 0.25;		
+		w_v_[ ( j * q_r_n_ + i ) * w_inc_] 	= ( s_one - q_r_v_[i*q_r_inc_] ) * q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * 0.125;
 	      }
 	  }	
 	return WMESH_STATUS_SUCCESS;
@@ -391,14 +411,14 @@ wmesh_status_t bms_template_cubature_transform(wmesh_int_t 	element_,
 	      {
 		for (wmesh_int_t i=0;i<q_r_n_;++i)
 		  {
-		    T u  = ( one + q_r_v_[i] ) / two;
-		    T v  = ( one + q_r_v_[j] ) / two;
-		    T w  = ( one + q_r_v_[k] ) / two;
+		    T u  = ( s_one + q_r_v_[i] ) / s_two;
+		    T v  = ( s_one + q_r_v_[j] ) / s_two;
+		    T w  = ( s_one + q_r_v_[k] ) / s_two;
 		    
 		    r[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= u * v * w;
-		    s[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= u * v * (one - w);
-		    t[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= u * (one - u);
-		    w_v_[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * w_inc_] 	= (q_w_v_[i*q_w_inc_] *q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * three) / four;
+		    s[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= u * v * (s_one - w);
+		    t[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= u * (s_one - u);
+		    w_v_[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * w_inc_] 	= (q_w_v_[i*q_w_inc_] *q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * s_three) / s_four;
 		  }
 	      }
 	  }		
@@ -432,10 +452,10 @@ wmesh_status_t bms_template_cubature_transform(wmesh_int_t 	element_,
 	      {
 		for (wmesh_int_t i=0;i<q_r_n_;++i)
 		  {
-		    r[ ( k * q_r_n_* q_r_n_+j * q_r_n_ + i ) * inc] 	= ( one + q_r_v_[i*q_r_inc_] ) * 0.5;
-		    s[ ( k * q_r_n_* q_r_n_+j * q_r_n_ + i ) * inc] 	= ( one - q_r_v_[i*q_r_inc_] ) * ( one - q_r_v_[j*q_r_inc_] ) * 0.25;
-		    t[ ( k * q_r_n_* q_r_n_+j * q_r_n_ + i ) * inc] 	= ( one + q_r_v_[k*q_r_inc_] ) * 0.5;		
-		    w_v_[ ( k * q_r_n_* q_r_n_ + j * q_r_n_ + i ) * w_inc_] = ( one - q_r_v_[i*q_r_inc_] ) * q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * 0.125 * q_w_v_[k *q_w_inc_];
+		    r[ ( k * q_r_n_* q_r_n_+j * q_r_n_ + i ) * inc] 	= ( s_one + q_r_v_[i*q_r_inc_] ) / s_two;
+		    s[ ( k * q_r_n_* q_r_n_+j * q_r_n_ + i ) * inc] 	= ( s_one - q_r_v_[i*q_r_inc_] ) * ( s_one - q_r_v_[j*q_r_inc_] ) / s_four;
+		    t[ ( k * q_r_n_* q_r_n_+j * q_r_n_ + i ) * inc] 	= ( s_one + q_r_v_[k*q_r_inc_] ) / s_two;		
+		    w_v_[ ( k * q_r_n_* q_r_n_ + j * q_r_n_ + i ) * w_inc_] = ( s_one - q_r_v_[i*q_r_inc_] ) * q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * 0.125 * q_w_v_[k *q_w_inc_];
 		  }
 	      }	    
 	  }
@@ -449,10 +469,10 @@ wmesh_status_t bms_template_cubature_transform(wmesh_int_t 	element_,
 	for (wmesh_int_t k=0;k<q_r_n_;++k)
 	  {
 	    T ww = q_r_v_[k*q_w_inc_];
-	    T tt = (ww + one) / two;
+	    T tt = (ww + s_one) / s_two;
 	    
 	    wmesh_int_t shiftk = k * q_r_n_* q_r_n_;	    
-	    double scal = one - tt;
+	    T scal = s_one - tt;
 	    for (wmesh_int_t j=0;j<q_r_n_;++j)
 	      {
 		T vv = q_r_v_[j*q_w_inc_];
@@ -466,7 +486,7 @@ wmesh_status_t bms_template_cubature_transform(wmesh_int_t 	element_,
 		    s[ at * inc] = vv * scal;
 		    t[ at * inc] = tt;
 		    
-		    w_v_[ at * w_inc_] 	= q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * q_w_v_[k *q_w_inc_] / two;
+		    w_v_[ at * w_inc_] 	= q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * q_w_v_[k *q_w_inc_] / s_two;
 		  }
 	      }	    
 	  }

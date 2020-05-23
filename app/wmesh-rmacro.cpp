@@ -363,7 +363,7 @@ wmesh_status_t bms_vandermonde_triangle(wmesh_int_t 	d_,
 	  double s 	= lcoo_[lcoo_ld_*k+1];
 	  x[k] 		= (s < s1) ? (r * s2) / (s1 - s) - s1 : 0.0;
 	}
-      
+
       bms_djacobip(0,
 		   0,
 		   i,		
@@ -378,7 +378,7 @@ wmesh_status_t bms_vandermonde_triangle(wmesh_int_t 	d_,
       for (wmesh_int_t k = 0; k < lcoo_n_;++k)
 	{
 	  double s 	= lcoo_[lcoo_ld_*k+1];
-	  yi[k] 	*= wmesh_math<double>::pow(s1 - s, i);
+	  yi[k] 	*= wmesh_math<double>::xpow(s1 - s, i);
 	}
       
       for (wmesh_int_t k = 0; k < lcoo_n_;++k)
@@ -482,7 +482,7 @@ wmesh_status_t bms_vandermonde_tetrahedra(wmesh_int_t 		trans_,
 	{
 	  double s 	= rst_[rst_ld_*l+1];
 	  double t 	= rst_[rst_ld_*l+2];
-	  si[l] 	= wmesh_math<double>::pow(1.0 - (s + t),i);
+	  si[l] 	= wmesh_math<double>::xpow(1.0 - (s + t),i);
 	}	      
       
       bms_djacobip(0,
@@ -507,7 +507,7 @@ wmesh_status_t bms_vandermonde_tetrahedra(wmesh_int_t 		trans_,
 	  for (wmesh_int_t l = 0; l < rst_n_;++l)
 	    {	     
 	      double t 	= rst_[rst_ld_*l+2];
-	      sj[l] 	*= pow(1.0 - t, j);
+	      sj[l] 	*= wmesh_math<double>::xpow(1.0 - t, j);
 	    }
 	  
 	  bms_djacobip(dj,
@@ -815,104 +815,6 @@ int main(int 		argc,
 	 char** 	argv)
 {
 
-
-  {
-
-    wmesh_int_t topodim = 3;
-    wmesh_int_t q_element = WMESH_ELEMENT_PYRAMID;
-
-    wmesh_int_t q_family  = WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE;
-    wmesh_int_t q_degree  = 11;
-
-    wmesh_int_t q_storage;
-    wmesh_int_t q_m;
-    wmesh_int_t q_n;
-    double *  	q_v;
-    wmesh_int_t q_ld;
-
-    wmesh_int_t q_w_n;
-    double *  	q_w_v;
-    wmesh_int_t q_w_inc = 1;
-    
-    wmesh_int_t q_num_nodes,n1d;
-    
-    wmesh_status_t status = bms_cubature_num_nodes(WMESH_ELEMENT_EDGE,
-						   q_family,
-						   q_degree,
-						   &n1d);
-    WMESH_STATUS_CHECK(status);
-    status = bms_cubature_num_nodes(q_element,
-				    q_family,
-				    q_degree,
-				    &q_num_nodes);
-    
-    WMESH_STATUS_CHECK(status);
-    //    std::cout << "q_num_nodes " << q_num_nodes << std::endl;
-    q_w_n 	= q_num_nodes;
-    q_w_inc     = 1;
-    
-    q_n 	= q_num_nodes;
-    q_m         = topodim;
-    q_ld        = q_m;
-    q_storage 	= WMESH_STORAGE_INTERLEAVE;
-
-    q_v   	= (double*)malloc(sizeof(double)* q_n * q_m);
-    q_w_v   	= (double*)malloc(sizeof(double)* q_n);
-    
-    wmesh_int_t rwork_n;
-    status =  bms_cubature_buffer_size(q_element,
-				       q_family,
-				       n1d,		
-				       &rwork_n);
-    
-    //    std::cout << "rwork_n_ " << q_num_nodes << std::endl;    
-    WMESH_STATUS_CHECK(status);
-    double * rwork = (rwork_n > 0) ? (double*)malloc(sizeof(double)*rwork_n) : nullptr;
-    if (rwork_n > 0 && !rwork)
-      {
-	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
-      }
-    
-    status = bms_cubature(q_element,
-			  q_family,
-			  n1d,
-			  
-			  q_storage,
-			  q_m,
-			  q_n,
-			  q_v,
-			  q_ld,
-			  
-			  q_w_n,
-			  q_w_v,
-			  q_w_inc,
-			  
-			  rwork_n,
-			  rwork);
-    std::cout << "MeshVersionFormatted" << std::endl;
-    std::cout << "1" << std::endl;
-    std::cout << "Dimension" << std::endl;
-    std::cout << topodim << std::endl;
-    std::cout << "Vertices" << std::endl;
-    std::cout << q_n << std::endl;
-    for (wmesh_int_t j=0;j<q_n;++j)
-      {
-	for (wmesh_int_t i=0;i<q_m;++i)
-	  {	    
-	    std::cout << " " << q_v[q_ld*j+i];
-	  }
-	std::cout << " 0" << std::endl;
-      }
-    std::cout << "End" << std::endl;
-    
-    if (rwork)
-      {
-	free(rwork);
-	rwork = nullptr;
-      }
-    WMESH_STATUS_CHECK(status);
-    return 0;
-  }
   
 #if 1
 

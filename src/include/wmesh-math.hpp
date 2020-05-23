@@ -18,7 +18,7 @@ template <typename T> struct wmesh_math
   //! @param x_ The base of the power.
   //! @param y_ The exponent of the power.
   //! @return The power x^y.
-  static constexpr real_t pow(const real_t&x_,const real_t&y_) noexcept;
+  static constexpr real_t xpow(const real_t&x_,const real_t&y_) noexcept;
   //! @brief Compute the maximum between two real.
   //! @param a_ The first operand.
   //! @param b_ The second operand.
@@ -45,7 +45,7 @@ template <> struct wmesh_math<double>
   static constexpr double zero = 0.0;
   static constexpr double epsilon = 2.22044604925031308e-16;
   //! @copydoc wmesh_math::pow(const real_t&x_,const real_t&y_)
-  static constexpr double pow(const double&x_,const double&y_) noexcept
+  static constexpr double xpow(const double&x_,const double&y_) noexcept
   {
     return pow(x_,y_);
   };
@@ -85,7 +85,7 @@ template <> struct wmesh_math<float>
   static constexpr float zero = 0.0f;
   static constexpr float epsilon = 1.19209290e-07f;
   //! @copydoc wmesh_math::pow(const real_t&x_,const real_t&y_)
-  static constexpr float pow(const float&x_,const float&y_) noexcept
+  static constexpr float xpow(const float&x_,const float&y_) noexcept
   {
     return powf(x_,y_);
   };
@@ -126,7 +126,7 @@ template <> struct wmesh_math<long double>
   static constexpr long double zero = 0.0L;
   static constexpr long double epsilon = 1.08420217248550443401e-19L;
   //! @copydoc wmesh_math::pow(const real_t&x_,const real_t&y_)
-  static constexpr long double pow(const long double&x_,const long double&y_) noexcept
+  static constexpr long double xpow(const long double&x_,const long double&y_) noexcept
   {
     return powl(x_,y_);
   };

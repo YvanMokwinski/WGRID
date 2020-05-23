@@ -6,6 +6,42 @@
 //!
 //! @brief element names for applications.
 //!
+static const char * s_wmesh_cubature_family_names[WMESH_CUBATURE_FAMILY_ALL]
+= {"gausslegendre",
+   "gausslobatto"};
+
+//!
+//! @brief Convert a string to an cubaturefamily.
+//!
+inline  wmesh_status_t app_str2cubaturefamily(wmesh_str_t cubaturefamily_name_,
+					   wmesh_int_p cubaturefamily_)
+{
+  WMESH_CHECK_POINTER(cubaturefamily_);
+  for (wmesh_int_t i=0;i<WMESH_CUBATURE_FAMILY_ALL;++i)
+    {            
+      if (!strcmp(s_wmesh_cubature_family_names[i],
+		  cubaturefamily_name_))
+	{
+	  cubaturefamily_[0] = i;
+	  return WMESH_STATUS_SUCCESS;  
+	}
+    }
+  return WMESH_STATUS_INVALID_ARGUMENT;  
+}
+
+//!
+//! @brief Convert cubaturefamily to a string.
+//!
+inline  wmesh_status_t app_cubaturefamily2str(wmesh_int_t cubaturefamily_,
+					   wmesh_str_t cubaturefamily_name_)
+{
+  strcpy(cubaturefamily_name_,s_wmesh_cubature_family_names[cubaturefamily_]);
+  return WMESH_STATUS_SUCCESS;  
+}
+
+//!
+//! @brief element names for applications.
+//!
 static const char * s_wmesh_nodes_family_names[WMESH_NODES_FAMILY_ALL]
 = {"lagrange",
    "gausslobatto"};
