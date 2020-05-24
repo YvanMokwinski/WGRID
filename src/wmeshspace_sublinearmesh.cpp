@@ -31,18 +31,297 @@ template <typename T> constexpr T Pow2(wmesh_int_t i)
   return (i==0) ? T(1.0) : T(2.0) * Pow2<T>(i-1);
 };
 
+#if 0
+template <wmesh_int_t 	ALPHA_,
+	  wmesh_int_t 	BETA_,
+	  wmesh_int_t 	N_>
+struct AA
+{
+  wmesh_status_t bms_template_jacobip(wmesh_int_t 			x_n_,
+				      const double * __restrict__  	x_,
+				      wmesh_int_t  			x_ld_,
+				      double *  __restrict__ 		y_,
+				      wmesh_int_t  			y_ld_,
+				      wmesh_int_t 			work_n_,			   
+				      double *  __restrict__ 		work_)
+  {
+    WMESH_CHECK_POSITIVE(x_n_);
+    WMESH_CHECK(work_n_  >= 2*x_n_);
+    WMESH_CHECK_POINTER(x_);
+    WMESH_CHECK_POINTER(y_);
+    WMESH_CHECK_POINTER(work_);
+    
+    static constexpr double
+      r2 = double(2.0),
+      r3 = double(3.0),
+      r1 = double(1.0),
+      r0 = double(0.0);
+  
+    static constexpr const double
+      ab  = ALPHA_ + BETA_,
+      ab1 = ALPHA_+ BETA_ + 1,
+      a1  = ALPHA_ + 1,
+      b1  = BETA_ + 1;
 
+    static constexpr const double gamma0 = Pow2<double>(ab1)*Gamma<double>(a1)*Gamma<double>(b1)/Factorial<double>(ab1);
+    
+    double
+      aold   = r0,
+      anew   = r0,
+      bnew   = r0,
+      h1     = r0,
+      gamma1 = r0;
+  
+    // Initial values P_0(x) and P_1(x)
+    const double y0 = r1 / wmesh_math<double>::xsqrt(gamma0);
+    for (wmesh_int_t i=0;i<x_n_;++i)
+      {
+	y_[i * y_ld_] = y0;
+      }
+  
+    wmesh_int_t n1=1;
+    double * __restrict__ pii 	= work_;
+    double * __restrict__  pi 	= work_ + x_n_;
+    if (N_>0)
+      {
+	BLAS_dcopy(&x_n_,y_,&y_ld_,pii,&n1);
+	//      auto pii = y;
+	gamma1 = (a1)*(b1)/(ab+3.0)*gamma0;
+	for (wmesh_int_t i=0;i<x_n_;++i)
+	  {      
+	    y_[i*y_ld_] = ((ab+r2)*x_[i]/r2 + (ALPHA_-BETA_)/r2) / wmesh_math<double>::xsqrt(gamma1);
+	  }
+	if (N_>1)
+	  {
+
+	    //
+	    // pi = y
+	    //
+	    BLAS_dcopy(&x_n_,y_,&y_ld_,pi,&n1);
+
+	    // Repeat value in recurrence.
+	    aold = r2 / (r2+ab) * wmesh_math<double>::xsqrt((a1)*(b1)/(ab+r3));	  
+	    // Forward recurrence using the symmetry of the recurrence.
+	    for (int i=1; i<=(N_-1); ++i)
+	      {
+		h1 = r2*i+ab;
+		double ri = static_cast<double>(i);
+		anew = r2/(h1+r2)*wmesh_math<double>::xsqrt( (ri+1.0)*(ri+ab1)*(ri+a1)*(ri+b1)/(h1+r1)/(h1+r3));
+		bnew = -(ALPHA_*ALPHA_-BETA_*BETA_) / ( h1*(h1+r2) );
+	      
+		for (wmesh_int_t i=0;i<x_n_;++i)
+		  {
+		    y_[i*y_ld_] = (x_[i]-bnew) * pi[i] - aold*pii[i];
+		  }
+		for (wmesh_int_t i=0;i<x_n_;++i)
+		  {
+		    y_[i*y_ld_] *= r1/anew;
+		  }
+	      
+		//	      y = (x-bnew) * pi - aold*pii;
+		//	      BLAS_daxpy(&x_n_,&s,y_,&n1);
+		//	      y *= r1/anew;
+		//	      double s = r1 / anew;
+		//	      BLAS_dscal(&x_n_,&s,y_,&n1);
+		aold = anew;
+		BLAS_dcopy(&x_n_,pi,&n1,pii,&n1);
+		BLAS_dcopy(&x_n_,y_,&y_ld_,pi,&n1);
+		//  pii = pi;
+		//  pi = y;
+	      }	  
+	  }     
+      }
+    return WMESH_STATUS_SUCCESS;
+
+  }
+};
+
+
+template <wmesh_int_t  ALPHA_,wmesh_int_t BETA_,wmesh_int_t N_>
+struct AA
+{
+  wmesh_status_t bms_template_jacobip(double 				scal_,
+				      wmesh_int_t 			x_n_,
+				      const double * __restrict__  	x_,
+				      wmesh_int_t  			x_inc_,
+				      double *  __restrict__ 		y_,
+				      wmesh_int_t  			y_inc_,
+				      wmesh_int_t 			work_n_,			   
+				      double *  __restrict__ 		work_)
+  {
+
+    double * __restrict__ y1 	= work_;
+    double * __restrict__ y2 	= work_ + x_n_;
+    double * __restrict__ tmp 	= work_ + x_n_ * 2;
+    work_ 			= work_ + x_n_ * 3;
+    work_n_ 			-= x_n_ * 3;
+
+    static constexpr wmesh_int_t c	= ( 2*N_*(N_ + ALPHA_ + BETA_)*(2*N_ + ALPHA_ + BETA_ - 2) );
+    static constexpr wmesh_int_t c10 	= ( 2 * N_ + ALPHA_ + BETA_ - 1);
+    static constexpr wmesh_int_t c11	= ( 2 * N_ + ALPHA_ + BETA_)*( 2 * N_ + ALPHA_ + BETA_ - 2);
+    static constexpr wmesh_int_t c12 	= ( ALPHA_*ALPHA_-BETA_*BETA_);
+    static constexpr wmesh_int_t c2     = 2 * (N_ + ALPHA_ - 1)*(N_ + BETA_ - 1)*(2*N_ + ALPHA_ + BETA_);
+
+    static constexpr wmesh_int_t scal0  = c2 / c;
+    static constexpr wmesh_int_t scal1  = (c10 * c11) / c;
+    static constexpr wmesh_int_t scal2  = (c10 * c12) / c;
+
+    
+
+    for (wmesh_int_t i=0;i<x_n_;++i)
+      {
+	tmp[i] = scal2;
+      }    
+    double sc = scal1;
+    daxpy(&sc,x_,&x_inc_,work_,&n1);
+
+    AA<ALPHA_,BETA_,0>::bms_template_jacobi(x_n_,
+					    x_,
+					    x_inc_,
+					    y0,
+					    1,
+					    work_n_,
+					    work_);
+    
+    AA<ALPHA_,BETA_,1>::bms_template_jacobi(x_n_,
+					    x_,
+					    x_inc_,
+					    y1,
+					    1,
+					    work_n_,
+					    work_);
+
+    for (wmesh_int_t k=2;k<=N_;++k)
+      {
+	for (wmesh_int_t i=0;i<x_n_;++i)
+	  {
+	    y_[y_inc_* i] = (a1 * ( a2 * tmp[i] + a3) * y1[i] + a4 * y0[i]) / a0;
+	  }
+        
+	BLAS_dcopy(&x_n_,y1,&n1,y0,&n1);
+	BLAS_dcopy(&x_n_,y_,&n1,y1,&n1);
+      }
+    
+    
+    AA<ALPHA_,BETA_,N_-1>::bms_template_jacobi(x_n_,
+					       x_,
+					       x_inc_,
+					       y_,
+					       y_inc_,
+					       work_n_,
+					       work_);
+    
+    
+    
+
+    dscal(&x_n_,&scal0,y0,&n1);
+
+
+
+    
+    WMESH_CHECK_POSITIVE(x_n_);
+    WMESH_CHECK_POINTER(x_);
+    WMESH_CHECK_POINTER(y_);
+    
+    static constexpr double
+      r1 = double(1.0);
+    
+    for (wmesh_int_t i=0;i<x_n_;++i)
+      {
+	y_[i * y_ld_] = r1;
+      }
+    return 0;
+  }
+
+};
+
+template <wmesh_int_t  ALPHA_,wmesh_int_t BETA_>
+struct AA<ALPHA_,BETA_,0>
+{
+  wmesh_status_t bms_template_jacobip(double 				scal_,
+				      wmesh_int_t 			x_n_,
+				      const double * __restrict__  	x_,
+				      wmesh_int_t  			x_ld_,
+				      double *  __restrict__ 		y_,
+				      wmesh_int_t  			y_ld_,
+				      wmesh_int_t 			work_n_,			   
+				      double *  __restrict__ 		work_)
+  {
+    
+    WMESH_CHECK_POSITIVE(x_n_);
+    WMESH_CHECK_POINTER(x_);
+    WMESH_CHECK_POINTER(y_);
+    
+    for (wmesh_int_t i=0;i<x_n_;++i)
+      {
+	y_[i * y_ld_] = scal_;
+      }
+    return 0;
+  }
+
+};
+
+
+template <wmesh_int_t  ALPHA_,wmesh_int_t BETA_>
+struct AA<ALPHA_,BETA_,1>
+{
+  wmesh_status_t bms_template_jacobip(double scal_,
+				      wmesh_int_t 			x_n_,
+				      const double * __restrict__  	x_,
+				      wmesh_int_t  			x_inc_,
+				      double *  __restrict__ 		y_,
+				      wmesh_int_t  			y_inc_,
+				      wmesh_int_t 			work_n_,			   
+				      double *  __restrict__ 		work_)
+  {
+    
+    WMESH_CHECK_POSITIVE(x_n_);
+    WMESH_CHECK_POINTER(x_);
+    WMESH_CHECK_POINTER(y_);
+    
+    static constexpr double
+      r1 = double(1.0);
+    static constexpr double
+      r2 = double(2.0);
+
+    for (wmesh_int_t i=0;i<x_n_;++i)
+      {
+	y_[y_inc_ * i] = scal_ * ( (ALPHA_+1) + (ALPHA_+BETA_+2) * (x_[xinc_ * i] - r1 ) / r2 );
+      }
+    return 0;
+  }
+};
+
+
+
+#if 0
+template <wmesh_int_t 	ALPHA_,
+	  wmesh_int_t 	BETA_,
+	  wmesh_int_t 	N_>
+wmesh_status_t bms_template_jacobip(wmesh_int_t 			x_n_,
+				    const double * __restrict__  	x_,
+				    wmesh_int_t  			x_ld_,
+				    double *  __restrict__ 		y_,
+				    wmesh_int_t  			y_ld_,
+				    wmesh_int_t 			work_n_,			   
+				    double *  __restrict__ 		work_)
+{
+};
+
+#endif
+#endif
+  
 template <typename T>
-wmesh_status_t bms_jacobip(wmesh_int_t 	alpha_,
-			   wmesh_int_t 	beta_,
-			   wmesh_int_t 	N_,
-			   wmesh_int_t 	x_n_,
-			   const T * 	x_,
-			   wmesh_int_t  x_ld_,
-			   T * 		y_,
-			   wmesh_int_t  y_ld_,
-			   wmesh_int_t 	work_n_,			   
-			   T * 		work_)
+wmesh_status_t bms_jacobip(wmesh_int_t 			alpha_,
+			   wmesh_int_t 			beta_,
+			   wmesh_int_t 			N_,
+			   wmesh_int_t 			x_n_,
+			   const T * __restrict__  	x_,
+			   wmesh_int_t  		x_ld_,
+			   T *  __restrict__ 		y_,
+			   wmesh_int_t  		y_ld_,
+			   wmesh_int_t 			work_n_,			   
+			   T *  __restrict__ 		work_)
 {
   WMESH_CHECK(alpha_ >= 0);
   WMESH_CHECK(beta_  >= 0);
@@ -67,9 +346,9 @@ wmesh_status_t bms_jacobip(wmesh_int_t 	alpha_,
   
   const T
     ab  = alpha_ + beta_,
-    ab1 = alpha_+beta_+1,
-    a1  = alpha_+1,
-    b1  = beta_+1;
+    ab1 = alpha_+ beta_ + 1,
+    a1  = alpha_ + 1,
+    b1  = beta_ + 1;
   
   // Initial values P_0(x) and P_1(x)
   const T gamma0 = Pow2<T>(ab1)*Gamma<T>(a1)*Gamma<T>(b1)/Factorial<T>(ab1);
@@ -80,8 +359,8 @@ wmesh_status_t bms_jacobip(wmesh_int_t 	alpha_,
     }
   
   wmesh_int_t n1=1;
-  T * pii = work_;
-  T * pi = work_ + x_n_;
+  T * __restrict__ pii 	= work_;
+  T * __restrict__  pi 	= work_ + x_n_;
   if (N_>0)
     {
       BLAS_dcopy(&x_n_,y_,&y_ld_,pii,&n1);
@@ -93,8 +372,12 @@ wmesh_status_t bms_jacobip(wmesh_int_t 	alpha_,
 	}
       if (N_>1)
 	{
+
+	  //
+	  // pi = y
+	  //
 	  BLAS_dcopy(&x_n_,y_,&y_ld_,pi,&n1);
-	  //  auto pi = y;
+
 	  // Repeat value in recurrence.
 	  aold = r2 / (r2+ab) * wmesh_math<T>::xsqrt((a1)*(b1)/(ab+r3));	  
 	  // Forward recurrence using the symmetry of the recurrence.

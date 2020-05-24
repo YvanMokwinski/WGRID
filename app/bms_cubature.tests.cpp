@@ -180,7 +180,10 @@ int main(int 		argc,
 			rwork_n,
 			rwork);
 
-    
+  double sum = 0.0;
+  for (wmesh_int_t i=0;i<w_n;++i)
+    sum+= w[w_inc*i];
+  std::cerr << "sum " << sum << std::endl;
   std::cout << "MeshVersionFormatted" << std::endl;
   std::cout << "1" << std::endl;
   std::cout << "Dimension" << std::endl;

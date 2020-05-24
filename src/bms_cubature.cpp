@@ -2,7 +2,7 @@
 #include "bms.hpp"
 #include "wmesh-math.hpp"
 #include "wmesh-blas.h"
-
+#include <iostream>
 #ifndef NDEBUG
 #include <iostream>
 #endif
@@ -534,7 +534,7 @@ bms_template_cubature(wmesh_int_t	element_,
   wmesh_int_t required_rwork_n;
   status = bms_cubature_buffer_size(element_,
 				    family_,
-				     n1d_,
+				    n1d_,
 				    &required_rwork_n);
   WMESH_STATUS_CHECK(status);
 
@@ -547,17 +547,6 @@ bms_template_cubature(wmesh_int_t	element_,
     {
       WMESH_CHECK_POINTER(rwork_);
     }
-
-  wmesh_int_t required_num_nodes;
-
-  //
-  // Get the required number of nodes for the element.
-  //
-  status = bms_cubature_num_nodes(element_,
-				  family_,
-				  n1d_,
-				  &required_num_nodes);
-  WMESH_STATUS_CHECK(status);
   
   switch(family_)
     {
@@ -573,7 +562,7 @@ bms_template_cubature(wmesh_int_t	element_,
 	    
 	  case WMESH_ELEMENT_EDGE:
 	    {
-	      status =  bms_cubature_legendre(required_num_nodes,
+	      status =  bms_cubature_legendre(n1d_,
 					      c_storage_,
 					      c_v_,
 					      c_ld_, 
