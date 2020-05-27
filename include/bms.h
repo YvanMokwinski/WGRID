@@ -9,7 +9,26 @@ extern "C"
 {
 #endif
 
-
+  wmesh_status_t 	bms_sparse	(wmesh_int_t 		num_dofs_,
+					 
+					 wmesh_int_t 		c2d_size_,
+					 const_wmesh_int_p	c2d_ptr_,
+					 const_wmesh_int_p	c2d_m_,
+					 const_wmesh_int_p	c2d_n_,
+					 const_wmesh_int_p	c2d_v_,
+					 const_wmesh_int_p	c2d_ld_,
+					 
+					 wmesh_int_p 		csr_ptr_,
+					 wmesh_int_p 		csr_ind_,
+					 wmesh_int_t		iw_n_,
+					 wmesh_int_p		iw_);
+  
+  wmesh_status_t bms_sparse_buffer_size	(wmesh_int_t 		num_dofs_,
+					 wmesh_int_t 		c2d_size_,
+					 const_wmesh_int_p	c2d_m_,
+					 const_wmesh_int_p	c2d_n_,
+					 wmesh_int_p		iw_n_);
+  
   wmesh_status_t  bms_c2d_n(wmesh_int_t 	c2n_size_,
 					     const_wmesh_int_p 	c2n_ptr_,
 					     const_wmesh_int_p 	c2n_m_,

@@ -12,12 +12,45 @@ using namespace std::chrono;
 extern "C"
 {
   
-  wmesh_status_t wmesh_fespace_endomorphism	(const wmesh_t*__restrict__	mesh_,
-						 wmesh_int_t 			degree_,
-						 wmesh_int_p 			csr_size_,
-						 wmesh_int_p*__restrict__ 	csr_ptr_,
-						 wmesh_int_p*__restrict__ 	csr_ind_)
+  wmesh_status_t wmeshspace_sparse	(const wmeshspace_t*__restrict__ 	self_,
+					 wmesh_int_p 				csr_size_,
+					 wmesh_int_p*__restrict__ 		csr_ptr_,
+					 wmesh_int_p*__restrict__ 		csr_ind_)
   {
+    wmesh_status_t status;    
+
+    wmesh_int_t num_dofs 		= self_->m_ndofs;
+    wmesh_int_t iw_n;
+    status = bms_sparse_buffer_size	(self_->m_ndofs,
+					 self_->m_c2d.m_size,
+					 self_->m_c2d.m_m,
+					 self_->m_c2d.m_n,
+					 &iw_n);
+    WMESH_STATUS_CHECK(status);
+    
+    wmesh_int_p iw      = (iw_n > 0) ? (wmesh_int_p)malloc(iw_n * sizeof(wmesh_int_t)) : nullptr;
+    wmesh_int_p csr_ptr = (wmesh_int_p)malloc( (num_dofs + 1)     * sizeof(wmesh_int_t));
+    wmesh_int_p csr_ind = (wmesh_int_p)malloc( (num_table_coeffs) * sizeof(wmesh_int_t));
+    
+    status = bms_sparse	(wmesh_int_t 		num_dofs_,
+			 
+			 wmesh_int_t 		c2d_size_,
+			 const_wmesh_int_p	c2d_ptr_,
+			 const_wmesh_int_p	c2d_m_,
+			 const_wmesh_int_p	c2d_n_,
+			 const_wmesh_int_p	c2d_v_,
+			 const_wmesh_int_p	c2d_ld_,
+			 
+			 wmesh_int_p 		csr_ptr_,
+			 wmesh_int_p 		csr_ind_,
+			 wmesh_int_t		iw_n_,
+			 wmesh_int_p		iw_);
+  
+
+
+    
+
+    
     wmesh_status_t status;
     
     wmesh_int_t n2c_m 	= mesh_->m_num_nodes;
