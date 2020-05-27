@@ -521,7 +521,9 @@ extern "C"
 #endif
     return 0;
   }
+  
 #if 0
+  
   wmesh_status_t wmesh_reorder_nodes(wmesh_t*		self_,
 				     wmesh_int_n 	p_n_,
 				     const_wmesh_int_p 	p_v_,

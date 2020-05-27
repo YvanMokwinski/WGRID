@@ -108,8 +108,10 @@ int main(int argc, char ** argv)
   //
   // Spy the symbolic matrix.
   //
+  std::cout << "size " << csr_size << std::endl;
+  std::cout << "nnz  " << csr_ptr[csr_size] << std::endl;
 #if 0
-  FILE * f = fopen("out.bin","wb");
+  FILE * f = fopen("out.txt","wb");
   for (wmesh_int_t i=0;i<csr_size;++i)
     {
       for (wmesh_int_t s=csr_ptr[i];s<csr_ptr[i+1];++s)
@@ -121,6 +123,29 @@ int main(int argc, char ** argv)
     }
   fclose(f);
 #endif
+
+  //
+  // Now compute Laplace equation.
+  //
+
+  
+  //
+  // Quadrature for each element.
+  // Finite element evaluated on quadrature for each element
+  // Loop and assembly.
+  //
+
+  double * csr_val 	= (double*)calloc(csr_ptr[csr_size],sizeof(double));
+  double * rhs 		= (double*)calloc(csr_size,sizeof(double));
+
+  status = wmeshspace_laplace(meshspace,
+			      csr_size,
+			      csr_ptr,
+			      csr_ind,
+			      csr_val,
+			      rhs);
+  WMESH_STATUS_CHECK(status);
+  
   if (csr_ptr)
     {
       free(csr_ptr);

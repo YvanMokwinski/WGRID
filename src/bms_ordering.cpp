@@ -16,6 +16,7 @@ extern "C"
 						      wmesh_int_t 	topoid_inc_)
     
   {
+    
     for (wmesh_int_t i=0;i<num_dofs_0_;++i)
       {
 	topoid_v_[0] = 0;
@@ -1245,23 +1246,28 @@ extern "C"
     
 
     WMESH_CHECK_POINTER(topoid_v_);
+
     switch(element_)
       {      
       
 #define TREAT_CASE(_c)							\
 	case _c:							\
 	  {								\
+	    wmesh_int_t topodim;					\
+	    wmesh_status_t status = bms_template_element2topodim<_c>(&topodim); \
+	    WMESH_STATUS_CHECK(status);					\
+									\
 	    const wmesh_int_t num_nodes 		= bms_traits_element<_c>::s_num_nodes; \
 	    const wmesh_int_t num_edges 		= bms_traits_element<_c>::s_num_edges; \
 	    const wmesh_int_t num_triangles 		= bms_traits_element<_c>::s_num_triangles; \
 	    const wmesh_int_t num_quadrilaterals 	= bms_traits_element<_c>::s_num_quadrilaterals; \
-	    								\
+									\
 	    const wmesh_int_t num_dofs_0  = (degree_ > 0) ? num_nodes : 0; \
 	    const wmesh_int_t num_dofs_1  = num_edges * bms_template_ndofs_interior<WMESH_ELEMENT_EDGE>(degree_); \
-	    const wmesh_int_t num_dofs_2t = num_triangles * bms_template_ndofs_interior<WMESH_ELEMENT_TRIANGLE>(degree_); \
-	    const wmesh_int_t num_dofs_2q = num_quadrilaterals  * bms_template_ndofs_interior<WMESH_ELEMENT_QUADRILATERAL>(degree_); \
-	    const wmesh_int_t num_dofs_3  = bms_template_ndofs_interior<_c>(degree_); \
-	    								\
+	    const wmesh_int_t num_dofs_2t = (topodim > 1) ? num_triangles * bms_template_ndofs_interior<WMESH_ELEMENT_TRIANGLE>(degree_) : 0; \
+	    const wmesh_int_t num_dofs_2q = (topodim > 1) ? num_quadrilaterals  * bms_template_ndofs_interior<WMESH_ELEMENT_QUADRILATERAL>(degree_) : 0; \
+	    const wmesh_int_t num_dofs_3  = (topodim > 2) ? bms_template_ndofs_interior<_c>(degree_) : 0; \
+									\
 	    return  bms_ordering_topoid_calculate(num_dofs_0,		\
 						  num_dofs_1,		\
 						  num_dofs_2t,		\

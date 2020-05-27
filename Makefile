@@ -1,7 +1,7 @@
 DISTRIB=$(PWD)
 include $(DISTRIB)/config.mk
-OPTIMIZE_FLAGS=-O3 -DNDEBUG
-DEBUG_FLAGS=-g
+OPTIMIZE_FLAGS=-O3 -DNDEBUG -fopenmp
+DEBUG_FLAGS=-g -fopenmp
 
 install: 
 	mkdir -p bin

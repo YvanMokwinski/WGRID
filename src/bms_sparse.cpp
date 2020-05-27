@@ -1,7 +1,47 @@
+
 #include "bms.h"
 #include "wmesh-utils.hpp"
 #include <iostream>
+#include <algorithm>
 
+static inline void insert(wmesh_int_t 	jdof_,
+			  wmesh_int_t& 	select_n_,
+			  wmesh_int_p 	select_,
+			  wmesh_int_p 	blank_)
+{
+  if (select_n_  > 0)
+    {
+      if (jdof_ > select_[select_n_-1])
+	{
+	  select_[select_n_] = jdof_;
+	  blank_[jdof_] = ++select_n_;
+	}
+      else
+	{
+	  wmesh_int_t i;
+	  for (i=0;i<select_n_;++i)
+	    {
+	      if (jdof_ < select_[i])
+		{
+		  for (wmesh_int_t j = select_n_;j>i;--j)
+		    {
+		      select_[j] = select_[j-1];
+		      blank_[select_[j]] = j+1;
+		    }
+		  select_[i] = jdof_;
+		  blank_[jdof_] = i+1;
+		  break;
+		}
+	    }
+	  ++select_n_;
+	}
+    }
+  else
+    {
+      select_[select_n_] = jdof_;
+      blank_[jdof_] = ++select_n_;
+    }
+}
 
 extern "C"
 {
@@ -132,6 +172,9 @@ extern "C"
     return WMESH_STATUS_SUCCESS;
   }
 
+
+  
+  
   wmesh_status_t bms_sparse	(wmesh_int_t 		num_dofs_,
 
 				 wmesh_int_t 		c2d_size_,
@@ -147,7 +190,9 @@ extern "C"
 				 wmesh_int_p		iw_)
   {
     wmesh_status_t 	status;
-    wmesh_int_t required_iw_n, num_table_coeffs;
+    wmesh_int_t
+      required_iw_n,
+      num_table_coeffs;
     status = bms_sparse_buffer_size(num_dofs_,
 				    c2d_size_,
 				    c2d_m_,
@@ -180,7 +225,6 @@ extern "C"
 	    status = bms_n2c_cindex	(c,
 					 &cindex);
 	    WMESH_STATUS_CHECK(status);
-
 	    
 	    status = bms_n2c_ctype	(c,
 					 &ctype);
@@ -190,9 +234,14 @@ extern "C"
 		wmesh_int_t jdof = c2d_v_[c2d_ptr_[ctype] + cindex * c2d_ld_[ctype] + i] - 1;	       
 		if (0==blank[jdof])
 		  {
-		    
-		    select[select_n] = jdof;
-		    blank[jdof] = ++select_n;
+#if 0
+		    insert(jdof,
+			   select_n,
+			   select,
+			   blank);
+#endif
+		    		    select[select_n] = jdof;
+		    		    blank[jdof] = ++select_n;
 		  }
 	      }
 	  }
@@ -204,16 +253,15 @@ extern "C"
 	  {
 	    blank[select[s]] = 0;
 	  }
-
+	
 	//
 	// Sort.
 	//
-#if 1
-	qsort(select,
-	      select_n,
-	      sizeof(wmesh_int_t),
-	      wmesh_qsort_increasing_predicate<wmesh_int_t>);
-#endif
+
+	std::sort(select,
+		  select + select_n,
+		  [](const wmesh_int_t& a,const wmesh_int_t& b){return a < b;});
+
 	//
 	// Copy back.
 	//
