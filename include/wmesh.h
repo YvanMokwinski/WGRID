@@ -26,6 +26,12 @@ extern "C"
   wmesh_status_t 	wmeshspace_sublinearmesh	(wmeshspace_t * 	self_,
 							 wmesh_t ** 		mesh__);
 
+  wmesh_status_t 	wmeshspace_sparse		(const wmeshspace_t*__restrict__ 	self_,
+							 wmesh_int_p 				csr_size_,
+							 wmesh_int_p*__restrict__ 		csr_ptr_,
+							 wmesh_int_p*__restrict__ 		csr_ind_);
+
+
   
   
   wmesh_status_t 	wmesh_read(wmesh_t ** 		self_,

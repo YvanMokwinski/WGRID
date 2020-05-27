@@ -2,7 +2,7 @@
 #include "wmesh.h"
 #include "cmdline.hpp"
 #include <iostream>
-
+#include "app.hpp"
 int main(int argc, char ** argv)
 {
   
@@ -11,19 +11,39 @@ int main(int argc, char ** argv)
   wmesh_t* mesh;
   wmesh_status_t status;
   wmesh_int_t degree;
+  wmesh_int_t nodes_family;
+
+
   //
   // Get the output file name.
   //
-  char ofilename[256];
-  if (false == cmd.option("-o", ofilename))
-    {
-      fprintf(stderr,"missing output file, '-o' option.\n");
-      return WMESH_STATUS_INVALID_ARGUMENT;
-    }
   
   if (false == cmd.option("-d", &degree))
     {
       fprintf(stderr,"missing output file, '-d' option.\n");
+      return WMESH_STATUS_INVALID_ARGUMENT;
+    }
+
+  WCOMMON::cmdline::str_t nodes_family_name;
+  if (false == cmd.option("-n", nodes_family_name))
+    {
+      fprintf(stderr,"// bms_nodes.tests::error: missing nodes family name, '-n' option.\n");
+	return WMESH_STATUS_INVALID_ARGUMENT;
+    }
+  
+  status = app_str2nodesfamily(nodes_family_name,
+			       &nodes_family);
+  if (status != WMESH_STATUS_SUCCESS)
+    {
+      fprintf(stderr,"wrong nodes family name '%s'\n",nodes_family_name);
+      fprintf(stderr," available nodes are:\n");
+      for  (wmesh_int_t i=0;i<WMESH_NODES_FAMILY_ALL;++i)
+	{	  
+	  status = app_nodesfamily2str(i,
+				       nodes_family_name);
+	  WMESH_STATUS_CHECK(status);
+	  fprintf(stderr," - '%s'\n",nodes_family_name);
+	}      
       return WMESH_STATUS_INVALID_ARGUMENT;
     }
   
@@ -42,38 +62,64 @@ int main(int argc, char ** argv)
 		      filename);
   WMESH_STATUS_CHECK(status);
 
+  status = wmesh_analysis(mesh);
+  WMESH_STATUS_CHECK(status);
+
+  //
+  // Define the finite element space.
+  //
+  wmeshspace_t * meshspace;
+  status = wmeshspace_def(&meshspace,
+			  nodes_family,
+			  degree,
+			  mesh);
+  WMESH_STATUS_CHECK(status);
+  //
+  // Build the sublinear mesh.
+  //
 #if 0
+  wmesh_t * refined_mesh;
+  status = wmeshspace_sublinearmesh	(meshspace,
+					 &refined_mesh);
+  WMESH_STATUS_CHECK(status);
+  
   //
-  // Mesh analysis.
+  // Write the refined mesh.
   //
-  status = wmesh_reorder(mesh);
+  status = wmesh_write			(refined_mesh,
+					 "toto.mesh");
   WMESH_STATUS_CHECK(status);
 #endif
-
+  
+  //
+  // Get the sparsity pattern of a scalar equation.
+  //
+  std::cout << "create sparse" << std::endl;
   wmesh_int_t csr_size 	= 0;
   wmesh_int_p csr_ptr 	= nullptr;
   wmesh_int_p csr_ind 	= nullptr;
-  status = wmesh_fespace_endomorphism	(mesh,
-					 degree,
-					 &csr_size,
-					 &csr_ptr,
-					 &csr_ind);
+  status =  wmeshspace_sparse	(meshspace,
+				 &csr_size,
+				 &csr_ptr,
+				 &csr_ind);
   WMESH_STATUS_CHECK(status);
+
+  
+  //
+  // Spy the symbolic matrix.
+  //
+#if 0
+  FILE * f = fopen("out.bin","wb");
   for (wmesh_int_t i=0;i<csr_size;++i)
     {
       for (wmesh_int_t s=csr_ptr[i];s<csr_ptr[i+1];++s)
 	{
 	  wmesh_int_t j = csr_ind[s];
-	  std::cout << csr_size - i << " " << j + 1 << std::endl;
+	  fprintf(f," " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",csr_size - i, j);
+	  //	  std::cout << csr_size - i << " " << j << std::endl;
 	}
     }
-#if 0  
-  //
-  // Create the mesh.
-  //
-  status = wmesh_write(mesh,
-		       ofilename);
-  WMESH_STATUS_CHECK(status);
+  fclose(f);
 #endif
   if (csr_ptr)
     {

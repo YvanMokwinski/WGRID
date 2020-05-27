@@ -101,7 +101,7 @@ extern "C"
 				    elements,
 				    c2d_e_m);
     WMESH_STATUS_CHECK(status);
-
+    
     for (wmesh_int_t i=0;i<c2d_e_size;++i)
       {	
 	c2d_e_m[i] *= num_ldofs_[i];
