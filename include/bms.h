@@ -8,6 +8,36 @@
 extern "C"
 {
 #endif
+
+  wmesh_status_t bms_dshape(wmesh_int_t 		element_,
+			    wmesh_int_t 		family_,
+			    wmesh_int_t 		degree_,
+			    
+			    const_wmesh_int_p		diff_,
+				     				     
+			    wmesh_int_t 		c_storage_,					  
+			    wmesh_int_t 		c_m_,
+			    wmesh_int_t 		c_n_,
+			    const double * 		c_,
+			    wmesh_int_t 		c_ld_,
+			    
+			    wmesh_int_t 		b_storage_,
+				     wmesh_int_t 		b_m_,
+			    wmesh_int_t 		b_n_,
+			    double* 			b_,
+			    wmesh_int_t 		b_ld_,
+			    
+			    wmesh_int_t		iw_n_,
+			    wmesh_int_p		iw_,
+			    wmesh_int_t		rw_n_,
+			    double*		rw_);
+  
+  wmesh_status_t bms_shape_buffer_size(wmesh_int_t 		element_,
+				       wmesh_int_t 		family_,
+				       wmesh_int_t 		degree_,
+				       wmesh_int_p 		iw_n_,
+				       wmesh_int_p 		rw_n_);
+  
   wmesh_status_t 	bms_sparse_buffer_size	(wmesh_int_t 		num_dofs_,
 						 wmesh_int_t 		c2d_size_,
 						 const_wmesh_int_p	c2d_m_,

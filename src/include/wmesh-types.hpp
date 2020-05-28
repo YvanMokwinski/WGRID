@@ -1,19 +1,41 @@
 #ifndef WMESH_TYPES_HPP
 #define WMESH_TYPES_HPP
 
-
+#include <ostream>
 #include "wmesh-status.h"
+
+template<typename T>
+struct wmesh_mat_t
+{
+  wmesh_int_t 		m;
+  wmesh_int_t 		n;
+  wmesh_int_t 		ld;
+  T * __restrict__ 	v;
+
+  
+  static void define(wmesh_mat_t*self_,wmesh_int_t m_,wmesh_int_t n_,T*__restrict__ v_,wmesh_int_t ld_)
+  {
+    self_->m = m_;
+    self_->n = n_;
+    self_->v = v_;
+    self_->ld = ld_;
+  };
+
+};
+
+
 extern "C"
 {
   
-  struct wmesh_int_mat_t
+  struct wmesh_int_mat_t : wmesh_mat_t<wmesh_int_t>{};
+#if 0
   {
     wmesh_int_t 	m;
     wmesh_int_t 	n;
     wmesh_int_t 	ld;
     wmesh_int_p 	v;
   };
-
+#endif
   struct wmesh_int_sparsemat_t
   {
     wmesh_int_t 	m_size;

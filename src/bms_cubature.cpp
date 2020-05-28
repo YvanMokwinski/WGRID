@@ -8,7 +8,7 @@
 #endif
 #define solve_params(_type) wmesh_int_t*n,_type*jacM,_type*wr,_type*wi,_type*vl,_type*vr,_type*work,wmesh_int_t*work_n_
 template<typename T>
-void solve(solve_params(T));
+static void solve(solve_params(T));
 
 template<>
 void solve<double>(solve_params(double))

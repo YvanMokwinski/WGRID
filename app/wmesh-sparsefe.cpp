@@ -3,6 +3,7 @@
 #include "cmdline.hpp"
 #include <iostream>
 #include "app.hpp"
+
 int main(int argc, char ** argv)
 {
   
@@ -13,11 +14,9 @@ int main(int argc, char ** argv)
   wmesh_int_t degree;
   wmesh_int_t nodes_family;
 
-
   //
   // Get the output file name.
   //
-  
   if (false == cmd.option("-d", &degree))
     {
       fprintf(stderr,"missing output file, '-d' option.\n");
@@ -145,6 +144,10 @@ int main(int argc, char ** argv)
 			      csr_val,
 			      rhs);
   WMESH_STATUS_CHECK(status);
+
+  //
+  // Save the linear system.
+  //
   
   if (csr_ptr)
     {
