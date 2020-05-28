@@ -6,8 +6,24 @@
 #include <chrono>
 #include <iostream>
 #include "bms.h"
-
 #include "wmesh-utils.hpp"
+extern "C"
+{
+  
+  wmesh_status_t wmeshspace_laplace	(const wmeshspace_t*__restrict__ 	self_,
+					 wmesh_int_t 				csr_size_,
+					 const_wmesh_int_p			csr_ptr_,
+					 const_wmesh_int_p			csr_ind_,
+					 double * 				csr_val_,
+					 double * 				rhs_)
+  {
+    return WMESH_STATUS_SUCCESS;
+  }
+};
+    
+#if 0
+
+
 using namespace std::chrono;
 extern "C"
 {
@@ -207,3 +223,4 @@ extern "C"
   }
   
 };
+#endif

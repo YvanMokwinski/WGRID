@@ -17,43 +17,45 @@ template<wmesh_int_t 	degree_,
 	 typename 	T>
 struct bms_shape_orthogonal_splz
 {  
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-			     wmesh_int_t 	c_m_,
-			     wmesh_int_t 	c_n_,
-			     const T * 	c_,
-			     wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-			     wmesh_int_t 	b_storage_,
-			     wmesh_int_t 	b_m_,
-			     wmesh_int_t 	b_n_,
-			     T* 		b_,
-			     wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-			     wmesh_int_t   	iw_n_,
-			     wmesh_int_p   	iw_,
-			     wmesh_int_t   	rw_n_,
-			     wmesh_int_p   	rw_);
+				     wmesh_int_t   	iw_n_,
+				     wmesh_int_p   	iw_,
+				     wmesh_int_t   	rw_n_,
+				     wmesh_int_p   	rw_);
 };
 
 template<wmesh_int_t ELEMENT_,typename T>
 struct bms_shape_orthogonal_splz<0,ELEMENT_,T>
 {
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-		      wmesh_int_t   iw_n_,
-		      wmesh_int_p   iw_,
-		      wmesh_int_t   rw_n_,
-		      wmesh_int_p   rw_)
+				     wmesh_int_t   iw_n_,
+				     wmesh_int_p   iw_,
+				     wmesh_int_t   rw_n_,
+				     wmesh_int_p   rw_)
   {
     wmesh_int_t treat_case
       = ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 1
@@ -124,22 +126,23 @@ struct bms_shape_orthogonal_splz<0,ELEMENT_,T>
 template<typename T>
 struct bms_shape_orthogonal_splz<1,WMESH_ELEMENT_EDGE,T>
 {
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						  wmesh_int_t 	c_m_,
-						  wmesh_int_t 	c_n_,
-						  const T * 	c_,
-						  wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						  
-						  wmesh_int_t 	b_storage_,
-						  wmesh_int_t 	b_m_,
-						  wmesh_int_t 	b_n_,
-						  T* 		b_,
-						  wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						  
-						  wmesh_int_t  	iw_n_,
-						  wmesh_int_p  	iw_,
-						  wmesh_int_t  	rw_n_,
-						  wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
     
     wmesh_int_t treat_case
@@ -232,22 +235,23 @@ template<typename T>
 struct bms_shape_orthogonal_splz<1,WMESH_ELEMENT_TRIANGLE,T>
 {
   
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						      wmesh_int_t 	c_m_,
-						      wmesh_int_t 	c_n_,
-						      const T * 	c_,
-						      wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						      
-						      wmesh_int_t 	b_storage_,
-						      wmesh_int_t 	b_m_,
-						      wmesh_int_t 	b_n_,
-						      T* 		b_,
-						      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						      
-						      wmesh_int_t  	iw_n_,
-						      wmesh_int_p  	iw_,
-						      wmesh_int_t  	rw_n_,
-						      wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
     
     wmesh_int_t treat_case
@@ -353,22 +357,23 @@ struct bms_shape_orthogonal_splz<1,WMESH_ELEMENT_QUADRILATERAL,T>
 
 
   
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-		      wmesh_int_t  	iw_n_,
-		      wmesh_int_p  	iw_,
-		      wmesh_int_t  	rw_n_,
-		      wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
 
     wmesh_int_t treat_case
@@ -378,7 +383,7 @@ struct bms_shape_orthogonal_splz<1,WMESH_ELEMENT_QUADRILATERAL,T>
       : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 4
       : 0;
 
-        static constexpr T four = static_cast<T>(4);
+    static constexpr T four = static_cast<T>(4);
     static constexpr T one = static_cast<T>(1);
 
 #define l0       (one - r)*(one - s) / four
@@ -481,22 +486,23 @@ struct bms_shape_orthogonal_splz<1,WMESH_ELEMENT_TETRAHEDRON,T>
 
 
   
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-							 wmesh_int_t 	c_m_,
-							 wmesh_int_t 	c_n_,
-							 const T * 	c_,
-							 wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						     
-							 wmesh_int_t 	b_storage_,
-							 wmesh_int_t 	b_m_,
-							 wmesh_int_t 	b_n_,
-							 T* 		b_,
-							 wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						     
-							 wmesh_int_t  	iw_n_,
-							 wmesh_int_p  	iw_,
-							 wmesh_int_t  	rw_n_,
-							 wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
 
     wmesh_int_t treat_case
@@ -610,22 +616,23 @@ template<typename T>
 struct bms_shape_orthogonal_splz<1,WMESH_ELEMENT_WEDGE,T>
 {
 
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						     wmesh_int_t 	c_m_,
-						     wmesh_int_t 	c_n_,
-						     const T * 	c_,
-						     wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						     
-						     wmesh_int_t 	b_storage_,
-						     wmesh_int_t 	b_m_,
-						     wmesh_int_t 	b_n_,
-						     T* 		b_,
-						     wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						     
-						     wmesh_int_t  	iw_n_,
-						     wmesh_int_p  	iw_,
-						     wmesh_int_t  	rw_n_,
-						     wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
     static constexpr T one = static_cast<T>(1);
 
@@ -750,22 +757,23 @@ struct bms_shape_orthogonal_splz<1,WMESH_ELEMENT_HEXAHEDRON,T>
 {
 
   
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						     wmesh_int_t 	c_m_,
-						     wmesh_int_t 	c_n_,
-						     const T * 	c_,
-						     wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						     
-						     wmesh_int_t 	b_storage_,
-						     wmesh_int_t 	b_m_,
-						     wmesh_int_t 	b_n_,
-						     T* 		b_,
-						     wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						     
-						     wmesh_int_t  	iw_n_,
-						     wmesh_int_p  	iw_,
-						     wmesh_int_t  	rw_n_,
-						     wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
     static constexpr T one = static_cast<T>(1);
     static constexpr T eight = static_cast<T>(8);
@@ -902,22 +910,23 @@ template<typename T>
 struct bms_shape_orthogonal_splz<1,WMESH_ELEMENT_PYRAMID,T>
 {
   
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						     wmesh_int_t 	c_m_,
-						     wmesh_int_t 	c_n_,
-						     const T * 	c_,
-						     wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						     
-						     wmesh_int_t 	b_storage_,
-						     wmesh_int_t 	b_m_,
-						     wmesh_int_t 	b_n_,
-						     T* 		b_,
-						     wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						     
-						     wmesh_int_t  	iw_n_,
-						     wmesh_int_p  	iw_,
-						     wmesh_int_t  	rw_n_,
-						     wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
     static constexpr T one = static_cast<T>(1);
     static constexpr T four = static_cast<T>(4);
@@ -1044,43 +1053,47 @@ template<wmesh_int_t 	degree_,
 	 typename 	T>
 struct bms_shape_lagrange_splz
 {  
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-		      wmesh_int_t   iw_n_,
-		      wmesh_int_p   iw_,
-		      wmesh_int_t   rw_n_,
-		      wmesh_int_p   rw_);
+				     wmesh_int_t   iw_n_,
+				     wmesh_int_p   iw_,
+				     wmesh_int_t   rw_n_,
+				     wmesh_int_p   rw_);
 };
 
 template<wmesh_int_t ELEMENT_,typename T>
 struct bms_shape_lagrange_splz<0,ELEMENT_,T>
 {
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
+
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,
+				     
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-		      wmesh_int_t   iw_n_,
-		      wmesh_int_p   iw_,
-		      wmesh_int_t   rw_n_,
-		      wmesh_int_p   rw_)
+				     wmesh_int_t   iw_n_,
+				     wmesh_int_p   iw_,
+				     wmesh_int_t   rw_n_,
+				     wmesh_int_p   rw_)
   {
     wmesh_int_t treat_case
       = ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 1
@@ -1089,7 +1102,8 @@ struct bms_shape_lagrange_splz<0,ELEMENT_,T>
       : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 4
       : 0;
     
-    static constexpr T one = static_cast<T>(1);
+    static constexpr T one  = static_cast<T>(1);
+
     
 #define l0       one
     
@@ -1097,7 +1111,7 @@ struct bms_shape_lagrange_splz<0,ELEMENT_,T>
       {
 	
       case 1:
-	{	  
+	{
 	  for (wmesh_int_t i=0;i<c_n_;++i)
 	    {
 	      b_[b_ld_ * i + 0] = l0;	     
@@ -1151,353 +1165,102 @@ struct bms_shape_lagrange_splz<0,ELEMENT_,T>
 template<typename T>
 struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_EDGE,T>
 {
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						  wmesh_int_t 	c_m_,
-						  wmesh_int_t 	c_n_,
-						  const T * 	c_,
-						  wmesh_int_t 	c_ld_,
-						  
-						  wmesh_int_t 	b_storage_,
-						  wmesh_int_t 	b_m_,
-						  wmesh_int_t 	b_n_,
-						  T* 		b_,
-						  wmesh_int_t 	b_ld_,
-						  
-						  wmesh_int_t  	iw_n_,
-						  wmesh_int_p  	iw_,
-						  wmesh_int_t  	rw_n_,
-						  wmesh_int_p  	rw_)
-  {
-    
-    wmesh_int_t treat_case
-      = ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 1
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 2
-      : ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 3
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 4
-      : 0;
 
+  static inline void basis(const_wmesh_int_p 	diff_,
+			   const T * 		lcoo_,
+			   wmesh_int_t 		lcoo_inc_,
+			   T * 			b_,
+			   wmesh_int_t 		b_inc_)
+  {
     static constexpr T one = static_cast<T>(1);
     static constexpr T two = static_cast<T>(2);
-
-#define l0       ( one - r ) / two
-#define l1       ( one + r ) / two
-
-    switch(treat_case)
+    const T
+      r = lcoo_[lcoo_inc_* 0];
+    if (diff_[0] > 0)
       {
-	
-      case 1:
-	{
-	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	    }
-	  
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 2:
-	{	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0];
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-
-      case 3:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0  + i];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 4:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0 + i];
-
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	      
-      case 0:
-	{
-	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
-	}
+	b_[b_inc_*0] = -one / two;
+	b_[b_inc_*1] = one / two;
       }
+    else
+      {
+	b_[b_inc_*0] = (one - r) / two;
+	b_[b_inc_*1] = (one + r) / two;
+      }
+  }
 
-    return WMESH_STATUS_INVALID_ENUM;
-#undef l0
-#undef l1
-
-  };
 };
 
 template<typename T>
 struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_TRIANGLE,T>
 {
-  
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						      wmesh_int_t 	c_m_,
-						      wmesh_int_t 	c_n_,
-						      const T * 	c_,
-						      wmesh_int_t 	c_ld_,
-						      
-						      wmesh_int_t 	b_storage_,
-						      wmesh_int_t 	b_m_,
-						      wmesh_int_t 	b_n_,
-						      T* 		b_,
-						      wmesh_int_t 	b_ld_,
-						      
-						      wmesh_int_t  	iw_n_,
-						      wmesh_int_p  	iw_,
-						      wmesh_int_t  	rw_n_,
-						      wmesh_int_p  	rw_)
+
+  static inline void basis(const_wmesh_int_p 	diff_,
+			   const T * 		lcoo_,
+			   wmesh_int_t 		lcoo_inc_,
+			   T * 			b_,
+			   wmesh_int_t 		b_inc_)
   {
-    
-    wmesh_int_t treat_case
-      = ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 1
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 2
-      : ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 3
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 4
-      : 0;
-    
-
     static constexpr T one = static_cast<T>(1);
-
-#define l0       (one - (r+s))
-#define l1       r
-#define l2       s
-
-
-    switch(treat_case)
+    static constexpr T zero = static_cast<T>(0);
+    if (diff_[0] > 0)
       {
-	
-      case 1:
-	{
-	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	    }
-	  
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 2:
-	{	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1];
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-
-      case 3:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0  + i],
-		s = c_[c_ld_* 1  + i];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 4:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0 + i],
-		s = c_[c_ld_* 1 + i];
-
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	      
-      case 0:
-	{
-	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
-	}
+	b_[b_inc_*0] = -one;
+	b_[b_inc_*1] = one;
+	b_[b_inc_*2] = zero;	
       }
-
-    return WMESH_STATUS_INVALID_ENUM;
-#undef l0
-#undef l1
-#undef l2
-
-  };
+    else if (diff_[1] > 0)
+      {
+	b_[b_inc_*0] = -one;
+	b_[b_inc_*1] = zero;
+	b_[b_inc_*2] = one;	
+      }
+    else
+      {
+	b_[b_inc_*0] = one - (lcoo_[lcoo_inc_ * 0] + lcoo_[lcoo_inc_ * 1]);
+	b_[b_inc_*1] = lcoo_[lcoo_inc_ * 0];
+	b_[b_inc_*2] = lcoo_[lcoo_inc_ * 1];
+      }
+  }
 };
 
 template<typename T>
 struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_QUADRILATERAL,T>
 {
 
-
-  
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
-		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
-		      
-		      wmesh_int_t  	iw_n_,
-		      wmesh_int_p  	iw_,
-		      wmesh_int_t  	rw_n_,
-		      wmesh_int_p  	rw_)
+  static inline void basis(const_wmesh_int_p 	diff_,
+			   const T * 		lcoo_,
+			   wmesh_int_t 		lcoo_inc_,
+			   T * 			b_,
+			   wmesh_int_t 		b_inc_)
   {
-
-    wmesh_int_t treat_case
-      = ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 1
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 2
-      : ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 3
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 4
-      : 0;
-
-        static constexpr T four = static_cast<T>(4);
     static constexpr T one = static_cast<T>(1);
-
-#define l0       (one - r)*(one - s) / four
-#define l1       (one + r)*(one + s) / four
-#define l2       (one + r)*(one + s) / four
-#define l3       (one - r)*(one + s) / four
-
-    switch(treat_case)
+    static constexpr T four = static_cast<T>(4);
+    const T
+      r = lcoo_[lcoo_inc_* 0],
+      s = lcoo_[lcoo_inc_* 1];
+    
+    if (diff_[0] > 0)
       {
-	
-      case 1:
-	{
-	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	      b_[b_ld_ * i + 3] = l3;
-	    }
-	  
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 2:
-	{	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1];
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-	      b_[b_ld_ * 3 + i] = l3;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-
-      case 3:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0  + i],
-		s = c_[c_ld_* 1  + i];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	      b_[b_ld_ * i + 3] = l3;
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 4:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0 + i],
-		s = c_[c_ld_* 1 + i];
-
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-	      b_[b_ld_ * 3 + i] = l3;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	      
-      case 0:
-	{
-	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
-	}
+	b_[b_inc_*0] = -(one - s) / four;
+	b_[b_inc_*1] = (one - s) / four;
+	b_[b_inc_*2] = (one + s) / four;
+	b_[b_inc_*3] = -(one + s) / four;
       }
-
-    return WMESH_STATUS_INVALID_ENUM;
-#undef l0
-#undef l1
-#undef l2
-#undef l3
-
-  };
+    else if (diff_[1] > 0)
+      {
+	b_[b_inc_*0] = -(one - r) / four;
+	b_[b_inc_*1] = -(one + r) / four;
+	b_[b_inc_*2] = (one + r) / four;
+	b_[b_inc_*3] = (one - r) / four;
+      }
+    else
+      {
+	b_[b_inc_*0] = (one - r)*(one - s) / four;
+	b_[b_inc_*1] = (one + r)*(one - s) / four;
+	b_[b_inc_*2] = (one + r)*(one + s) / four;
+	b_[b_inc_*3] = (one - r)*(one + s) / four;
+      }
+  }
 
 
 };
@@ -1506,129 +1269,49 @@ template<typename T>
 struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_TETRAHEDRON,T>
 {
 
-
-  
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-							 wmesh_int_t 	c_m_,
-							 wmesh_int_t 	c_n_,
-							 const T * 	c_,
-							 wmesh_int_t 	c_ld_,
-						     
-							 wmesh_int_t 	b_storage_,
-							 wmesh_int_t 	b_m_,
-							 wmesh_int_t 	b_n_,
-							 T* 		b_,
-							 wmesh_int_t 	b_ld_,
-						     
-							 wmesh_int_t  	iw_n_,
-							 wmesh_int_p  	iw_,
-							 wmesh_int_t  	rw_n_,
-							 wmesh_int_p  	rw_)
+  static inline void basis(const_wmesh_int_p 	diff_,
+			   const T * 		lcoo_,
+			   wmesh_int_t 		lcoo_inc_,
+			   T * 			b_,
+			   wmesh_int_t 		b_inc_)
   {
-
-    wmesh_int_t treat_case
-      = ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 1
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 2
-      : ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 3
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 4
-      : 0;
-    
     static constexpr T one = static_cast<T>(1);
+    static constexpr T zero = static_cast<T>(0);
+    const T
+      r = lcoo_[lcoo_inc_*0],
+      s = lcoo_[lcoo_inc_*1],
+      t = lcoo_[lcoo_inc_*2];
     
-#define l0      ( one - (r + s + t) )
-#define l1       r
-#define l2       s
-#define l3       t
-
-    switch(treat_case)
+    if (diff_[0] > 0)
       {
-	
-      case 1:
-	{
-	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1],
-		t = c_[c_ld_*i + 2];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	      b_[b_ld_ * i + 3] = l3;
-	    }
-	  
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 2:
-	{	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1],
-		t = c_[c_ld_*i + 2];
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-	      b_[b_ld_ * 3 + i] = l3;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-
-      case 3:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0  + i],
-		s = c_[c_ld_* 1  + i],
-		t = c_[c_ld_* 2  + i];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	      b_[b_ld_ * i + 3] = l3;
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 4:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0 + i],
-		s = c_[c_ld_* 1 + i],
-		t = c_[c_ld_* 2 + i];
-
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-	      b_[b_ld_ * 3 + i] = l3;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	      
-      case 0:
-	{
-	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
-	}
+	b_[b_inc_*0] = -one;
+	b_[b_inc_*1] = one;
+	b_[b_inc_*2] = zero; 
+	b_[b_inc_*3] = zero;
       }
+    else if (diff_[1] > 0)
+      {
+	b_[b_inc_*0] = -one;
+	b_[b_inc_*1] = zero;
+	b_[b_inc_*2] = one;
+	b_[b_inc_*3] = zero;
+      }
+    else if (diff_[2] > 0)
+      {
+	b_[b_inc_*0] = -one;
+	b_[b_inc_*1] = zero;
+	b_[b_inc_*2] = zero;
+	b_[b_inc_*3] = one;
+      }
+    else
+      {
+	b_[b_inc_*0] = one - (r + s + t);
+	b_[b_inc_*1] = r;
+	b_[b_inc_*2] = s;
+	b_[b_inc_*3] = t;
+      }
+  }
 
-    return WMESH_STATUS_INVALID_ENUM;
-#undef l0
-#undef l1
-#undef l2
-#undef l3
-
-  };
 
 
 };
@@ -1637,138 +1320,57 @@ template<typename T>
 struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_WEDGE,T>
 {
 
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						     wmesh_int_t 	c_m_,
-						     wmesh_int_t 	c_n_,
-						     const T * 	c_,
-						     wmesh_int_t 	c_ld_,
-						     
-						     wmesh_int_t 	b_storage_,
-						     wmesh_int_t 	b_m_,
-						     wmesh_int_t 	b_n_,
-						     T* 		b_,
-						     wmesh_int_t 	b_ld_,
-						     
-						     wmesh_int_t  	iw_n_,
-						     wmesh_int_p  	iw_,
-						     wmesh_int_t  	rw_n_,
-						     wmesh_int_p  	rw_)
+  static inline void basis(const_wmesh_int_p 	diff_,
+			   const T * 		lcoo_,
+			   wmesh_int_t 		lcoo_inc_,
+			   T * 			b_,
+			   wmesh_int_t 		b_inc_)
   {
     static constexpr T one = static_cast<T>(1);
-
-    wmesh_int_t treat_case
-      = ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 1
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 2
-      : ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 3
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 4
-      : 0;
-
-#define l0     ( one - (r + s) ) * (one - t)
-#define l1       r  * (one - t);
-#define l2       s  * (one - t)
-#define l3       ( one - (r + s) ) * t
-#define l4       r * t
-#define l5       s * t
-
-    switch(treat_case)
+    static constexpr T zero = static_cast<T>(0);
+    const T
+      r = lcoo_[lcoo_inc_*0],
+      s = lcoo_[lcoo_inc_*1],
+      t = lcoo_[lcoo_inc_*2];
+    
+    if (diff_[0] > 0)
       {
-	
-      case 1:
-	{
-	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1],
-		t = c_[c_ld_*i + 2];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	      b_[b_ld_ * i + 3] = l3;
-	      b_[b_ld_ * i + 4] = l4;
-	      b_[b_ld_ * i + 5] = l5;
-	    }
-	  
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 2:
-	{	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1],
-		t = c_[c_ld_*i + 2];
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-	      b_[b_ld_ * 3 + i] = l3;
-	      b_[b_ld_ * 4 + i] = l4;
-	      b_[b_ld_ * 5 + i] = l5;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-
-      case 3:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0  + i],
-		s = c_[c_ld_* 1  + i],
-		t = c_[c_ld_* 2  + i];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	      b_[b_ld_ * i + 3] = l3;
-	      b_[b_ld_ * i + 4] = l4;
-	      b_[b_ld_ * i + 5] = l5;
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 4:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0 + i],
-		s = c_[c_ld_* 1 + i],
-		t = c_[c_ld_* 2 + i];
-
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-	      b_[b_ld_ * 3 + i] = l3;
-	      b_[b_ld_ * 4 + i] = l4;
-	      b_[b_ld_ * 5 + i] = l5;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	      
-      case 0:
-	{
-	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
-	}
+	b_[b_inc_*0] = -(one - t);
+	b_[b_inc_*1] = (one - t);
+	b_[b_inc_*2] = zero;
+	b_[b_inc_*3] = -t;
+	b_[b_inc_*4] = t;
+	b_[b_inc_*5] = zero;
       }
+    else if (diff_[1] > 0)
+      {
+	b_[b_inc_*0] = -(one - t);
+	b_[b_inc_*1] = zero;
+	b_[b_inc_*2] = (one - t);
+	b_[b_inc_*3] = -t;
+	b_[b_inc_*4] = zero;
+	b_[b_inc_*5] = t;
+      }
+    else if (diff_[2] > 0)
+      {
+	b_[b_inc_*0] = -( one - (r + s) );
+	b_[b_inc_*1] = -r;
+	b_[b_inc_*2] = -s;
+	b_[b_inc_*3] = ( one - (r + s) );
+	b_[b_inc_*4] = r;
+	b_[b_inc_*5] = s;
+      }
+    else
+      {
+	b_[b_inc_*0] = ( one - (r + s) ) * (one - t);
+	b_[b_inc_*1] = r * (one - t);
+	b_[b_inc_*2] = s * (one - t);
+	b_[b_inc_*3] = ( one - (r + s) ) * t;
+	b_[b_inc_*4] = r * t;
+	b_[b_inc_*5] = s * t;
+      }
+  }
 
-    return WMESH_STATUS_INVALID_ENUM;
-#undef l0
-#undef l1
-#undef l2
-#undef l3
-#undef l4
-#undef l5
-
-  };
 
 };
 
@@ -1776,192 +1378,200 @@ template<typename T>
 struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_HEXAHEDRON,T>
 {
 
-  
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						     wmesh_int_t 	c_m_,
-						     wmesh_int_t 	c_n_,
-						     const T * 	c_,
-						     wmesh_int_t 	c_ld_,
-						     
-						     wmesh_int_t 	b_storage_,
-						     wmesh_int_t 	b_m_,
-						     wmesh_int_t 	b_n_,
-						     T* 		b_,
-						     wmesh_int_t 	b_ld_,
-						     
-						     wmesh_int_t  	iw_n_,
-						     wmesh_int_p  	iw_,
-						     wmesh_int_t  	rw_n_,
-						     wmesh_int_p  	rw_)
+  static inline void basis(const_wmesh_int_p 	diff_,
+			   const T * 		lcoo_,
+			   wmesh_int_t 		lcoo_inc_,
+			   T * 			b_,
+			   wmesh_int_t 		b_inc_)
   {
     static constexpr T one = static_cast<T>(1);
     static constexpr T eight = static_cast<T>(8);
-
-    wmesh_int_t treat_case
-      = ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 1
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 2
-      : ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 3
-      : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 4
-      : 0;
-
-
-    	      
-#define l0     (one - r)*(one - s)*(one - t) / eight
-#define l1       (one + r)*(one - s)*(one - t) / eight
-#define l2       (one + r)*(one + s)*(one - t) / eight
-#define l3       (one - r)*(one + s)*(one - t) / eight
-#define l4       (one - r)*(one - s)*(one + t) / eight
-#define l5       (one + r)*(one - s)*(one + t) / eight
-#define l6       (one + r)*(one + s)*(one + t) / eight
-#define l7       (one - r)*(one + s)*(one + t) / eight
-
-    switch(treat_case)
+    const T
+      r = lcoo_[lcoo_inc_*0],
+      s = lcoo_[lcoo_inc_*1],
+      t = lcoo_[lcoo_inc_*2];
+    
+    if (diff_[0] > 0)
       {
-	
-      case 1:
-	{
-	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1],
-		t = c_[c_ld_*i + 2];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	      b_[b_ld_ * i + 3] = l3;
-	      b_[b_ld_ * i + 4] = l4;
-	      b_[b_ld_ * i + 5] = l5;
-	      b_[b_ld_ * i + 6] = l6;
-	      b_[b_ld_ * i + 7] = l7;
-	    }
-	  
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 2:
-	{	  
-	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1],
-		t = c_[c_ld_*i + 2];
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-	      b_[b_ld_ * 3 + i] = l3;
-	      b_[b_ld_ * 4 + i] = l4;
-	      b_[b_ld_ * 5 + i] = l5;
-	      b_[b_ld_ * 6 + i] = l6;
-	      b_[b_ld_ * 7 + i] = l7;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-
-      case 3:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0  + i],
-		s = c_[c_ld_* 1  + i],
-		t = c_[c_ld_* 2  + i];
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	      b_[b_ld_ * i + 3] = l3;
-	      b_[b_ld_ * i + 4] = l4;
-	      b_[b_ld_ * i + 5] = l5;
-	      b_[b_ld_ * i + 6] = l6;
-	      b_[b_ld_ * i + 7] = l7;
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	
-      case 4:
-	{
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      const T
-		r = c_[c_ld_* 0 + i],
-		s = c_[c_ld_* 1 + i],
-		t = c_[c_ld_* 2 + i];
-
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-	      b_[b_ld_ * 3 + i] = l3;
-	      b_[b_ld_ * 4 + i] = l4;
-	      b_[b_ld_ * 5 + i] = l5;
-	      b_[b_ld_ * 6 + i] = l6;
-	      b_[b_ld_ * 7 + i] = l7;
-
-	    }
-	  return WMESH_STATUS_SUCCESS;
-	}
-	      
-      case 0:
-	{
-	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
-	}
+	b_[b_inc_*0] = -(one - s)*(one - t) / eight;
+	b_[b_inc_*1] = (one - s)*(one - t) / eight;
+	b_[b_inc_*2] = (one + s)*(one - t) / eight;
+	b_[b_inc_*3] = -(one + s)*(one - t) / eight;
+	b_[b_inc_*4] = -(one - s)*(one + t) / eight;
+	b_[b_inc_*5] = (one - s)*(one + t) / eight;
+	b_[b_inc_*6] = (one + s)*(one + t) / eight;
+	b_[b_inc_*7] = -(one + s)*(one + t) / eight;
       }
+    else if (diff_[1] > 0)
+      {
+	b_[b_inc_*0] = -(one - r)*(one - t) / eight;
+	b_[b_inc_*1] = -(one + r)*(one - t) / eight;
+	b_[b_inc_*2] =  (one + r)*(one - t) / eight;
+	b_[b_inc_*3] =  (one - r)*(one - t) / eight;
+	b_[b_inc_*4] = -(one - r)*(one + t) / eight;
+	b_[b_inc_*5] = -(one + r)*(one + t) / eight;
+	b_[b_inc_*6] =  (one + r)*(one + t) / eight;
+	b_[b_inc_*7] =  (one - r)*(one + t) / eight;
+      }
+    else if (diff_[2] > 0)
+      {
+	b_[b_inc_*0] = -(one - r)*(one - s) / eight;
+	b_[b_inc_*1] = -(one + r)*(one - s) / eight;
+	b_[b_inc_*2] = -(one + r)*(one + s) / eight;
+	b_[b_inc_*3] = -(one - r)*(one + s) / eight;
+	b_[b_inc_*4] =  (one - r)*(one - s) / eight;
+	b_[b_inc_*5] =  (one + r)*(one - s) / eight;
+	b_[b_inc_*6] =  (one + r)*(one + s) / eight;
+	b_[b_inc_*7] =  (one - r)*(one + s) / eight;
+      }
+    else
+      {
+	b_[b_inc_*0] = (one - r)*(one - s)*(one - t) / eight;
+	b_[b_inc_*1] = (one + r)*(one - s)*(one - t) / eight;
+	b_[b_inc_*2] = (one + r)*(one + s)*(one - t) / eight;
+	b_[b_inc_*3] = (one - r)*(one + s)*(one - t) / eight;
+	b_[b_inc_*4] = (one - r)*(one - s)*(one + t) / eight;
+	b_[b_inc_*5] = (one + r)*(one - s)*(one + t) / eight;
+	b_[b_inc_*6] = (one + r)*(one + s)*(one + t) / eight;
+	b_[b_inc_*7] = (one - r)*(one + s)*(one + t) / eight;
+      }
+  }
 
-    return WMESH_STATUS_INVALID_ENUM;
-#undef l0
-#undef l1
-#undef l2
-#undef l3
-#undef l4
-#undef l5
-#undef l6
-#undef l7
-  };
 };
 
 template<typename T>
 struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_PYRAMID,T>
 {
-  
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						     wmesh_int_t 	c_m_,
-						     wmesh_int_t 	c_n_,
-						     const T * 	c_,
-						     wmesh_int_t 	c_ld_,
-						     
-						     wmesh_int_t 	b_storage_,
-						     wmesh_int_t 	b_m_,
-						     wmesh_int_t 	b_n_,
-						     T* 		b_,
-						     wmesh_int_t 	b_ld_,
-						     
-						     wmesh_int_t  	iw_n_,
-						     wmesh_int_p  	iw_,
-						     wmesh_int_t  	rw_n_,
-						     wmesh_int_p  	rw_)
-  {
-    static constexpr T one = static_cast<T>(1);
-    static constexpr T four = static_cast<T>(4);
 
-    wmesh_int_t treat_case
+
+  static inline void basis(const_wmesh_int_p 	diff_,
+			   const T * 		lcoo_,
+			   wmesh_int_t 		lcoo_inc_,
+			   T * 			b_,
+			   wmesh_int_t 		b_inc_)
+  {
+
+    static constexpr T four = static_cast<T>(4);
+    static constexpr T one = static_cast<T>(1);
+    static constexpr T zero = static_cast<T>(0);
+    const T
+      r = lcoo_[lcoo_inc_*0],
+      s = lcoo_[lcoo_inc_*1],
+      t = lcoo_[lcoo_inc_*2];
+    
+    if (diff_[0] > 0)
+      {
+	if (t < 1.0)
+	  {
+	    b_[b_inc_*0] = ( -one + s / (one-t)) / four;
+	    b_[b_inc_*1] = (  one  - s / (one-t)) / four;
+	    b_[b_inc_*2] = (  one  + s / (one-t)) / four;
+	    b_[b_inc_*3] = ( -one - s / (one-t)) / four;
+	    b_[b_inc_*4] = zero;
+	  }
+	else
+	  {
+	    b_[b_inc_*0] = -one / four;
+	    b_[b_inc_*1] = one / four;
+	    b_[b_inc_*2] = one / four;
+	    b_[b_inc_*3] = -one / four;
+	    b_[b_inc_*4] = zero;
+	  }
+      }
+    else if (diff_[1] > 0)
+      {
+	if (t < 1.0)
+	  {
+	    b_[b_inc_*0] = ( -one + r / (one-t)) / four;
+	    b_[b_inc_*1] = ( -one  - r / (one-t)) / four;
+	    b_[b_inc_*2] = (  one  + r / (one-t)) / four;
+	    b_[b_inc_*3] = (  one  - r / (one-t)) / four;
+	    b_[b_inc_*4] = zero;
+	  }
+	else
+	  {
+	    b_[b_inc_*0] = -one / four;
+	    b_[b_inc_*1] = -one / four;
+	    b_[b_inc_*2] = one / four;
+	    b_[b_inc_*3] = one / four;
+	    b_[b_inc_*4] = zero;
+	  }
+      }
+    else if (diff_[2] > 0)
+      {
+	if (t < 1.0)
+	  {
+	    b_[b_inc_*0] = ( -one + r*s / (one-t) / (one-t)) / four;
+	    b_[b_inc_*1] = ( -one - r*s / (one-t) / (one-t)) / four;
+	    b_[b_inc_*2] = ( -one + r*s / (one-t) / (one-t)) / four;
+	    b_[b_inc_*3] = ( -one - r*s / (one-t) / (one-t)) / four;
+	    b_[b_inc_*4] = one;
+	  }
+	else
+	  {
+	    b_[b_inc_*0] = -one / four;
+	    b_[b_inc_*1] = -one / four;
+	    b_[b_inc_*2] = -one / four;
+	    b_[b_inc_*3] = -one / four;
+	    b_[b_inc_*4] = one;
+	  }
+      }
+    else
+      {
+	if (t < 1.0)
+	  {
+	    b_[b_inc_*0] = ( one - r - s - t + r*s / (one-t)) / four;
+	    b_[b_inc_*1] = ( one + r - s - t - r*s / (one-t)) / four;
+	    b_[b_inc_*2] = ( one + r + s - t + r*s / (one-t)) / four;
+	    b_[b_inc_*3] = ( one - r + s - t - r*s / (one-t)) / four;
+	    b_[b_inc_*4] = t;
+	  }
+	else
+	  {
+	    b_[b_inc_*0] = zero;
+	    b_[b_inc_*1] = zero;
+	    b_[b_inc_*2] = zero;
+	    b_[b_inc_*3] = zero;
+	    b_[b_inc_*4] = one;
+	  }
+      }
+  }
+
+  
+};
+
+
+
+
+template<typename T,typename F>  
+static inline  wmesh_status_t bms_shape_eval(const_wmesh_int_p	diff_,
+					     wmesh_int_t 	c_storage_,
+					     
+					     wmesh_int_t 	c_m_,
+					     wmesh_int_t 	c_n_,
+					     const T * 		c_,
+					     wmesh_int_t 	c_ld_,
+					     
+					     wmesh_int_t 	b_storage_,
+					     wmesh_int_t 	b_m_,
+					     wmesh_int_t 	b_n_,
+					     T* 		b_,
+					     wmesh_int_t 	b_ld_,
+					     
+					     wmesh_int_t  	iw_n_,
+					     wmesh_int_p  	iw_,
+					     wmesh_int_t  	rw_n_,
+					     wmesh_int_p  	rw_,
+					     F 			funcbasis)
+  {
+    
+    const wmesh_int_t treat_case
       = ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 1
       : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 2
       : ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 3
       : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 4
       : 0;
-
-#define l0 under ? ( (one - t) * (one - r)*(one - s) / four) : 0
-#define l1 under ? ( (one - t) * (one + r)*(one - s) / four) : 0
-#define l2 under ? ( (one - t) * (one + r)*(one + s) / four) : 0
-#define l3 under ? ( (one - t) * (one - r)*(one + s) / four) : 0
-#define l4 t
-
+    
     switch(treat_case)
       {
 	
@@ -1970,18 +1580,13 @@ struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_PYRAMID,T>
 	  
 	  for (wmesh_int_t i=0;i<c_n_;++i)
 	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1],
-		t = c_[c_ld_*i + 2];
 
-	      const bool under = (t < 1.0);
+	      funcbasis(diff_,
+		    c_ + c_ld_*i,
+		    1,
+		    b_ + b_ld_*i,
+		    1);
 
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	      b_[b_ld_ * i + 3] = l3;
-	      b_[b_ld_ * i + 4] = l4;
 	    }
 	  
 	  return WMESH_STATUS_SUCCESS;
@@ -1990,20 +1595,12 @@ struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_PYRAMID,T>
       case 2:
 	{	  
 	  for (wmesh_int_t i=0;i<c_n_;++i)
-	    {
-	      const T
-		r = c_[c_ld_*i + 0],
-		s = c_[c_ld_*i + 1],
-		t = c_[c_ld_*i + 2];
-
-	      const bool under = (t < 1.0);
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-	      b_[b_ld_ * 3 + i] = l3;
-	      b_[b_ld_ * 4 + i] = l4;
-
+	    {	      
+	      funcbasis(diff_,
+		    c_ + c_ld_*i,
+		    1,
+		    b_ + i,
+		    b_ld_);
 	    }
 	  return WMESH_STATUS_SUCCESS;
 	}
@@ -2012,18 +1609,11 @@ struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_PYRAMID,T>
 	{
 	  for (wmesh_int_t i=0;i<c_m_;++i)
 	    {
-	      const T
-		r = c_[c_ld_* 0  + i],
-		s = c_[c_ld_* 1  + i],
-		t = c_[c_ld_* 2  + i];
-
-	      const bool under = (t < 1.0);
-
-	      b_[b_ld_ * i + 0] = l0;
-	      b_[b_ld_ * i + 1] = l1;
-	      b_[b_ld_ * i + 2] = l2;
-	      b_[b_ld_ * i + 3] = l3;
-	      b_[b_ld_ * i + 4] = l4;
+	      funcbasis(diff_,
+		    c_ + i,
+		    c_ld_,
+		    b_ + b_ld_ * i,
+		    1);
 	    }
 	  return WMESH_STATUS_SUCCESS;
 	}
@@ -2032,20 +1622,11 @@ struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_PYRAMID,T>
 	{
 	  for (wmesh_int_t i=0;i<c_m_;++i)
 	    {
-	      const T
-		r = c_[c_ld_* 0 + i],
-		s = c_[c_ld_* 1 + i],
-		t = c_[c_ld_* 2 + i];
-
-
-	      const bool under = (t < 1.0);
-
-	      b_[b_ld_ * 0 + i] = l0;
-	      b_[b_ld_ * 1 + i] = l1;
-	      b_[b_ld_ * 2 + i] = l2;
-	      b_[b_ld_ * 3 + i] = l3;
-	      b_[b_ld_ * 4 + i] = l4;
-
+	      funcbasis(diff_,
+		    c_ + i,
+		    c_ld_,
+		    b_ + i,
+		    b_ld_);
 	    }
 	  return WMESH_STATUS_SUCCESS;
 	}
@@ -2057,13 +1638,8 @@ struct bms_shape_lagrange_splz<1,WMESH_ELEMENT_PYRAMID,T>
       }
 
     return WMESH_STATUS_INVALID_ENUM;
-#undef l0
-#undef l1
-#undef l2
-#undef l3
-#undef l4
+
   };
-};
 
 
 template<wmesh_int_t 	degree_,
@@ -2071,43 +1647,47 @@ template<wmesh_int_t 	degree_,
 	 typename 	T>
 struct bms_shape_legendre_splz
 {  
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,
+				     
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-		      wmesh_int_t   iw_n_,
-		      wmesh_int_p   iw_,
-		      wmesh_int_t   rw_n_,
-		      wmesh_int_p   rw_);
+				     wmesh_int_t   iw_n_,
+				     wmesh_int_p   iw_,
+				     wmesh_int_t   rw_n_,
+				     wmesh_int_p   rw_);
 };
 
 template<wmesh_int_t ELEMENT_,typename T>
 struct bms_shape_legendre_splz<0,ELEMENT_,T>
 {
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,
+				     
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-		      wmesh_int_t   iw_n_,
-		      wmesh_int_p   iw_,
-		      wmesh_int_t   rw_n_,
-		      wmesh_int_p   rw_)
+				     wmesh_int_t   iw_n_,
+				     wmesh_int_p   iw_,
+				     wmesh_int_t   rw_n_,
+				     wmesh_int_p   rw_)
   {
     wmesh_int_t treat_case
       = ((WMESH_STORAGE_INTERLEAVE == b_storage_)&&(WMESH_STORAGE_INTERLEAVE == c_storage_)) ? 1
@@ -2178,22 +1758,24 @@ struct bms_shape_legendre_splz<0,ELEMENT_,T>
 template<typename T>
 struct bms_shape_legendre_splz<1,WMESH_ELEMENT_EDGE,T>
 {
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						  wmesh_int_t 	c_m_,
-						  wmesh_int_t 	c_n_,
-						  const T * 	c_,
-						  wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,
+				     
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						  
-						  wmesh_int_t 	b_storage_,
-						  wmesh_int_t 	b_m_,
-						  wmesh_int_t 	b_n_,
-						  T* 		b_,
-						  wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						  
-						  wmesh_int_t  	iw_n_,
-						  wmesh_int_p  	iw_,
-						  wmesh_int_t  	rw_n_,
-						  wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
     
     wmesh_int_t treat_case
@@ -2286,22 +1868,24 @@ template<typename T>
 struct bms_shape_legendre_splz<1,WMESH_ELEMENT_TRIANGLE,T>
 {
   
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						      wmesh_int_t 	c_m_,
-						      wmesh_int_t 	c_n_,
-						      const T * 	c_,
-						      wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,
+				     
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						      
-						      wmesh_int_t 	b_storage_,
-						      wmesh_int_t 	b_m_,
-						      wmesh_int_t 	b_n_,
-						      T* 		b_,
-						      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						      
-						      wmesh_int_t  	iw_n_,
-						      wmesh_int_p  	iw_,
-						      wmesh_int_t  	rw_n_,
-						      wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
     
     wmesh_int_t treat_case
@@ -2407,22 +1991,24 @@ struct bms_shape_legendre_splz<1,WMESH_ELEMENT_QUADRILATERAL,T>
 
 
   
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,
+				     
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-		      wmesh_int_t  	iw_n_,
-		      wmesh_int_p  	iw_,
-		      wmesh_int_t  	rw_n_,
-		      wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
 
     wmesh_int_t treat_case
@@ -2432,7 +2018,7 @@ struct bms_shape_legendre_splz<1,WMESH_ELEMENT_QUADRILATERAL,T>
       : ((WMESH_STORAGE_BLOCK      == b_storage_)&&(WMESH_STORAGE_BLOCK == c_storage_)) ? 4
       : 0;
 
-        static constexpr T four = static_cast<T>(4);
+    static constexpr T four = static_cast<T>(4);
     static constexpr T one = static_cast<T>(1);
 
 #define l0       (one - r)*(one - s) / four
@@ -2535,22 +2121,24 @@ struct bms_shape_legendre_splz<1,WMESH_ELEMENT_TETRAHEDRON,T>
 
 
   
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-							 wmesh_int_t 	c_m_,
-							 wmesh_int_t 	c_n_,
-							 const T * 	c_,
-							 wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,
+				     
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						     
-							 wmesh_int_t 	b_storage_,
-							 wmesh_int_t 	b_m_,
-							 wmesh_int_t 	b_n_,
-							 T* 		b_,
-							 wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						     
-							 wmesh_int_t  	iw_n_,
-							 wmesh_int_p  	iw_,
-							 wmesh_int_t  	rw_n_,
-							 wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
 
     wmesh_int_t treat_case
@@ -2664,22 +2252,24 @@ template<typename T>
 struct bms_shape_legendre_splz<1,WMESH_ELEMENT_WEDGE,T>
 {
 
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						     wmesh_int_t 	c_m_,
-						     wmesh_int_t 	c_n_,
-						     const T * 	c_,
-						     wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,
+				     
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						     
-						     wmesh_int_t 	b_storage_,
-						     wmesh_int_t 	b_m_,
-						     wmesh_int_t 	b_n_,
-						     T* 		b_,
-						     wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						     
-						     wmesh_int_t  	iw_n_,
-						     wmesh_int_p  	iw_,
-						     wmesh_int_t  	rw_n_,
-						     wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
     static constexpr T one = static_cast<T>(1);
 
@@ -2804,22 +2394,24 @@ struct bms_shape_legendre_splz<1,WMESH_ELEMENT_HEXAHEDRON,T>
 {
 
   
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						     wmesh_int_t 	c_m_,
-						     wmesh_int_t 	c_n_,
-						     const T * 	c_,
-						     wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     wmesh_int_t 	c_storage_,
+				     
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						     
-						     wmesh_int_t 	b_storage_,
-						     wmesh_int_t 	b_m_,
-						     wmesh_int_t 	b_n_,
-						     T* 		b_,
-						     wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						     
-						     wmesh_int_t  	iw_n_,
-						     wmesh_int_p  	iw_,
-						     wmesh_int_t  	rw_n_,
-						     wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
     static constexpr T one = static_cast<T>(1);
     static constexpr T eight = static_cast<T>(8);
@@ -2956,22 +2548,25 @@ template<typename T>
 struct bms_shape_legendre_splz<1,WMESH_ELEMENT_PYRAMID,T>
 {
   
-  static inline  wmesh_status_t eval(wmesh_int_t 	c_storage_,					  
-						     wmesh_int_t 	c_m_,
-						     wmesh_int_t 	c_n_,
-						     const T * 	c_,
-						     wmesh_int_t 	c_ld_,
+  static inline  wmesh_status_t eval(const_wmesh_int_p	diff_,
+				     
+				     wmesh_int_t 	c_storage_,
+				     
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 						     
-						     wmesh_int_t 	b_storage_,
-						     wmesh_int_t 	b_m_,
-						     wmesh_int_t 	b_n_,
-						     T* 		b_,
-						     wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 						     
-						     wmesh_int_t  	iw_n_,
-						     wmesh_int_p  	iw_,
-						     wmesh_int_t  	rw_n_,
-						     wmesh_int_p  	rw_)
+				     wmesh_int_t  	iw_n_,
+				     wmesh_int_p  	iw_,
+				     wmesh_int_t  	rw_n_,
+				     wmesh_int_p  	rw_)
   {
     static constexpr T one = static_cast<T>(1);
     static constexpr T four = static_cast<T>(4);
@@ -3104,41 +2699,43 @@ template<wmesh_int_t 	ELEMENT_,
 struct bms_shape_lagrange
 {  
   static inline  wmesh_status_t eval(wmesh_int_t 	degree_,
-		      wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
+				     const_wmesh_int_p	diff_,				     
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-		      wmesh_int_t   iw_n_,
-		      wmesh_int_p   iw_,
-		      wmesh_int_t   rw_n_,
-		      wmesh_int_p   rw_)
+				     wmesh_int_t   iw_n_,
+				     wmesh_int_p   iw_,
+				     wmesh_int_t   rw_n_,
+				     wmesh_int_p   rw_)
   {
     
 #define FORWARD					\
-    c_storage_,					\
-    c_m_,					\
-    c_n_,					\
-    c_,						\
-    c_ld_,					\
+    diff_,					\
+      c_storage_,				\
+      c_m_,					\
+      c_n_,					\
+      c_,					\
+      c_ld_,					\
 						\
-    b_storage_,					\
-    b_m_,					\
-    b_n_,					\
-    b_,						\
-    b_ld_,					\
+      b_storage_,				\
+      b_m_,					\
+      b_n_,					\
+      b_,					\
+      b_ld_,					\
 						\
-    iw_n_,					\
-    iw_,					\
-    rw_n_,					\
-    rw_
+      iw_n_,					\
+      iw_,					\
+      rw_n_,					\
+      rw_
     
     switch(degree_)
       {
@@ -3148,7 +2745,8 @@ struct bms_shape_lagrange
 	}
       case 1:
 	{
-	  return bms_shape_lagrange_splz<1,ELEMENT_,T>::eval(FORWARD);
+	  return bms_shape_eval(FORWARD,
+				bms_shape_lagrange_splz<1,ELEMENT_,T>::basis);
 	}
       default:
 	{
@@ -3166,46 +2764,48 @@ struct bms_shape_lagrange
 
 
 
-  template<wmesh_int_t 	ELEMENT_,
+template<wmesh_int_t 	ELEMENT_,
 	 typename 	T>
 struct bms_shape_legendre
 {  
   static inline  wmesh_status_t eval(wmesh_int_t 	degree_,
-		      wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
+				     const_wmesh_int_p	diff_,				     
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-		      wmesh_int_t   iw_n_,
-		      wmesh_int_p   iw_,
-		      wmesh_int_t   rw_n_,
-		      wmesh_int_p   rw_)
+				     wmesh_int_t   iw_n_,
+				     wmesh_int_p   iw_,
+				     wmesh_int_t   rw_n_,
+				     wmesh_int_p   rw_)
   {
     
 #define FORWARD					\
+    diff_,					\
     c_storage_,					\
-    c_m_,					\
-    c_n_,					\
-    c_,						\
-    c_ld_,					\
+      c_m_,					\
+      c_n_,					\
+      c_,					\
+      c_ld_,					\
 						\
-    b_storage_,					\
-    b_m_,					\
-    b_n_,					\
-    b_,						\
-    b_ld_,					\
+      b_storage_,				\
+      b_m_,					\
+      b_n_,					\
+      b_,					\
+      b_ld_,					\
 						\
-    iw_n_,					\
-    iw_,					\
-    rw_n_,					\
-    rw_
+      iw_n_,					\
+      iw_,					\
+      rw_n_,					\
+      rw_
     
     switch(degree_)
       {
@@ -3238,46 +2838,48 @@ struct bms_shape_legendre
 
 
 
-  template<wmesh_int_t 	ELEMENT_,
+template<wmesh_int_t 	ELEMENT_,
 	 typename 	T>
 struct bms_shape_orthogonal
 {  
   static inline  wmesh_status_t eval(wmesh_int_t 	degree_,
-		      wmesh_int_t 	c_storage_,					  
-		      wmesh_int_t 	c_m_,
-		      wmesh_int_t 	c_n_,
-		      const T * 	c_,
-		      wmesh_int_t 	c_ld_,
+				     const_wmesh_int_p	diff_,				     
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 	c_,
+				     wmesh_int_t 	c_ld_,
 		      
-		      wmesh_int_t 	b_storage_,
-		      wmesh_int_t 	b_m_,
-		      wmesh_int_t 	b_n_,
-		      T* 		b_,
-		      wmesh_int_t 	b_ld_,
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
 		      
-		      wmesh_int_t   iw_n_,
-		      wmesh_int_p   iw_,
-		      wmesh_int_t   rw_n_,
-		      wmesh_int_p   rw_)
+				     wmesh_int_t   iw_n_,
+				     wmesh_int_p   iw_,
+				     wmesh_int_t   rw_n_,
+				     wmesh_int_p   rw_)
   {
     
 #define FORWARD					\
-    c_storage_,					\
-    c_m_,					\
-    c_n_,					\
-    c_,						\
-    c_ld_,					\
+    diff_,					\
+      c_storage_,				\
+      c_m_,					\
+      c_n_,					\
+      c_,					\
+      c_ld_,					\
 						\
-    b_storage_,					\
-    b_m_,					\
-    b_n_,					\
-    b_,						\
-    b_ld_,					\
+      b_storage_,				\
+      b_m_,					\
+      b_n_,					\
+      b_,					\
+      b_ld_,					\
 						\
-    iw_n_,					\
-    iw_,					\
-    rw_n_,					\
-    rw_
+      iw_n_,					\
+      iw_,					\
+      rw_n_,					\
+      rw_
     
     switch(degree_)
       {
@@ -3310,29 +2912,31 @@ struct
 bms_shape<WMESH_SHAPE_FAMILY_LAGRANGE,T>
 {
   static inline  wmesh_status_t eval(wmesh_int_t 		element_,
-			     wmesh_int_t 		degree_,
+				     wmesh_int_t 		degree_,
+				     const_wmesh_int_p		diff_,				     
 		      
-			     wmesh_int_t 		c_storage_,					  
-			     wmesh_int_t 		c_m_,
-			     wmesh_int_t 		c_n_,
-			     const T * 		c_,
-			     wmesh_int_t 		c_ld_,
+				     wmesh_int_t 		c_storage_,					  
+				     wmesh_int_t 		c_m_,
+				     wmesh_int_t 		c_n_,
+				     const T * 		c_,
+				     wmesh_int_t 		c_ld_,
 		      
-			     wmesh_int_t 		b_storage_,
-			     wmesh_int_t 		b_m_,
-			     wmesh_int_t 		b_n_,
-			     T* 			b_,
-			     wmesh_int_t 		b_ld_,
+				     wmesh_int_t 		b_storage_,
+				     wmesh_int_t 		b_m_,
+				     wmesh_int_t 		b_n_,
+				     T* 			b_,
+				     wmesh_int_t 		b_ld_,
 		      
 		      
-			     wmesh_int_t		iw_n_,
-			     wmesh_int_p		iw_,
-			     wmesh_int_t		rw_n_,
-			     wmesh_int_p		rw_)
+				     wmesh_int_t		iw_n_,
+				     wmesh_int_p		iw_,
+				     wmesh_int_t		rw_n_,
+				     wmesh_int_p		rw_)
   {
 
 #define FORWARD					\
     degree_,					\
+      diff_,					\
       c_storage_,				\
       c_m_,					\
       c_n_,					\
@@ -3376,28 +2980,30 @@ struct
 bms_shape<WMESH_SHAPE_FAMILY_LEGENDRE,T>
 {
   static inline      wmesh_status_t eval(wmesh_int_t 		element_,
-				 wmesh_int_t 		degree_,
+					 wmesh_int_t 		degree_,
+					 const_wmesh_int_p	diff_,				     
 			
-				 wmesh_int_t 		c_storage_,					  
-				 wmesh_int_t 		c_m_,
-				 wmesh_int_t 		c_n_,
-				 const T * 		c_,
-				 wmesh_int_t 		c_ld_,
+					 wmesh_int_t 		c_storage_,					  
+					 wmesh_int_t 		c_m_,
+					 wmesh_int_t 		c_n_,
+					 const T * 		c_,
+					 wmesh_int_t 		c_ld_,
 			
-				 wmesh_int_t 		b_storage_,
-				 wmesh_int_t 		b_m_,
-				 wmesh_int_t 		b_n_,
-				 T* 			b_,
-				 wmesh_int_t 		b_ld_,
+					 wmesh_int_t 		b_storage_,
+					 wmesh_int_t 		b_m_,
+					 wmesh_int_t 		b_n_,
+					 T* 			b_,
+					 wmesh_int_t 		b_ld_,
 			
-				 wmesh_int_t		iw_n_,
-				 wmesh_int_p		iw_,
-				 wmesh_int_t		rw_n_,
-				 wmesh_int_p		rw_)
+					 wmesh_int_t		iw_n_,
+					 wmesh_int_p		iw_,
+					 wmesh_int_t		rw_n_,
+					 wmesh_int_p		rw_)
   {
       
 #define FORWARD					\
     degree_,					\
+      diff_,					\
       c_storage_,				\
       c_m_,					\
       c_n_,					\
@@ -3440,6 +3046,7 @@ bms_shape<WMESH_SHAPE_FAMILY_ORTHOGONAL,T>
 {
   static inline  wmesh_status_t eval(wmesh_int_t 		element_,
 				     wmesh_int_t 		degree_,
+				     const_wmesh_int_p		diff_,				     
 			
 				     wmesh_int_t 		c_storage_,					  
 				     wmesh_int_t 		c_m_,
@@ -3460,6 +3067,7 @@ bms_shape<WMESH_SHAPE_FAMILY_ORTHOGONAL,T>
       
 #define FORWARD					\
     degree_,					\
+      diff_,					\
       c_storage_,				\
       c_m_,					\
       c_n_,					\
@@ -3505,7 +3113,9 @@ template<typename T>
 wmesh_status_t bms_template_shape(wmesh_int_t 		element_,
 				  wmesh_int_t 		family_,
 				  wmesh_int_t 		degree_,
-				    
+
+				  const_wmesh_int_p	diff_,
+				  
 				  wmesh_int_t 		c_storage_,					  
 				  wmesh_int_t 		c_m_,
 				  wmesh_int_t 		c_n_,
@@ -3527,12 +3137,14 @@ wmesh_status_t bms_template_shape(wmesh_int_t 		element_,
 #define FORWARD					\
   element_,					\
     degree_,					\
+    diff_,					\
+						\
     c_storage_,					\
     c_m_,					\
     c_n_,					\
     c_,						\
     c_ld_,					\
-      						\
+						\
     b_storage_,					\
     b_m_,					\
     b_n_,					\
@@ -3567,26 +3179,33 @@ wmesh_status_t bms_template_shape(wmesh_int_t 		element_,
 extern "C" wmesh_status_t bms_dshape(wmesh_int_t 		element_,
 				     wmesh_int_t 		family_,
 				     wmesh_int_t 		degree_,
-				     
+
+				     const_wmesh_int_p		diff_,
+				     				     
 				     wmesh_int_t 		c_storage_,					  
 				     wmesh_int_t 		c_m_,
 				     wmesh_int_t 		c_n_,
-				     const double * 			c_,
+				     const double * 		c_,
 				     wmesh_int_t 		c_ld_,
 					    
 				     wmesh_int_t 		b_storage_,
 				     wmesh_int_t 		b_m_,
 				     wmesh_int_t 		b_n_,
-				     double* 				b_,
+				     double* 			b_,
 				     wmesh_int_t 		b_ld_,
-				     wmesh_int_t			iw_n_,
-				     wmesh_int_p			iw_,
-				     wmesh_int_t			rw_n_,
-				     wmesh_int_p			rw_)
+				     
+				     wmesh_int_t		iw_n_,
+				     wmesh_int_p		iw_,
+				     wmesh_int_t		rw_n_,
+				     wmesh_int_p		rw_)
 {    
   return bms_template_shape(element_,
 			    family_,
 			    degree_,
+
+			    diff_,
+				     
+			    
 			    c_storage_,
 			    c_m_,
 			    c_n_,

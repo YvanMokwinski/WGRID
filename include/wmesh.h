@@ -15,23 +15,29 @@ extern "C"
   struct wmeshspace_t;
   struct wmesh_bspline_t;
 
+  
+  wmesh_status_t 	wmeshspace_def			(wmeshspace_t ** 			self__,
+							 wmesh_int_t 				family_,
+							 wmesh_int_t 				degree_,
+							 wmesh_t * 				mesh_);
 
   
-  wmesh_status_t 	wmeshspace_def(wmeshspace_t ** 	self__,
-				       wmesh_int_t 	family_,
-				       wmesh_int_t 	degree_,
-				       wmesh_t * 	mesh_);
-
-  
-  wmesh_status_t 	wmeshspace_sublinearmesh	(wmeshspace_t * 	self_,
-							 wmesh_t ** 		mesh__);
+  wmesh_status_t 	wmeshspace_sublinearmesh	(wmeshspace_t * 			self_,
+							 wmesh_t ** 				mesh__);
 
   wmesh_status_t 	wmeshspace_sparse		(const wmeshspace_t*__restrict__ 	self_,
 							 wmesh_int_p 				csr_size_,
 							 wmesh_int_p*__restrict__ 		csr_ptr_,
 							 wmesh_int_p*__restrict__ 		csr_ind_);
 
+  wmesh_status_t 	wmeshspace_laplace		(const wmeshspace_t*__restrict__ 	self_,
+							 wmesh_int_t 				csr_size_,
+							 const_wmesh_int_p			csr_ptr_,
+							 const_wmesh_int_p			csr_ind_,
+							 double * 				csr_val_,
+							 double * 				rhs_);
 
+  
   
   
   wmesh_status_t 	wmesh_read(wmesh_t ** 		self_,
