@@ -31,7 +31,7 @@ void solve<double>(solve_params(double))
 	work_n_,
 	&info);
 }
-
+#if 0
 template<>
 void solve<float>(solve_params(float))
 {
@@ -55,7 +55,7 @@ void solve<float>(solve_params(float))
 }
 
 
-    
+#endif    
 static wmesh_status_t bms_cubature_legendre_buffer_size(wmesh_int_t nspl_,wmesh_int_p work_n_)
 {
   work_n_[0] = (nspl_+2)*3 + 2*(nspl_+2)*(nspl_+2) + 4*(nspl_+1);
