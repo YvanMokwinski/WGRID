@@ -3,6 +3,7 @@
 #include "cmdline.hpp"
 #include <iostream>
 #include "app.hpp"
+#include "bms.h"
 
 int main(int argc, char ** argv)
 {
@@ -45,6 +46,16 @@ int main(int argc, char ** argv)
 	}      
       return WMESH_STATUS_INVALID_ARGUMENT;
     }
+
+
+
+  WCOMMON::cmdline::str_t ofilename;
+  if (false == cmd.option("-o", ofilename))
+    {
+      fprintf(stderr,"// %s::error: missing output file name, '-o' option.\n",argv[0]);
+      return WMESH_STATUS_INVALID_ARGUMENT;
+    }
+
   
   if (cmd.get_nargs() == 1)
     {
@@ -145,6 +156,25 @@ int main(int argc, char ** argv)
 			      rhs);
   WMESH_STATUS_CHECK(status);
 
+  status =  bms_matrix_market_dense_dwrite(csr_size,
+					   1,
+					   rhs,
+					   csr_size,
+					   "%s_rhs.mtx",
+					   ofilename);
+  WMESH_STATUS_CHECK(status);
+
+  status =  bms_matrix_market_csr_dwrite(csr_size,
+					 csr_size,
+					 csr_ptr[csr_size],
+					 csr_ptr,
+					 csr_ind,
+					 csr_val,
+					 "%s.mtx",
+					 ofilename);
+  WMESH_STATUS_CHECK(status);
+  
+  
   //
   // Save the linear system.
   //

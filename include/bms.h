@@ -722,7 +722,44 @@ extern "C"
   wmesh_status_t
   bms_medit_close
   (int64_t		inm_);
+
+
+  //
+  // Matrix market.
+  //
+
   
+
+    wmesh_status_t bms_matrix_market_dense_dwrite(wmesh_int_t 	m_,
+						wmesh_int_t 	n_,
+						double *   	v_,
+						wmesh_int_t 	ld_,
+						const char * 	filename_,
+						...);
+  wmesh_status_t bms_matrix_market_dense_fwrite(wmesh_int_t 	m_,
+						wmesh_int_t 	n_,
+						float *   	v_,
+						wmesh_int_t 	ld_,
+						const char * 	filename_,
+						...);
+  wmesh_status_t bms_matrix_market_csr_dwrite(wmesh_int_t 	m_,
+					      wmesh_int_t 	n_,
+					      wmesh_int_t 	nnz_,
+					      wmesh_int_p 	csr_ptr_,
+					      wmesh_int_p	csr_ind_,
+					      double *__restrict__	csr_val_,
+					      const char * 	filename_,
+					      ...);
+  
+  wmesh_status_t bms_matrix_market_csr_fwrite(wmesh_int_t 	m_,
+					      wmesh_int_t 	n_,
+					      wmesh_int_t 	nnz_,
+					      wmesh_int_p 	csr_ptr_,
+					      wmesh_int_p	csr_ind_,
+					      float *__restrict__	csr_val_,
+					      const char * 	filename_,
+					      ...);
+
 
   //!
   //! @brief Get the required size for the needed buffer.

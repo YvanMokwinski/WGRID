@@ -387,6 +387,57 @@ wmesh_status_t bms_template_shape(wmesh_int_t 		element_,
 }
 
 
+
+
+template
+wmesh_status_t bms_template_shape<float>(wmesh_int_t 		element_,
+				  wmesh_int_t 		family_,
+				  wmesh_int_t 		degree_,
+
+				  const_wmesh_int_p	diff_,
+				  
+				  wmesh_int_t 		c_storage_,					  
+				  wmesh_int_t 		c_m_,
+				  wmesh_int_t 		c_n_,
+				  const float * 		c_,
+				  wmesh_int_t 		c_ld_,
+				  
+				  wmesh_int_t 		b_storage_,
+				  wmesh_int_t 		b_m_,
+				  wmesh_int_t 		b_n_,
+				  float* 			b_,
+				  wmesh_int_t 		b_ld_,
+				      
+				  wmesh_int_t		iw_n_,
+				  wmesh_int_p		iw_,
+				  wmesh_int_t		rw_n_,
+				  float * rw_);
+
+template
+wmesh_status_t bms_template_shape<double>(wmesh_int_t 		element_,
+				  wmesh_int_t 		family_,
+				  wmesh_int_t 		degree_,
+
+				  const_wmesh_int_p	diff_,
+				  
+				  wmesh_int_t 		c_storage_,					  
+				  wmesh_int_t 		c_m_,
+				  wmesh_int_t 		c_n_,
+				  const double * 		c_,
+				  wmesh_int_t 		c_ld_,
+				  
+				  wmesh_int_t 		b_storage_,
+				  wmesh_int_t 		b_m_,
+				  wmesh_int_t 		b_n_,
+				  double* 			b_,
+				  wmesh_int_t 		b_ld_,
+				      
+				  wmesh_int_t		iw_n_,
+				  wmesh_int_p		iw_,
+				  wmesh_int_t		rw_n_,
+				  double * rw_);
+
+
 extern "C" wmesh_status_t bms_shape_buffer_size(wmesh_int_t 		element_,
 						wmesh_int_t 		family_,
 						wmesh_int_t 		degree_,

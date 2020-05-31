@@ -109,3 +109,32 @@ template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_TETRAHE
 template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_PYRAMID>(wmesh_int_t d_) { return (d_>0) ?((d_-2)*(d_-1)*(2*d_-3)) / 6 : 1; }
 template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_WEDGE>(wmesh_int_t d_) { return (d_>0) ?((d_-1)*(d_-1)*(d_-2)) / 2 : 1; }
 template <> inline wmesh_int_t bms_template_ndofs_interior<WMESH_ELEMENT_HEXAHEDRON>(wmesh_int_t d_) { return (d_>0) ? (d_-1)*(d_-1)*(d_-1) : 1; }
+
+
+
+
+
+
+template<typename T>
+wmesh_status_t bms_template_shape(wmesh_int_t 		element_,
+				  wmesh_int_t 		family_,
+				  wmesh_int_t 		degree_,
+
+				  const_wmesh_int_p	diff_,
+				  
+				  wmesh_int_t 		c_storage_,					  
+				  wmesh_int_t 		c_m_,
+				  wmesh_int_t 		c_n_,
+				  const T * 		c_,
+				  wmesh_int_t 		c_ld_,
+				  
+				  wmesh_int_t 		b_storage_,
+				  wmesh_int_t 		b_m_,
+				  wmesh_int_t 		b_n_,
+				  T* 			b_,
+				  wmesh_int_t 		b_ld_,
+				      
+				  wmesh_int_t		iw_n_,
+				  wmesh_int_p		iw_,
+				  wmesh_int_t		rw_n_,
+				  T * rw_);
