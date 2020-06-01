@@ -1561,7 +1561,7 @@ extern "C"
     wmesh_int_t coo_dofs_m  	= coo_m;
     wmesh_int_t coo_dofs_ld 	= coo_dofs_m;
     double * 	coo_dofs 	= (double*)malloc(coo_dofs_m*sizeof(double)*self_->m_ndofs);
-    
+
     {
       for (wmesh_int_t l=0;l<self_->m_c2d.m_size;++l)
 	{
@@ -1646,17 +1646,74 @@ extern "C"
 	    }
 	}
     }
-    
+#if 0    
     wmesh_int_p dofs_cod = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*self_->m_ndofs);      
+
+    //
+    // Nodes.
+    //
     for (wmesh_int_t i=0;i<self_->m_mesh->m_num_nodes;++i)
       {
 	dofs_cod[i] = self_->m_mesh->m_n_c.v[i];
       }
+
+    for (wmesh_int_t l=0;l<self_->m_c2d.m_size;++l)
+      {
+	double * 	refeval = refevals[l];
+
+	
+	//
+	// Loop over cells
+	//
+	for (wmesh_int_t j=0;j<self_->m_c2d.m_n[l];++j)
+	  {
+	    //
+	    // Loop over cells
+	    //
+	    for (wmesh_int_t j=0;j<self_->m_c2d.m_n[l];++j)
+	      {
+		
+	      }
+	  }
+	
+	//
+	// Local c2d.
+	//	    
+	wmesh_int_t c2d_m 		= self_->m_c2d.m_m[l];
+	wmesh_int_t c2d_ld 		= self_->m_c2d.m_ld[l];
+	wmesh_int_p c2d_v 		= self_->m_c2d.m_data + self_->m_c2d.m_ptr[l];
+	  
+	//
+	// Local c2n.
+	//
+	wmesh_int_t c2n_n 		= self_->m_mesh->m_c2n.m_n[l];
+	wmesh_int_t c2n_m 		= self_->m_mesh->m_c2n.m_m[l];
+	wmesh_int_t c2n_ld		= self_->m_mesh->m_c2n.m_ld[l];
+	wmesh_int_p c2n_v 		= self_->m_mesh->m_c2n.m_data + self_->m_mesh->m_c2n.m_ptr[l];
+
+	//
+	// 
+	//
+	dofs_cod[];
+      }
+    
+    //
+    // Edges
+    //
     for (wmesh_int_t i=self_->m_mesh->m_num_nodes;i<self_->m_ndofs;++i)
       {
 	dofs_cod[i] = 1001;
       }
+#endif    
+    //
+    // Faces
+    //
 
+    //
+    // interiors
+    //
+
+    
     printf("generate sublinear connectivity.\n");
     {
       wmesh_int_t c2n_size = num_types;
@@ -1766,8 +1823,9 @@ extern "C"
       
       for (wmesh_int_t i=0;i<self_->m_ndofs;++i)
 	{
-	  mesh__[0]->m_n_c.v[i] = dofs_cod[i];
-	}      
+	  mesh__[0]->m_n_c.v[i] = self_->m_dof_codes[i];
+	}
+      
       WMESH_STATUS_CHECK(status);
     }
     return WMESH_STATUS_SUCCESS;

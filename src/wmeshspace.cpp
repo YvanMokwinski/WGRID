@@ -235,7 +235,7 @@ extern "C"
   static wmesh_status_t wmeshspace_compute(wmeshspace_t * 	space_)
   {
     wmesh_t*		self_ 	= space_->m_mesh;
-    const wmesh_int_t topodim = self_->m_topology_dimension;
+    const wmesh_int_t 	topodim = self_->m_topology_dimension;
     wmesh_int_t		degree_ = space_->m_degree;    
     wmesh_status_t 	status;
     const wmesh_int_t num_dofs_per_node 		= (degree_ > 0) ? 1 : 0;      
@@ -253,7 +253,7 @@ extern "C"
 			   num_dofs_per_node,
 			   dof_idx);
 	WMESH_STATUS_CHECK(status);
-	dof_idx += self_->m_num_nodes * num_dofs_per_node;	  
+	dof_idx += self_->m_num_nodes * num_dofs_per_node;
       }
 
     if (num_dofs_per_edge > 0)
@@ -321,13 +321,208 @@ extern "C"
     wmesh_int_sparsemat_fprintf(&space_->m_c2d,
 				stdout);
 #endif
- space_->m_ndofs 	= dof_idx - 1;
+    space_->m_ndofs 	= dof_idx - 1;
     printf("generate dofs " WMESH_INT_FORMAT "\n",
 	   space_->m_ndofs);      
 
     return WMESH_STATUS_SUCCESS;
   }
+
+
+
+
+
+  static inline wmesh_status_t wmeshspace_compute_dofs_codes_entity(wmesh_int_t 		c2n_size_,
+								     const_wmesh_int_p 		c2n_ptr_,
+								     const_wmesh_int_p 		c2n_m_,
+								     const_wmesh_int_p 		c2n_n_,
+								     const_wmesh_int_p		c2n_v_,
+								     const_wmesh_int_p 		c2n_ld_,
+								     
+								     const_wmesh_int_p		n_c_v_,
+								     wmesh_int_t 		n_c_inc_,
+								     
+								    wmesh_int_t 		c2d_x_size_,
+								     const_wmesh_int_p 		c2d_x_ptr_,
+								     const_wmesh_int_p 		c2d_x_m_,
+								     const_wmesh_int_p 		c2d_x_n_,
+								     const_wmesh_int_p		c2d_x_v_,
+								     const_wmesh_int_p 		c2d_x_ld_,
+								     
+								     wmesh_int_t 		s_x2n_size_,
+								     const_wmesh_int_p 		s_x2n_ptr_,
+								     const_wmesh_int_p 		s_x2n_m_,
+								     const_wmesh_int_p 		s_x2n_n_,
+								     const_wmesh_int_p 		s_x2n_v_,
+								     const_wmesh_int_p 		s_x2n_ld_,
+								     
+								     wmesh_int_t 			ndofs_per_entity_,
+								     wmesh_int_p 			dof_codes_)
+  {
+
+    for (wmesh_int_t l=0;l<c2n_size_;++l)
+      {
+
+	wmesh_int_t 		c2n_ptr 	= c2n_ptr_[l];
+	wmesh_int_t 		c2n_m 		= c2n_m_[l];
+	wmesh_int_t 		c2n_n 		= c2n_n_[l];
+	wmesh_int_t 		c2n_ld 		= c2n_ld_[l];
+
+	wmesh_int_t 		c2d_x_ptr 	= c2d_x_ptr_[l];
+	// wmesh_int_t 		c2d_x_m 	= c2d_x_m_[l];
+	// wmesh_int_t 		c2d_x_n 	= c2d_x_n_[l];
+	wmesh_int_t 		c2d_x_ld 	= c2d_x_ld_[l];
+
+	wmesh_int_t 		s_x2n_ptr 	= s_x2n_ptr_[l];
+	wmesh_int_t 		s_x2n_m 	= s_x2n_m_[l];
+	wmesh_int_t 		s_x2n_n 	= s_x2n_n_[l];
+	wmesh_int_t 		s_x2n_ld 	= s_x2n_ld_[l];
+	
+	wmesh_int_t
+	  x2n[4],
+	  c2n[8];
+	
+	for (wmesh_int_t cell_idx = 0;cell_idx < c2n_n;++cell_idx)
+	  {
+
+
+	    //
+	    // Extract nodes.
+	    //
+	    get_c2n(c2n_m,
+		    c2n_v_ + c2n_ptr,
+		    c2n_ld,
+		    cell_idx,
+		    c2n);
+	    
+	    
+	    //
+	    // Loop over the entities.
+	    //
+	    for (wmesh_int_t lidx = 0;lidx<s_x2n_n;++lidx)
+	      {
+
+		for (wmesh_int_t k = 0;k<s_x2n_m;++k)
+		  {
+		    x2n[k] = c2n_v_[ c2n_ptr + c2n_ld * cell_idx + s_x2n_v_[s_x2n_ptr + s_x2n_ld * lidx + k] ];
+		  }
+		
+		wmesh_int_t code = 0;
+		for (wmesh_int_t k=0;k<s_x2n_m;++k)
+		  {
+		    wmesh_int_t codek = n_c_v_[n_c_inc_ * (x2n[k]-1)];
+		    code = (code > codek) ? code : codek;
+		  }
+		
+		for (wmesh_int_t k=0;k<ndofs_per_entity_;++k)
+		  {
+		    wmesh_int_t dof = c2d_x_v_[c2d_x_ptr + c2d_x_ld * cell_idx + (lidx * ndofs_per_entity_ + k)] - 1;
+		    dof_codes_[dof] = code;
+		  }
+		
+	      }
+	  }
+      }
+    return WMESH_STATUS_SUCCESS;
+
+  };
+
+  
+  static inline wmesh_status_t wmeshspace_compute_dofs_codes_interior(wmesh_int_t 		c2d_i_size_,
+								      const_wmesh_int_p		c2d_i_ptr_,
+								      const_wmesh_int_p		c2d_i_m_,
+								      const_wmesh_int_p 	c2d_i_n_,
+								      const_wmesh_int_p		c2d_i_v_,
+								      const_wmesh_int_p 	c2d_i_ld_,
+								      wmesh_int_p 		dof_codes_)
+  {
+    for (wmesh_int_t l=0;l<c2d_i_size_;++l)
+      {
+	for (wmesh_int_t cell_idx = 0;cell_idx < c2d_i_n_[l];++cell_idx)
+	  {      
+	    for (wmesh_int_t lidx = 0;lidx<c2d_i_m_[l];++lidx)
+	      {	  
+		
+		wmesh_int_t dof = c2d_i_v_[c2d_i_ptr_[l] + c2d_i_ld_[l] * cell_idx + lidx] - 1;
+		dof_codes_[dof] = 1001;
+	      }
+	  }
+      }
+  
+    return WMESH_STATUS_SUCCESS;
+
+  };
+
+  
+  
+  static wmesh_status_t wmeshspace_compute_dofs_codes(wmeshspace_t * 	space_,wmesh_int_p dof_codes_)
+  {
+    wmesh_t*		self_ 	= space_->m_mesh;
+    const wmesh_int_t 	topodim = self_->m_topology_dimension;
+    wmesh_int_t		degree_ = space_->m_degree;    
+    wmesh_status_t 	status;
+    const wmesh_int_t num_dofs_per_node 		= (degree_ > 0) ? 1 : 0;      
+    const wmesh_int_t num_dofs_per_edge 		= (degree_>0) ? degree_-1 : 0;
+    const wmesh_int_t num_dofs_per_triangle		= (degree_>0) ? ((degree_-1)*(degree_-2))/2 : 0;
+    const wmesh_int_t num_dofs_per_quadrilateral 	= (degree_>0) ? (degree_-1)*(degree_-1) : 0;    
     
+    if (num_dofs_per_node > 0)
+      {
+	for (wmesh_int_t i=0;i<self_->m_num_nodes;++i)
+	  {
+	    for (wmesh_int_t j=0;j<num_dofs_per_node;++j)
+	      {
+		dof_codes_[num_dofs_per_node*i+j] = self_->m_n_c.v[self_->m_n_c.ld*i];
+	      }
+	  }
+      }
+
+    if (num_dofs_per_edge > 0)
+      {	
+	status =  wmeshspace_compute_dofs_codes_entity(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
+						       self_->m_n_c.v,
+						       self_->m_n_c.ld,
+						       WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_e),
+						       WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_e2n),
+						       num_dofs_per_edge,
+						       dof_codes_);	
+	WMESH_STATUS_CHECK(status);
+      }
+
+    if (topodim > 2)
+      {
+	if (num_dofs_per_triangle > 0)
+	  {
+	    status =  wmeshspace_compute_dofs_codes_entity(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
+							   self_->m_n_c.v,
+							   self_->m_n_c.ld,
+							   WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_t),
+							   WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_t2n),
+							   num_dofs_per_triangle,
+							   dof_codes_);	
+	  }
+	
+	if (num_dofs_per_quadrilateral > 0)
+	  {
+	    status =  wmeshspace_compute_dofs_codes_entity(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
+								   self_->m_n_c.v,
+								   self_->m_n_c.ld,
+								   WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_q),
+								   WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_q2n),
+								   num_dofs_per_quadrilateral,
+								   dof_codes_);	
+	    WMESH_STATUS_CHECK(status);
+	  }
+      }
+    
+    status =  wmeshspace_compute_dofs_codes_interior(WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_i),
+						     dof_codes_);
+    
+    WMESH_STATUS_CHECK(status);
+
+    return WMESH_STATUS_SUCCESS;
+  }
+
   wmesh_status_t wmeshspace_def(wmeshspace_t ** self__,
 				wmesh_int_t 	nodes_family_,
 				wmesh_int_t 	degree_,
@@ -519,6 +714,11 @@ extern "C"
     std::cout << "gggggggggggggggggg   " << self_->m_ndofs << std::endl;
     status = wmeshspace_compute(self_);
     std::cout << "gggggggggggggggggg after   " << self_->m_ndofs << std::endl;
+
+    std::cout << "compute dofs code   " << std::endl;
+    self_->m_dof_codes = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*self_->m_ndofs);
+    wmeshspace_compute_dofs_codes(self_,
+				  self_->m_dof_codes);
     WMESH_STATUS_CHECK(status);
     return WMESH_STATUS_SUCCESS;
   };

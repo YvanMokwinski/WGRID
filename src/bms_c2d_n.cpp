@@ -3,29 +3,29 @@
 #include "wmesh.hpp"
 
 static inline wmesh_status_t bms_c2d_n_calculate(wmesh_int_t 			c2n_ptr_,
-							  wmesh_int_t 			c2n_m_,
-							  wmesh_int_t 			c2n_n_,
-							  const_wmesh_int_p		c2n_v_,
-							  wmesh_int_t 			c2n_ld_,
-								  
-								  								  
-							  wmesh_int_t 			c2d_n_ptr_,
-							  wmesh_int_t 			c2d_n_m_,
-							  wmesh_int_t 			c2d_n_n_,
-							  wmesh_int_p			c2d_n_v_,
-							  wmesh_int_t 			c2d_n_ld_,
-
-							  wmesh_int_t 			num_nodes_,
-							  wmesh_int_t 			ndofs_per_node_,
-							  wmesh_int_t 			dof_idx_)
+						 wmesh_int_t 			c2n_m_,
+						 wmesh_int_t 			c2n_n_,
+						 const_wmesh_int_p		c2n_v_,
+						 wmesh_int_t 			c2n_ld_,
+						 
+						 
+						 wmesh_int_t 			c2d_n_ptr_,
+						 wmesh_int_t 			c2d_n_m_,
+						 wmesh_int_t 			c2d_n_n_,
+						 wmesh_int_p			c2d_n_v_,
+						 wmesh_int_t 			c2d_n_ld_,
+						 
+						 wmesh_int_t 			num_nodes_,
+						 wmesh_int_t 			ndofs_per_node_,
+						 wmesh_int_t 			dof_idx_)
 {
-
+  
   wmesh_int_t
     c2n[8];
-
+  
   for (wmesh_int_t cell_idx = 0;cell_idx < c2n_n_;++cell_idx)
     {
-
+      
       //
       // Extract nodes.
       //

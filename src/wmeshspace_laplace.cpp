@@ -555,9 +555,10 @@ wmesh_status_t wmesh_fem_laplace_def(wmesh_fem_laplace_t<T> *	self_,
 template <typename T>
 wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	self_,
 					      wmesh_int_t 			element_,
+					      wmesh_int_t 			cooelm_storage_,
 					      wmesh_int_t 			cooelm_m_,
 					      wmesh_int_t 			cooelm_n_,
-					      const T*__restrict__		cooelm_,
+					       T*__restrict__		cooelm_,
 					      wmesh_int_t 			cooelm_ld_,
 					      wmesh_int_t 			lmat_m_,
 					      wmesh_int_t 			lmat_n_,
@@ -568,15 +569,37 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 					      wmesh_int_t 			rw_n_,
 					      T*__restrict__			rw_)
 {
-  wmesh_shape_eval_t<T>	* shape_eval_element = self_->m_shape_eval_element[element_];
-  wmesh_shape_eval_t<T>	* shape_eval_f = self_->m_shape_eval_f[element_];
+  const wmesh_shape_eval_t<T>	* shape_eval_element 	= &self_->m_shape_eval_element[element_];
+  const wmesh_shape_eval_t<T>	* shape_eval_f 		= &self_->m_shape_eval_f[element_];
+  const wmesh_cubature_t<T> 	* cubature		= &self_->m_cubature[element_];
 
-  wmesh_int_t 	q_n = self_->m_cubature[element_].m_w.n;
-  const T* 	q_w = self_->m_cubature[element_].m_w;
+#if 0
+  std::cout << "cooelm " << std::endl;
+  for (wmesh_int_t i=0;i<cooelm_m_;++i)
+    {
+      for (wmesh_int_t j=0;j<cooelm_n_;++j)
+	{
+	  std::cout << " " << cooelm_[cooelm_ld_*j+i];
+	}
+      std::cout << std::endl;
+    }
+#endif
+#if 0
+  cooelm_[cooelm_ld_*0 + 0] = -1;
+  cooelm_[cooelm_ld_*0 + 1] = -1;
+  cooelm_[cooelm_ld_*1 + 0] = 1;
+  cooelm_[cooelm_ld_*1 + 1] = -1;
+  cooelm_[cooelm_ld_*2 + 0] = 1;
+  cooelm_[cooelm_ld_*2 + 1] = 1;
+  cooelm_[cooelm_ld_*3 + 0] = -1;
+  cooelm_[cooelm_ld_*3 + 1] = 1;
+#endif
+  const wmesh_int_t q_n = cubature->m_w.n;
+  const T* 	q_w = cubature->m_w.v;
   wmesh_int_t 	topodim  	= cooelm_m_;
   wmesh_int_t  	topodimXtopodim = topodim*topodim;;
   T * 		jacobians 	= rw_;
-  T * 		dets 		= topodimXtopodim * q_n;
+  T * 		dets 		= rw_ + topodimXtopodim * q_n;
 
   //
   // cooelm (3 X nn)
@@ -606,6 +629,11 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
   for (wmesh_int_t j=0;j<q_n;++j)
     {
       T*jacobian = jacobians + topodimXtopodim * j;
+#if 0
+      std::cout << "jacobian " << std::endl;
+      std::cout << " " << jacobian[0] << " " << jacobian[2] << std::endl;
+      std::cout << " " << jacobian[1] << " " << jacobian[3] << std::endl;
+#endif
       T det;
       if (topodim==2)
 	{
@@ -614,10 +642,12 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 	  T a01 = jacobian[2];
 	  T a11 = jacobian[3];
 	  det = a00 * a11 - a01 * a10;
+#if 0
 	  jacobian[0] = a11 / det;
 	  jacobian[1] = -a10 / det;
 	  jacobian[2] = -a01 / det;
 	  jacobian[3] = a00 / det;
+#endif
 	  if (det < 0.0)
 	    det = -det;
 	}
@@ -635,18 +665,18 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 	  T det0 = a11 * a22 - a12 * a21;
 	  T det1 = a01 * a22 - a02 * a21;
 	  T det2 = a01 * a12 - a02 * a11;
-	  T det  = a00 * det0 - a10 * det1 + a20 * det2;
+	  det  = a00 * det0 - a10 * det1 + a20 * det2;
 	  if (det < 0.0)
 	    det = -det;			
 	}
       dets[j] = det;
-
+      //      std::cout << "J " << std::endl << jacobian[0] << " " << jacobian[1] << std::endl << jacobian[2] << " " << jacobian[3]  << std::endl;  
+      //      std::cout << "dets[" << j << "] = " << det << std::endl;  
       //
       // Now inverse the jacobian.
       //
-      
-      for (wmesh_int_t i=0;i<topodim*topodim;++i) B[i]=0;
-      for (wmesh_int_t i=0;i<topodim;++i) B[i]=1.0;
+      for (wmesh_int_t i=0;i<topodim*topodim;++i) B[i]=0.0;
+      for (wmesh_int_t i=0;i<topodim;++i) B[i*topodim+i]=1.0;
       wmesh_int_t perm[3],info_lapack;
       LAPACK_dgesv((wmesh_int_p)&topodim,
 		   (wmesh_int_p)&topodim,
@@ -656,7 +686,14 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 		   B,
 		   (wmesh_int_p)&topodim,
 		   (wmesh_int_p)&info_lapack);
-		    
+      //      std::cout << "info_lapack " << info_lapack<<std::endl;
+      if (info_lapack)
+	{
+	  fprintf(stderr,"error lapack\n");
+	  exit(1);
+	}      
+      //      std::cout << "inverse jacobian  " << B[0] << " " << B[2] << std::endl;
+      //      std::cout << " " << B[1] << " " << B[3] << std::endl;
       for (wmesh_int_t i=0;i<topodim*topodim;++i)
 	{
 	  jacobians[topodim*topodim * j + i] = B[i];
@@ -675,19 +712,28 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 	  lmat_[lmat_ld_*j+i] = 0;	      
 	}
     }
-      
+#if 0
+    std::cout << "CUB " << cubature->m_c << std::endl;
+  std::cout << "DR " << shape_eval_f->m_diff[0] << std::endl;
+  std::cout << "DS " << shape_eval_f->m_diff[1] << std::endl;
+  std::cout << "DT " << shape_eval_f->m_diff[2] << std::endl;
+#endif
   static constexpr wmesh_int_t n1 = static_cast<wmesh_int_t>(1);
   for (wmesh_int_t k=0;k<q_n;++k)
     {
+      T*jacobian = jacobians + topodimXtopodim * k;
       for (wmesh_int_t j=0;j<lmat_n_;++j)
 	{
-	  T*jacobian = jacobians + topodimXtopodim * j;
 	  for (wmesh_int_t idim=0;idim<topodim;++idim)
 	    {
 	      lnabla_phi_j[idim] = shape_eval_f->m_diff[idim].v[shape_eval_f->m_diff[idim].ld * k + j];
 	    }
-	  
-	  BLAS_dgemm("N",
+#if 0
+	  std::cout << "---" << std::endl;
+	  std::cout << jacobian[0] << " " << jacobian[2] << std::endl;
+	  std::cout << jacobian[1] << " " << jacobian[3] << std::endl;
+#endif
+	  BLAS_dgemm("T",
 		     "N",
 		     &topodim,
 		     &n1,
@@ -703,12 +749,13 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 
 	  for (wmesh_int_t i=0;i<lmat_m_;++i)
 	    {
+
 	      for (wmesh_int_t idim=0;idim<topodim;++idim)
 		{
 		  lnabla_phi_i[idim] = shape_eval_f->m_diff[idim].v[shape_eval_f->m_diff[idim].ld * k + i];
 		}
 
-	      BLAS_dgemm("N",
+	      BLAS_dgemm("T",
 			 "N",
 			 &topodim,
 			 &n1,
@@ -727,12 +774,12 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 		{
 		  dot += nabla_phi_i[idim]*nabla_phi_j[idim];
 		}
-	      lmat_[lmat_ld_*j+i] += dot * dets[k] * q_w[k];
+	      
+	      lmat_[lmat_ld_*j+i] += dot *  q_w[k]  *  dets[k];
 	    }
 	  
 	}      
     }
-
 
 
   for (wmesh_int_t i=0;i<lmat_m_;++i)
@@ -740,14 +787,14 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
       lrhs_[lrhs_inc_*i] = 0;	      
     }
 
-
   for (wmesh_int_t k=0;k<q_n;++k)
     {
       for (wmesh_int_t i=0;i<lmat_m_;++i)
 	{
-	  lrhs_[lrhs_inc_*i] += dets[k] * q_w[k] * shape_eval_f->m_f[k*shape_eval_f->m_ld + i] * 1;
+	  lrhs_[lrhs_inc_*i] += shape_eval_f->m_f.v[k*shape_eval_f->m_f.ld + i] * dets[k] * q_w[k];
 	}      
     }
+
   
   //
   // Calculate the jacobian.
@@ -756,6 +803,249 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 }
 
 
+template <typename T>
+wmesh_status_t wmeshspace_get_cooelm(const wmesh_t * __restrict__	self_,
+				     wmesh_int_t			itype_,
+				     wmesh_int_t			ielm_,
+				     wmesh_int_t			cooelm_storage_,
+				     wmesh_int_t			cooelm_m_,
+				     wmesh_int_t			cooelm_n_,
+				     T * __restrict__			cooelm_,
+				     wmesh_int_t			cooelm_ld_)
+{
+  WMESH_CHECK_POINTER(self_);
+  WMESH_CHECK_POINTER(cooelm_);
+  switch(cooelm_storage_)
+    {
+    case WMESH_STORAGE_INTERLEAVE:
+      {
+	for (wmesh_int_t j=0;j<cooelm_n_;++j)
+	  {
+	    for (wmesh_int_t i=0;i<cooelm_m_;++i)
+	      {
+		cooelm_[cooelm_ld_*j+i]
+		  = self_->m_coo[self_->m_coo_ld * ( self_->m_c2n.m_data[self_->m_c2n.m_ptr[itype_] + self_->m_c2n.m_ld[itype_] * ielm_ + j] - 1) + i];
+	      }
+	  }
+	return WMESH_STATUS_SUCCESS;  
+      }
+
+    case WMESH_STORAGE_BLOCK:
+      {
+	for (wmesh_int_t j=0;j<cooelm_n_;++j)
+	  {
+	    for (wmesh_int_t i=0;i<cooelm_m_;++i)
+	      {
+		cooelm_[cooelm_ld_*i+j]
+		  = self_->m_coo[self_->m_coo_ld * ( self_->m_c2n.m_data[self_->m_c2n.m_ptr[itype_] + self_->m_c2n.m_ld[itype_] * ielm_ + j] - 1) + i];
+	      }
+	  }
+	return WMESH_STATUS_SUCCESS;  
+      }
+
+    }
+  return WMESH_STATUS_INVALID_ENUM;  
+}
+
+template <typename T>
+wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		self_,
+							 wmesh_int_t			itype_,
+							 const wmesh_fem_laplace_t<T> *	fem_,
+							 wmesh_int_t			csr_size_,
+							 const_wmesh_int_p		csr_ptr_,
+							 const_wmesh_int_p		csr_ind_,
+							 T * 				csr_val_,
+							 T * 				rhs_)
+{
+  
+  const wmesh_int_t num_dofs_per_element 	= self_->m_c2d.m_m[itype_];
+  const wmesh_int_t num_elements 		= self_->m_c2d.m_n[itype_];
+  WMESH_CHECK( num_elements > 0 );
+  T cooelm[32];
+  T lmat[512];
+  T lrhs[512];
+
+
+  const wmesh_int_t cooelm_storage 	= WMESH_STORAGE_INTERLEAVE;
+  const wmesh_int_t cooelm_m 		= self_->m_mesh->m_topology_dimension;
+  const wmesh_int_t cooelm_n 		= self_->m_mesh->m_c2n.m_m[itype_];
+  const wmesh_int_t cooelm_ld 		= self_->m_mesh->m_topology_dimension;
+  
+  wmesh_status_t status;
+  const wmesh_int_t element = (cooelm_m == 1) ? 1 + itype_ : ((cooelm_m == 2) ? 2 + itype_ : 4 + itype_);
+
+
+  const wmesh_int_t lmat_m  = num_dofs_per_element;
+  const wmesh_int_t lmat_n  = num_dofs_per_element;
+  const wmesh_int_t lmat_ld = num_dofs_per_element;
+  const wmesh_int_t lrhs_inc = 1;
+
+
+  wmesh_int_t rw_n = 2048;
+  T rw[2048];
+  wmesh_int_t c2d[1024];
+  const wmesh_t * mesh = self_->m_mesh;
+
+  for (wmesh_int_t ielm=0;ielm<num_elements;++ielm)
+    {      
+      
+      status = wmeshspace_get_cooelm(mesh,
+				     itype_,
+				     ielm,
+				     cooelm_storage,
+				     cooelm_m,
+				     cooelm_n,
+				     cooelm,
+				     cooelm_ld);
+      WMESH_STATUS_CHECK(status);
+
+      status = wmesh_fem_laplace_local_system(fem_,
+					      element,
+					      
+					      cooelm_storage,
+					      cooelm_m,
+					      cooelm_n,
+					      cooelm,
+					      cooelm_ld,
+					      lmat_m,
+					      lmat_n,
+					      lmat,
+					      lmat_ld,
+					      lrhs,
+					      lrhs_inc,
+					      rw_n,
+					      rw);
+#if 0
+      std::cout << "-----------------------------------------------------" << std::endl;
+      std::cout << "-----------------------------------------------------" << std::endl;
+      std::cout << "-----------------------------------------------------" << std::endl;
+      for (wmesh_int_t i=0;i<cooelm_n;++i)
+	{
+	  for (wmesh_int_t j=0;j<cooelm_n;++j)
+	    {	      
+	      std::cout << " " << lmat[j*lmat_ld + i];	      
+	    }
+	  std::cout << std::endl;
+	}
+      std::cout << "-----------------------------------------------------" << std::endl;
+      for (wmesh_int_t i=0;i<cooelm_n;++i)
+	{
+	  std::cout << " " << lrhs[lrhs_inc*i];	      
+	  std::cout << std::endl;
+	}
+      std::cout << "-----------------------------------------------------" << std::endl;
+      std::cout << "-----------------------------------------------------" << std::endl;
+      std::cout << "-----------------------------------------------------" << std::endl;
+#endif 
+      for (wmesh_int_t i=0;i<self_->m_c2d.m_m[itype_];++i)
+	{
+	  c2d[i] = self_->m_c2d.m_data[self_->m_c2d.m_ptr[itype_] + self_->m_c2d.m_ld[itype_] * ielm + i] - 1;
+	}
+
+      //
+      // Assembly.
+      //
+      for (wmesh_int_t i=0;i<num_dofs_per_element;++i)
+	{
+	  const wmesh_int_t idof = c2d[i];
+	  for (wmesh_int_t j=0;j<num_dofs_per_element;++j)
+	    {
+	      const wmesh_int_t jdof = c2d[j];
+	      //
+	      // Search in the matrix.
+	      //
+	      bool found = false;
+	      for (wmesh_int_t at = csr_ptr_[idof];at < csr_ptr_[idof+1];++at)
+		{
+		  if (csr_ind_[at]==0)
+		    {
+		  std::cerr << "pblm aaaaaaaassembly " << std::endl;
+		  exit(1);
+
+		    }
+		  //  std::cout << csr_ind_[at] << std::endl;
+		  if (csr_ind_[at] - 1 == jdof)
+		    {
+		      csr_val_[at] += lmat[j*num_dofs_per_element + i];
+		      found = true;
+		      break;
+		    }
+		}
+	      if (!found)
+		{
+		  std::cerr << "pblm assembly " << std::endl;
+		  exit(1);
+		}
+	    }
+	}
+      
+      for (wmesh_int_t i=0;i<num_dofs_per_element;++i)
+	{
+	  rhs_[c2d[i]] += lrhs[i];
+	}
+      
+    }
+
+
+  //
+  // Now apply bc.
+  //
+  for (wmesh_int_t i=0;i<self_->m_mesh->m_num_nodes;++i)
+    {
+      if (self_->m_mesh->m_n_c.v[self_->m_mesh->m_n_c.ld * i] == 1)
+	{
+
+	  for (wmesh_int_t k = csr_ptr_[i];k<csr_ptr_[i+1];++k)
+	    {
+	      wmesh_int_t j = csr_ind_[k]-1;
+	      if (j==i)
+		{
+		  csr_val_[k] = 1.0;
+		}
+	      else
+		{
+		  csr_val_[k] = 0.0;
+		}
+	    }
+
+	  rhs_[i] = 0.0;
+	  
+	}
+    }
+
+  
+  return WMESH_STATUS_SUCCESS;
+}
+
+
+template <typename T>
+wmesh_status_t wmeshspace_fem_laplace_global_system(const wmeshspace_t *		self_,
+						    const wmesh_fem_laplace_t<T> *	fem_,
+						    wmesh_int_t			csr_size_,
+						    const_wmesh_int_p		csr_ptr_,
+						    const_wmesh_int_p		csr_ind_,
+						    T * 				csr_val_,
+						    T * 				rhs_)
+{
+  const wmesh_int_t ntypes = self_->m_c2d.m_size;
+  for (wmesh_int_t itype=0;itype<ntypes;++itype)
+    {
+      const wmesh_int_t num_elements = self_->m_c2d.m_n[itype];
+      if (num_elements > 0)
+	{
+	  wmesh_status_t status = wmeshspace_fem_laplace_global_system_zone(self_,
+									    itype,
+									    fem_,
+									    csr_size_,
+									    csr_ptr_,
+									    csr_ind_,
+									    csr_val_,
+									    rhs_);
+	  WMESH_STATUS_CHECK(status);
+	}
+    }
+  return WMESH_STATUS_SUCCESS;
+}
 
 
 extern "C"
@@ -769,6 +1059,11 @@ extern "C"
 				    double * 				rhs_)
   {
 
+    for (wmesh_int_t i=0;i<csr_ptr_[csr_size_];++i)
+      csr_val_[i] = static_cast<double>(0); 
+    for (wmesh_int_t i=0;i<csr_size_;++i)
+      rhs_[i] = static_cast<double>(0); 
+   
     wmesh_int_t shape_family = WMESH_SHAPE_FAMILY_LAGRANGE;
     wmesh_int_t shape_degree = self_->m_degree;    
     wmesh_int_t topodim = self_->m_mesh->m_topology_dimension;
@@ -777,7 +1072,7 @@ extern "C"
     const wmesh_int_t shape_element_degree = 1;    
 
     wmesh_int_t cubature_family = WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE;
-    wmesh_int_t cubature_degree = 2 * shape_degree;
+    wmesh_int_t cubature_degree = 5;//2 * shape_degree;
     
     //
     // Initialize data.
@@ -809,9 +1104,35 @@ extern "C"
 	  }
       }
 
+    status = wmeshspace_fem_laplace_global_system(self_,
+						  &fem,
+						  csr_size_,
+						  csr_ptr_,
+						  csr_ind_,
+						  csr_val_,
+						  rhs_);
+    WMESH_STATUS_CHECK(status);
 
     
-    
+#if 0    
+    template <typename T>
+      wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	self_,
+						    wmesh_int_t 			element_,
+						    wmesh_int_t 			cooelm_m_,
+						    wmesh_int_t 			cooelm_n_,
+						    const T*__restrict__		cooelm_,
+						    wmesh_int_t 			cooelm_ld_,
+						    wmesh_int_t 			lmat_m_,
+						    wmesh_int_t 			lmat_n_,
+						    T*__restrict__			lmat_,
+						    wmesh_int_t 			lmat_ld_,
+						    T*__restrict__			lrhs_,
+						    wmesh_int_t 			lrhs_inc_,
+						    wmesh_int_t 			rw_n_,
+						    T*__restrict__			rw_)
+#endif
+
+      
 #if 0
     WMESH_CHECK_POINTER(self_);
     WMESH_CHECK_POINTER(csr_size_);
@@ -987,7 +1308,7 @@ extern "C"
 		      }
 		    
 		    for (wmesh_int_t i=0;i<topodim*topodim;++i) B[i]=0;
-		    for (wmesh_int_t i=0;i<topodim;++i) B[i]=1.0;
+		    for (wmesh_int_t i=0;i<topodim;++i) B[i*topodim+1]=1.0;
 		    
 		    LAPACK_dgesv((wmesh_int_p)&topodim,
 				 (wmesh_int_p)&topodim,

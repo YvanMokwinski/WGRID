@@ -9,6 +9,7 @@
 extern "C"
 {
 #endif
+
   wmesh_status_t wmesh_init_c2c(const wmesh_int_t 		topodim_,
 				const wmesh_int_sparsemat_t*	c2n_,
 				wmesh_int_sparsemat_t*		c2c_);
@@ -257,6 +258,8 @@ static  inline void get_q2n(const_wmesh_int_p		c2n_,
     wmesh_int_sparsemat_t 	m_c2d_q;
     wmesh_int_sparsemat_t 	m_c2d_i;
     wmesh_int_t 		m_ndofs;
+    wmesh_int_p			m_dof_codes;
+
     
     //    double* 		m_coo_dofs;
     //    wmesh_int_t		m_coo_dofs_ld;

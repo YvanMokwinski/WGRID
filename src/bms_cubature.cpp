@@ -375,6 +375,7 @@ T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
       
     case WMESH_ELEMENT_TRIANGLE:
       {
+		T sum = 0;
 	for (wmesh_int_t j=0;j<q_r_n_;++j)
 	  {
 	    for (wmesh_int_t i=0;i<q_r_n_;++i)
@@ -382,13 +383,17 @@ T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
 		r[ ( j * q_r_n_ + i ) * inc] 	= ( s_one + q_r_v_[i*q_r_inc_] ) * 0.5;
 		s[ ( j * q_r_n_ + i ) * inc] 	= ( s_one - q_r_v_[i*q_r_inc_] ) * ( s_one - q_r_v_[j*q_r_inc_] ) * 0.25;		
 		w_v_[ ( j * q_r_n_ + i ) * w_inc_] 	= ( s_one - q_r_v_[i*q_r_inc_] ) * q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * 0.125;
+		sum += w_v_[ ( j * q_r_n_ + i ) * w_inc_];
 	      }
-	  }	
+
+	  }
+		    std::cout << "sum " << sum << std::endl;
 	return WMESH_STATUS_SUCCESS;
       }
 
     case WMESH_ELEMENT_QUADRILATERAL:
       {
+	T sum = 0;
 	for (wmesh_int_t j=0;j<q_r_n_;++j)
 	  {
 	    for (wmesh_int_t i=0;i<q_r_n_;++i)
@@ -396,8 +401,10 @@ T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
 		r[ ( j * q_r_n_ + i ) * inc] 	= q_r_v_[i * q_r_inc_];
 		s[ ( j * q_r_n_ + i ) * inc] 	= q_r_v_[j * q_r_inc_];
 		w_v_[ ( j * q_r_n_ + i ) * w_inc_] 	= q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_];
+		sum += w_v_[ ( j * q_r_n_ + i ) * w_inc_];
 	      }
 	  }
+	std::cout << "sum " << sum << std::endl;
 	
 	return WMESH_STATUS_SUCCESS;
       }
@@ -595,7 +602,6 @@ bms_template_cubature(wmesh_int_t	element_,
 					      1,
 					      rwork_n_,
 					      rwork_);
-	      
 	      WMESH_STATUS_CHECK(status);
 	      status = bms_template_cubature_transform(element_,
 						       n1d_,
