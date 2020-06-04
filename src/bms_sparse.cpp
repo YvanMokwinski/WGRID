@@ -148,7 +148,7 @@ extern "C"
 	    
 	    for (wmesh_int_t i=0;i<c2d_m_[ctype];++i)
 	      {
-		wmesh_int_t jdof = c2d_v_[c2d_ptr_[ctype] + cindex * c2d_ld_[ctype] + i]-1;
+		wmesh_int_t jdof = c2d_v_[c2d_ptr_[ctype] + cindex * c2d_ld_[ctype] + i] - 1;
 		if (0 == blank[jdof])
 		  {
 		    select[select_n] = jdof;
@@ -274,4 +274,208 @@ extern "C"
     return WMESH_STATUS_SUCCESS;
   }
 
+
+#if 0
+  struct wmesh_pairint_t {wmesh_int_t a;wmesh_int_t b;};
+
+  wmesh_status_t bms_sparse_dg	(wmesh_int_t 		num_dofs_,
+				 
+				 wmesh_int_t 		c2c_size_,
+				 const_wmesh_int_p	c2c_ptr_,
+				 const_wmesh_int_p	c2c_m_,
+				 const_wmesh_int_p	c2c_n_,
+				 const_wmesh_int_p	c2c_v_,
+				 const_wmesh_int_p	c2c_ld_,
+				 
+				 const_wmesh_int_p	row_size_blocks_,
+				 const_wmesh_int_p	col_size_blocks_,
+				 
+				 wmesh_int_p 		csr_ptr__,
+				 wmesh_int_p 		csr_ind__,
+				 wmesh_int_t		iw_n_,
+				 wmesh_int_p		iw_)
+{
+  
+  WMESH_POINTER_CHECK(c2n_ptr_);
+  WMESH_POINTER_CHECK(c2n_m_);
+  WMESH_POINTER_CHECK(c2n_n_);
+  WMESH_POINTER_CHECK(c2n_v_);
+  WMESH_POINTER_CHECK(c2n_ld_);
+
+  WMESH_POINTER_CHECK(c2c_ptr_);
+  WMESH_POINTER_CHECK(c2c_m_);
+  WMESH_POINTER_CHECK(c2c_n_);
+  WMESH_POINTER_CHECK(c2c_v_);
+  WMESH_POINTER_CHECK(c2c_ld_);
+
+  WMESH_POINTER_CHECK(row_size_blocks_);
+  WMESH_POINTER_CHECK(col_size_blocks_);
+
+  WMESH_POINTER_CHECK(csr_m__);
+  WMESH_POINTER_CHECK(csr_n__);
+  WMESH_POINTER_CHECK(csr_nnz__);
+  WMESH_POINTER_CHECK(csr_row_ptr__);
+  WMESH_POINTER_CHECK(csr_row_ind__);
+
+
+  //
+  // Compute the number of rows and columns.
+  //
+  wmesh_int_t num_rows 		= 0;
+  wmesh_int_t num_columns 	= 0;
+  {
+    for (wmesh_int_t cell_type = 0;cell_type < c2n_size_;++cell_type)
+      {
+	num_rows += c2c_n_[cell_type] * row_size_blocks_[cell_type];
+	num_columns += c2c_n_[cell_type] * col_size_blocks_[cell_type];
+      }
+  }
+
+  //
+  // Allocate array csr_row_ptr.
+  //
+  csr_ptr__[0] = (wmesh_int_p)malloc(num_rows + 1,sizeof(wmesh_int_t) );
+  if (!csr_ptr__[0])
+    {
+      WMESH_CHECK_STATUS(WMESH_CHECK_ERROR_MEMORY);
+    }
+  wmesh_int_p csr_ptr_ = csr_ptr__[0];
+  
+  //
+  // Allocate array csr_ind.
+  //
+  wmesh_int_t global_shifts[5];
+  global_shifts[0] = 0;
+  for (wmesh_int_t cell_type = 0;cell_type < c2c_size_;++cell_type)
+    {
+      global_shifts[cell_type+1] = global_shifts[cell_type] + c2c_n_[cell_type];
+    }
+
+  wmesh_int_t global_dof_shifts[5];
+  global_dof_shifts[0] = 0;
+  for (wmesh_int_t cell_type = 0;cell_type < c2c_size_;++cell_type)
+    {
+      global_dof_shifts[cell_type+1] = global_dof_shifts[cell_type] + c2c_n_[cell_type] * row_size_blocks_[cell_type];
+    }
+
+  wmesh_int_t nnz = 0;  
+  //
+  // Get the number of interior faces.
+  //
+  csr_ind__[0] = (wmesh_int_p)malloc(nnz * sizeof(wmesh_int_t) );
+  if (!csr_ind__[0])
+    {
+      WMESH_CHECK_STATUS(WMESH_CHECK_ERROR_MEMORY);
+    }
+  wmesh_int_p csr_ind_ = csr_ind__[0];
+  wmesh_int_t at = 0;
+  wmesh_int_t nei_ids[8*2];
+
+  wmesh_int_t nblocks;
+  wmesh_int_t blocks[8];
+  wmesh_int_t row_idx = 0;
+  
+  wmesh_int_t acc=0;
+
+  
+  *csr_ptr_++=0;
+  for (wmesh_int_t cell_type = 0;cell_type < c2c_size_;++cell_type)
+    {
+      wmesh_int_t row_idx_start = global_dof_shifts[cell_type];
+      wmesh_int_t ib_size 	= row_size_blocks_[cell_type];      
+      const wmesh_int_t c2c_n 	= c2c_n_[cell_type];
+      //
+      // Traverse the adjacency graph.
+      //
+      for (wmesh_int_t cell_idx=0;cell_idx < c2n_n;++cell_idx)
+	{
+
+	  //
+	  // Diagonal
+	  //
+	  acc += col_size_blocks[cell_type];
+	  for (wmesh_int_t lidx=0;lidx<c2c_m;++lidx)
+	    {
+	      wmesh_int_t info = c2c_v_[ c2c_ptr_[cell_type] + c2c_ld_[cell_type] * cell_idx + lidx];
+	      if (info > 0)
+		{
+		  auto jtype = GenericEncoding<wmesh_int_t,2>::Low(info,tested_cell_type);
+		  acc += col_size_blocks[jtype];
+		}
+	    }	  
+	  *csr_ptr_++ = acc;
+	}      
+    } 
+  csr_ptr_ = csr_ptr__[0];
+  
+  
+  //
+  // For each cell type.
+  //
+  for (wmesh_int_t cell_type = 0;cell_type < c2c_size_;++cell_type)
+    {
+      wmesh_int_t row_idx_start = global_dof_shifts[cell_type];
+      wmesh_int_t ib_size 	= row_size_blocks_[cell_type];      
+      const wmesh_int_t c2c_n 	= c2c_n_[cell_type];
+      const wmesh_int_t c2c_m 	= c2c_m_[cell_type];
+      
+      //
+      // Traverse the adjacency graph.
+      //
+      for (wmesh_int_t cell_idx=0;cell_idx < c2n_n;++cell_idx)
+	{
+	  wmesh_int_t row_idx = row_idx_start + cell_idx * ib_size;
+
+	  //
+	  // Get the global cell index.
+	  //
+	  wmesh_int_t global_cell_idx = global_shifts[cell_type] + cell_idx;
+
+	  //
+	  // Load nei_ids
+	  //
+	  nblocks = 0;
+	  for (wmesh_int_t lidx=0;lidx<c2c_m;++lidx)
+	    {
+	      //
+	      // Not exatly.!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	      //
+	      wmesh_int_t info = c2c_v_[ c2c_ptr_[cell_type] + c2c_ld_[cell_type] * cell_idx + lidx];
+	      if (info > 0)
+		{
+		  nei_ids[2*nblocks+0] = GenericEncoding<wmesh_int_t,2>::Up(info,tested_cell_type);
+		  nei_ids[2*nblocks+1] = GenericEncoding<wmesh_int_t,2>::Low(info,tested_cell_type);
+		  nblocks++;
+		}
+	    }
+	  
+	  std::sort((wmesh_pairint_t*)nei_ids,
+		    ((wmesh_pairint_t*)nei_ids) + nblocks,
+		    [](const wmesh_pairint_t& a,const wmesh_pairint_t& b){return a.a < b.a;});
+	  
+	  for (wmesh_int_t i=0;i<ib_size;++i)
+	    {
+	      for (wmesh_int_t li=0;li<nblocks;++li)
+		{
+		  if (nei_ids[2*li+0] > 0)
+		    {
+		      wmesh_int_t cell_j_idx  = nei_ids[2*li+0] - 1;
+		      wmesh_int_t cell_j_type = nei_ids[2*li+1];
+		      
+		      wmesh_int_t global_cell_j_idx = global_shifts[cell_j_type] + cell_j_idx * col_size_blocks_[];
+		      for (wmesh_int_t j=0;j<col_size_blocks_[cell_j_type];++j)
+			{
+			  *csr_ind_++ = global_cell_j_idx + j;
+			}	      
+		    }
+		}
+	    }
+	}      
+    }
+
+  bsr_m__[0] = ncells_;
+  bsr_n__[0] = ncells_;
+
+}
+#endif
 };

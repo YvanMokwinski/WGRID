@@ -142,7 +142,6 @@ struct wmesh_shape_eval_t
   wmesh_int_t 		m_wdiff_storage;
   wmesh_mat_t<T> 	m_wdiff[3];
 
-  
 };
 
 
@@ -551,188 +550,204 @@ wmesh_status_t wmesh_fem_laplace_def(wmesh_fem_laplace_t<T> *	self_,
   return WMESH_STATUS_SUCCESS;
 }
 
+template<typename T>
+static inline T determinant1x1(const T * __restrict__ 	jacobian_,
+			       wmesh_int_t 		jacobian_ld_)
+{
+  return jacobian_[jacobian_ld_*0+0];
+}
+
+template<typename T>
+static inline T determinant2x2(const T * __restrict__ 	jacobian_,
+			       wmesh_int_t 		jacobian_ld_)
+{
+  return jacobian_[jacobian_ld_*0+0] * jacobian_[jacobian_ld_*1+1] - jacobian_[jacobian_ld_*0+1] *jacobian_[jacobian_ld_*1+0];
+}
+
+template<typename T>
+static inline T determinant3x3(const T * __restrict__ 	jacobian_,
+			       wmesh_int_t 		jacobian_ld_)
+{
+  const T a00 = jacobian_[jacobian_ld_ * 0 + 0];
+  const T a10 = jacobian_[jacobian_ld_ * 0 + 1];
+  const T a20 = jacobian_[jacobian_ld_ * 0 + 2];
+  const T a01 = jacobian_[jacobian_ld_ * 1 + 0];
+  const T a11 = jacobian_[jacobian_ld_ * 1 + 1];
+  const T a21 = jacobian_[jacobian_ld_ * 1 + 2];
+  const T a02 = jacobian_[jacobian_ld_ * 2 + 0];
+  const T a12 = jacobian_[jacobian_ld_ * 2 + 1];
+  const T a22 = jacobian_[jacobian_ld_ * 2 + 2];
+  const T det0 = a11 * a22 - a12 * a21;
+  const T det1 = a01 * a22 - a02 * a21;
+  const T det2 = a01 * a12 - a02 * a11;
+  return a00 * det0 - a10 * det1 + a20 * det2;
+}
 
 template <typename T>
-wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	self_,
-					      wmesh_int_t 			element_,
-					      wmesh_int_t 			cooelm_storage_,
-					      wmesh_int_t 			cooelm_m_,
-					      wmesh_int_t 			cooelm_n_,
-					       T*__restrict__		cooelm_,
-					      wmesh_int_t 			cooelm_ld_,
-					      wmesh_int_t 			lmat_m_,
-					      wmesh_int_t 			lmat_n_,
-					      T*__restrict__			lmat_,
-					      wmesh_int_t 			lmat_ld_,
-					      T*__restrict__			lrhs_,
-					      wmesh_int_t 			lrhs_inc_,
-					      wmesh_int_t 			rw_n_,
-					      T*__restrict__			rw_)
+wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *__restrict__	self_,
+					      wmesh_int_t 					element_,
+					      wmesh_int_t 					cooelm_storage_,
+					      wmesh_int_t 					cooelm_m_,
+					      wmesh_int_t 					cooelm_n_,
+					      const T*__restrict__				cooelm_,
+					      wmesh_int_t 					cooelm_ld_,
+					      wmesh_int_t 					lmat_m_,
+					      wmesh_int_t 					lmat_n_,
+					      T*__restrict__					lmat_,
+					      wmesh_int_t 					lmat_ld_,
+					      T*__restrict__					lrhs_,
+					      wmesh_int_t 					lrhs_inc_,
+					      wmesh_int_t 					rw_n_,
+					      T*__restrict__					rw_)
 {
-  const wmesh_shape_eval_t<T>	* shape_eval_element 	= &self_->m_shape_eval_element[element_];
-  const wmesh_shape_eval_t<T>	* shape_eval_f 		= &self_->m_shape_eval_f[element_];
-  const wmesh_cubature_t<T> 	* cubature		= &self_->m_cubature[element_];
+  static constexpr T r0 = static_cast<T>(0);
+  static constexpr T r1 = static_cast<T>(1);
 
-#if 0
-  std::cout << "cooelm " << std::endl;
-  for (wmesh_int_t i=0;i<cooelm_m_;++i)
+  WMESH_CHECK_POINTER(self_);
+
+  
+  const wmesh_shape_eval_t<T> * __restrict__ 	shape_eval_element 	= &self_->m_shape_eval_element[element_];
+  const wmesh_shape_eval_t<T> * __restrict__	shape_eval_f 		= &self_->m_shape_eval_f[element_];
+  const wmesh_cubature_t<T>*__restrict__ 	cubature		= &self_->m_cubature[element_];
+  const wmesh_int_t 				q_n 			= cubature->m_w.n;
+  const T* __restrict__				q_w 			= cubature->m_w.v;  
+  const wmesh_int_t 	topodim  					= cooelm_m_;
+  const wmesh_int_t  	topodimXtopodim 				= topodim*topodim;;
+  
+  if (rw_n_ < topodimXtopodim * q_n)
     {
-      for (wmesh_int_t j=0;j<cooelm_n_;++j)
-	{
-	  std::cout << " " << cooelm_[cooelm_ld_*j+i];
-	}
-      std::cout << std::endl;
+      WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_WORKSPACE);
     }
-#endif
-#if 0
-  cooelm_[cooelm_ld_*0 + 0] = -1;
-  cooelm_[cooelm_ld_*0 + 1] = -1;
-  cooelm_[cooelm_ld_*1 + 0] = 1;
-  cooelm_[cooelm_ld_*1 + 1] = -1;
-  cooelm_[cooelm_ld_*2 + 0] = 1;
-  cooelm_[cooelm_ld_*2 + 1] = 1;
-  cooelm_[cooelm_ld_*3 + 0] = -1;
-  cooelm_[cooelm_ld_*3 + 1] = 1;
-#endif
-  const wmesh_int_t q_n = cubature->m_w.n;
-  const T* 	q_w = cubature->m_w.v;
-  wmesh_int_t 	topodim  	= cooelm_m_;
-  wmesh_int_t  	topodimXtopodim = topodim*topodim;;
-  T * 		jacobians 	= rw_;
-  T * 		dets 		= rw_ + topodimXtopodim * q_n;
 
   //
-  // cooelm (3 X nn)
-  // mat    nn x q_n
+  // Compute Jacobians and determinants.
   //
-  // cooelm * diff[0] = [ dx/dr(R0) dy/dr(R0) dz/dr(R0) ... ]  (3 X q_n)
-  //
-  //
-  T r1=1, r0=0,B[9];
-  for (wmesh_int_t i=0;i<topodim;++i)
+  T *__restrict__ jacobians 	= rw_;
+  T *__restrict__ dets 		= rw_ + topodimXtopodim * q_n;
+
+  for (wmesh_int_t idim=0;idim<topodim;++idim)
     {
       BLAS_dgemm("N",
 		 "N",
 		 &topodim,
-		 &shape_eval_element->m_diff[i].n,
-		 &shape_eval_element->m_diff[i].m,
+		 &shape_eval_element->m_diff[idim].n,
+		 &shape_eval_element->m_diff[idim].m,
 		 &r1,
 		 cooelm_,
 		 &cooelm_ld_,
-		 shape_eval_element->m_diff[i].v,
-		 &shape_eval_element->m_diff[i].ld,
+		 shape_eval_element->m_diff[idim].v,
+		 &shape_eval_element->m_diff[idim].ld,
 		 &r0,
-		 jacobians + topodim*i,
+		 jacobians + topodim*idim,
 		 &topodimXtopodim);
     }
-
+  
+  T B[9];
   for (wmesh_int_t j=0;j<q_n;++j)
     {
       T*jacobian = jacobians + topodimXtopodim * j;
-#if 0
-      std::cout << "jacobian " << std::endl;
-      std::cout << " " << jacobian[0] << " " << jacobian[2] << std::endl;
-      std::cout << " " << jacobian[1] << " " << jacobian[3] << std::endl;
-#endif
       T det;
       if (topodim==2)
 	{
-	  T a00 = jacobian[0];
-	  T a10 = jacobian[1];
-	  T a01 = jacobian[2];
-	  T a11 = jacobian[3];
-	  det = a00 * a11 - a01 * a10;
-#if 0
-	  jacobian[0] = a11 / det;
-	  jacobian[1] = -a10 / det;
-	  jacobian[2] = -a01 / det;
-	  jacobian[3] = a00 / det;
-#endif
-	  if (det < 0.0)
-	    det = -det;
+	  det = determinant2x2(jacobian,
+			       topodim);
+	}
+      else if (topodim==3)
+	{
+	  det = determinant3x3(jacobian,
+			       topodim);
 	}
       else
 	{
-	  T a00 = jacobian[0];
-	  T a10 = jacobian[1];
-	  T a20 = jacobian[2];
-	  T a01 = jacobian[3];
-	  T a11 = jacobian[4];
-	  T a21 = jacobian[5];
-	  T a02 = jacobian[6];
-	  T a12 = jacobian[7];
-	  T a22 = jacobian[8];
-	  T det0 = a11 * a22 - a12 * a21;
-	  T det1 = a01 * a22 - a02 * a21;
-	  T det2 = a01 * a12 - a02 * a11;
-	  det  = a00 * det0 - a10 * det1 + a20 * det2;
-	  if (det < 0.0)
-	    det = -det;			
+	  det = determinant1x1(jacobian,
+			       topodim);
 	}
+          
+      if (det < 0.0)
+	det = -det;
       dets[j] = det;
-      //      std::cout << "J " << std::endl << jacobian[0] << " " << jacobian[1] << std::endl << jacobian[2] << " " << jacobian[3]  << std::endl;  
-      //      std::cout << "dets[" << j << "] = " << det << std::endl;  
+      
       //
-      // Now inverse the jacobian.
+      // Reset identity
       //
-      for (wmesh_int_t i=0;i<topodim*topodim;++i) B[i]=0.0;
-      for (wmesh_int_t i=0;i<topodim;++i) B[i*topodim+i]=1.0;
-      wmesh_int_t perm[3],info_lapack;
-      LAPACK_dgesv((wmesh_int_p)&topodim,
-		   (wmesh_int_p)&topodim,
-		   jacobian,
-		   (wmesh_int_p)&topodim,
-		   perm,
-		   B,
-		   (wmesh_int_p)&topodim,
-		   (wmesh_int_p)&info_lapack);
-      //      std::cout << "info_lapack " << info_lapack<<std::endl;
-      if (info_lapack)
-	{
-	  fprintf(stderr,"error lapack\n");
-	  exit(1);
-	}      
-      //      std::cout << "inverse jacobian  " << B[0] << " " << B[2] << std::endl;
-      //      std::cout << " " << B[1] << " " << B[3] << std::endl;
       for (wmesh_int_t i=0;i<topodim*topodim;++i)
+	{
+	  B[i] = r0;
+	}
+      
+      for (wmesh_int_t i=0;i<topodim;++i)
+	{
+	  B[i*topodim+i] = r1;
+	}
+
+      //
+      // Inverse the jacobian.
+      //
+      
+      {	wmesh_int_t info_lapack,perm[3];
+	LAPACK_dgesv((wmesh_int_p)&topodim,
+		 (wmesh_int_p)&topodim,
+		 jacobian,
+		 (wmesh_int_p)&topodim,
+		 perm,
+		 B,
+		 (wmesh_int_p)&topodim,
+		 (wmesh_int_p)&info_lapack);
+	if (info_lapack)
+	  {
+	    fprintf(stderr,"error lapack\n");
+	    exit(1);
+	  } }
+
+      //
+      // Store the inverse.
+      //
+      for (wmesh_int_t i=0;i<topodimXtopodim;++i)
 	{
 	  jacobians[topodim*topodim * j + i] = B[i];
 	}
     }
 
 
-  T lnabla_phi_i[3];
-  T lnabla_phi_j[3];
-  T nabla_phi_i[3];
-  T nabla_phi_j[3];
+  //
+  // Reset the local matrix and the local rhs.
+  //
   for (wmesh_int_t j=0;j<lmat_n_;++j)
     {
       for (wmesh_int_t i=0;i<lmat_m_;++i)
 	{
-	  lmat_[lmat_ld_*j+i] = 0;	      
+	  lmat_[lmat_ld_*j+i] = r0;	      
 	}
     }
-#if 0
-    std::cout << "CUB " << cubature->m_c << std::endl;
-  std::cout << "DR " << shape_eval_f->m_diff[0] << std::endl;
-  std::cout << "DS " << shape_eval_f->m_diff[1] << std::endl;
-  std::cout << "DT " << shape_eval_f->m_diff[2] << std::endl;
-#endif
+
+  for (wmesh_int_t i=0;i<lmat_m_;++i)
+    {
+      lrhs_[lrhs_inc_*i] = r0;	      
+    }
+
+
+  //
+  // Compute the local matrix.
+  //
+  T lnabla_phi_i[3];
+  T lnabla_phi_j[3];
+  T nabla_phi_i[3];
+  T nabla_phi_j[3];
+
   static constexpr wmesh_int_t n1 = static_cast<wmesh_int_t>(1);
   for (wmesh_int_t k=0;k<q_n;++k)
     {
       T*jacobian = jacobians + topodimXtopodim * k;
       for (wmesh_int_t j=0;j<lmat_n_;++j)
 	{
+	  //
+	  // Compute the global gradient of shape function j at point k.
+	  //
 	  for (wmesh_int_t idim=0;idim<topodim;++idim)
 	    {
 	      lnabla_phi_j[idim] = shape_eval_f->m_diff[idim].v[shape_eval_f->m_diff[idim].ld * k + j];
 	    }
-#if 0
-	  std::cout << "---" << std::endl;
-	  std::cout << jacobian[0] << " " << jacobian[2] << std::endl;
-	  std::cout << jacobian[1] << " " << jacobian[3] << std::endl;
-#endif
+	  
 	  BLAS_dgemm("T",
 		     "N",
 		     &topodim,
@@ -750,6 +765,9 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 	  for (wmesh_int_t i=0;i<lmat_m_;++i)
 	    {
 
+	      //
+	      // Compute the global gradient of shape function i at point k.
+	      //
 	      for (wmesh_int_t idim=0;idim<topodim;++idim)
 		{
 		  lnabla_phi_i[idim] = shape_eval_f->m_diff[idim].v[shape_eval_f->m_diff[idim].ld * k + i];
@@ -769,7 +787,11 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 			 nabla_phi_i,
 			 &topodim);
 
-	      T dot = static_cast<T>(0);
+	      //
+	      // Compute dot product of the global gradient of shape function i
+	      // and the global gradient of shape function j.
+	      //
+	      T dot = r0;
 	      for (wmesh_int_t idim=0;idim<topodim;++idim)
 		{
 		  dot += nabla_phi_i[idim]*nabla_phi_j[idim];
@@ -780,11 +802,13 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 	  
 	}      
     }
-
-
+  
+  //
+  // Reset the local rhs.
+  //
   for (wmesh_int_t i=0;i<lmat_m_;++i)
     {
-      lrhs_[lrhs_inc_*i] = 0;	      
+      lrhs_[lrhs_inc_*i] = r0;	      
     }
 
   for (wmesh_int_t k=0;k<q_n;++k)
@@ -794,7 +818,6 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *	sel
 	  lrhs_[lrhs_inc_*i] += shape_eval_f->m_f.v[k*shape_eval_f->m_f.ld + i] * dets[k] * q_w[k];
 	}      
     }
-
   
   //
   // Calculate the jacobian.
@@ -937,6 +960,10 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
       std::cout << "-----------------------------------------------------" << std::endl;
       std::cout << "-----------------------------------------------------" << std::endl;
 #endif 
+
+      //
+      // Get dof indices.
+      //
       for (wmesh_int_t i=0;i<self_->m_c2d.m_m[itype_];++i)
 	{
 	  c2d[i] = self_->m_c2d.m_data[self_->m_c2d.m_ptr[itype_] + self_->m_c2d.m_ld[itype_] * ielm + i] - 1;
@@ -951,8 +978,9 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
 	  for (wmesh_int_t j=0;j<num_dofs_per_element;++j)
 	    {
 	      const wmesh_int_t jdof = c2d[j];
+	      
 	      //
-	      // Search in the matrix.
+	      // Search in the csr matrix.
 	      //
 	      bool found = false;
 	      for (wmesh_int_t at = csr_ptr_[idof];at < csr_ptr_[idof+1];++at)
@@ -1013,7 +1041,6 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
 	}
     }
 
-  
   return WMESH_STATUS_SUCCESS;
 }
 
@@ -1021,9 +1048,9 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
 template <typename T>
 wmesh_status_t wmeshspace_fem_laplace_global_system(const wmeshspace_t *		self_,
 						    const wmesh_fem_laplace_t<T> *	fem_,
-						    wmesh_int_t			csr_size_,
-						    const_wmesh_int_p		csr_ptr_,
-						    const_wmesh_int_p		csr_ind_,
+						    wmesh_int_t				csr_size_,
+						    const_wmesh_int_p			csr_ptr_,
+						    const_wmesh_int_p			csr_ind_,
 						    T * 				csr_val_,
 						    T * 				rhs_)
 {
@@ -1058,21 +1085,27 @@ extern "C"
 				    double * 				csr_val_,
 				    double * 				rhs_)
   {
-
+    static constexpr double r0 = static_cast<double>(0);
+    //
+    // Set csr_val and rhs_ to zero.
+    //
     for (wmesh_int_t i=0;i<csr_ptr_[csr_size_];++i)
-      csr_val_[i] = static_cast<double>(0); 
+      csr_val_[i] = r0; 
     for (wmesh_int_t i=0;i<csr_size_;++i)
-      rhs_[i] = static_cast<double>(0); 
+      rhs_[i] = r0; 
    
-    wmesh_int_t shape_family = WMESH_SHAPE_FAMILY_LAGRANGE;
-    wmesh_int_t shape_degree = self_->m_degree;    
-    wmesh_int_t topodim = self_->m_mesh->m_topology_dimension;
+    const wmesh_int_t shape_family 	= WMESH_SHAPE_FAMILY_LAGRANGE;
+    const wmesh_int_t shape_degree 	= self_->m_degree;    
+    const wmesh_int_t topodim 		= self_->m_mesh->m_topology_dimension;
 
-    const wmesh_int_t shape_element_family = WMESH_SHAPE_FAMILY_LAGRANGE;
-    const wmesh_int_t shape_element_degree = 1;    
+    //
+    // For now ... mesh cells are linear only.
+    //
+    const wmesh_int_t 	shape_element_family 	= WMESH_SHAPE_FAMILY_LAGRANGE;
+    const wmesh_int_t 	shape_element_degree 	= 1;    
 
-    wmesh_int_t cubature_family = WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE;
-    wmesh_int_t cubature_degree = 5;//2 * shape_degree;
+    wmesh_int_t 	cubature_family 	= WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE;
+    wmesh_int_t 	cubature_degree 	= 5;//2 * shape_degree;
     
     //
     // Initialize data.

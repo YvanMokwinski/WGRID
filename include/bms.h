@@ -729,6 +729,20 @@ extern "C"
   //
 
   
+  wmesh_status_t bms_matrix_market_dense_dread(wmesh_int_p 	m_,
+					       wmesh_int_p 	n_,
+					       double **   	v_,
+					       wmesh_int_p 	ld_,
+					       const char * 	filename_,
+					       ...);
+
+  wmesh_status_t bms_matrix_market_dense_fread(wmesh_int_p 	m_,
+					       wmesh_int_p 	n_,
+					       float **   	v_,
+					       wmesh_int_p 	ld_,
+					       const char * 	filename_,
+					       ...);
+
 
     wmesh_status_t bms_matrix_market_dense_dwrite(wmesh_int_t 	m_,
 						wmesh_int_t 	n_,

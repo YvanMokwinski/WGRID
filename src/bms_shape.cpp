@@ -109,6 +109,30 @@ static inline  wmesh_status_t bms_template_shape_eval(const_wmesh_int_p	diff_,
 template<wmesh_int_t FAMILY_,typename T>
 struct  bms_shape;
 
+
+
+template<typename T>
+wmesh_status_t bms_template_shape_vandermonde(wmesh_int_t 	element_,
+					      wmesh_int_t 	family_,
+					      wmesh_int_t 	degree_,
+					      
+					      wmesh_int_t 	c_storage_,					  
+					      wmesh_int_t 	c_m_,
+					      wmesh_int_t 	c_n_,
+					      const T * 	c_,
+					      wmesh_int_t 	c_ld_,
+					      
+					      wmesh_int_t 	v_storage_,
+					      wmesh_int_t 	v_m_,
+					      wmesh_int_t 	v_n_,
+					      T* 		v_,
+					      wmesh_int_t 	v_ld_)
+{
+  return WMESH_STATUS_SUCCESS;
+}
+
+
+#include "bms_template_shape_monomial.hpp"
 #include "bms_template_shape_lagrange.hpp"
 #include "bms_template_shape_legendre.hpp"
 #include "bms_template_shape_orthogonal.hpp"
@@ -504,25 +528,6 @@ extern "C" wmesh_status_t bms_dshape(wmesh_int_t 		element_,
 
   
 #if 0
-template<typename T>
-wmesh_status_t bms_template_shape_vandermonde(wmesh_int_t 	element_,
-					      wmesh_int_t 	family_,
-					      wmesh_int_t 	degree_,
-					      
-					      wmesh_int_t 	c_storage_,					  
-					      wmesh_int_t 	c_m_,
-					      wmesh_int_t 	c_n_,
-					      const T * 	c_,
-					      wmesh_int_t 	c_ld_,
-					      
-					      wmesh_int_t 	v_storage_,
-					      wmesh_int_t 	v_m_,
-					      wmesh_int_t 	v_n_,
-					      T* 		v_,
-					      wmesh_int_t 	v_ld_)
-{
-  return WMESH_STATUS_SUCCESS;
-}
 
 
 template<typename T>

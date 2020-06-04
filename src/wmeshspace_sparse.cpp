@@ -1,17 +1,9 @@
-#include <stdlib.h>
-#include <string.h>
-#include "wmesh-types.hpp"
-#include "wmesh-status.h"
 #include "wmesh.hpp"
-#include <chrono>
-#include <iostream>
 #include "bms.h"
+#include <iostream>
 
-#include "wmesh-utils.hpp"
-using namespace std::chrono;
 extern "C"
 {
-  
   wmesh_status_t wmeshspace_sparse	(const wmeshspace_t*__restrict__ 	self_,
 					 wmesh_int_p 				csr_size_,
 					 wmesh_int_p*__restrict__ 		csr_ptr_,
@@ -42,7 +34,6 @@ extern "C"
       {
 	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
       }
-    
 
     wmesh_int_p csr_ptr = (wmesh_int_p)malloc( (num_dofs + 1) * sizeof(wmesh_int_t));
     if (!csr_ptr)
@@ -50,7 +41,6 @@ extern "C"
 	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
       }
 
-    std::cout << "ptr" << std::endl;
     status = bms_sparse_ptr(num_dofs,
 			    WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2d),			 
 			    csr_ptr,
@@ -58,14 +48,13 @@ extern "C"
 			    iw);
 
     WMESH_STATUS_CHECK(status);
-    std::cout << "ptr done" << std::endl;
+
 
     wmesh_int_p csr_ind = (wmesh_int_p)malloc( csr_ptr[num_dofs] * sizeof(wmesh_int_t));
     if (!csr_ind)
       {
 	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
       }
-    std::cout << "sp .." << std::endl;
     
     status = bms_sparse	(num_dofs,
 			 WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2d),			 
@@ -74,7 +63,6 @@ extern "C"
 			 iw_n,
 			 iw);
     WMESH_STATUS_CHECK(status);
-    std::cout << "sp done." << std::endl;
 
     //
     // Free iw.

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "bms_template_shape_lagrange_splz.hpp"
+#include "bms_template_shape_monomial_splz.hpp"
 
 template<wmesh_int_t 	ELEMENT_,
 	 typename 	T>
-struct bms_template_shape_lagrange
+struct bms_template_shape_monomial
 {  
   static inline  wmesh_status_t eval(wmesh_int_t 	degree_,
 				     const_wmesh_int_p	diff_,				     
@@ -52,16 +52,19 @@ struct bms_template_shape_lagrange
       case 0:
 	{
 	  return bms_template_shape_eval(FORWARD,
-					 bms_template_shape_lagrange_splz<0,ELEMENT_,T>::basis);
+					 bms_template_shape_monomial_splz<0,ELEMENT_,T>::basis);
 	}
       case 1:
 	{
 	  return bms_template_shape_eval(FORWARD,
-					 bms_template_shape_lagrange_splz<1,ELEMENT_,T>::basis);
+					 bms_template_shape_monomial_splz<1,ELEMENT_,T>::basis);
 	}
+	
       default:
 	{
-	  return WMESH_STATUS_SUCCESS;
+	  bms_template_shape_monomial_functor<ELEMENT_,T> f(degree_);
+	  return bms_template_shape_eval(FORWARD,
+					 f.basis);
 	}
       }
 
@@ -71,4 +74,3 @@ struct bms_template_shape_lagrange
   }
 
 };
-

@@ -2,6 +2,25 @@
 #include "cmdline.hpp"
 #include <math.h>
 #include <stdlib.h>
+#include "bms.h"
+static const char * file_extension(const char * filename_)
+{
+  int i = -1;
+  int len = 0;
+  for (;;)
+    {
+      if (filename_[len] == '.')
+	{
+	  i = len;
+	}
+      if (filename_[len++] == '\0')
+	{
+	  break;
+	}
+    }
+  return (i>=0) ? &filename_[i] : nullptr;
+}
+
 
 void usage(const char * appname_)
 {
@@ -64,27 +83,72 @@ int main(int 		argc,
     }  
   const char * ifilename = cmd.get_arg(1);
 
-  //
-  // Read the mesh.
-  //
-  wmesh_t* mesh;
-  wmesh_status_t status = wmesh_read(&mesh,
-				     ifilename);
-  WMESH_STATUS_CHECK(status);
+  const char * ifilename_extension = file_extension(ifilename);
+  if (!ifilename_extension)
+    {      
+      fprintf(stderr,"// wmesh-convert::error: no extension found from file name '%s'.\n", ifilename);
+      return WMESH_STATUS_INVALID_ARGUMENT;
+    }
   
-  //
-  // Write the mesh.
-  //
-  status = wmesh_write(mesh,
-		       ofilename);
-  WMESH_STATUS_CHECK(status);
+  if (!strcmp(ifilename_extension,".mesh") || !strcmp(ifilename_extension,".meshb") )
+    {
+      //
+      // Read the mesh.
+      //
+      wmesh_t* mesh;
+      wmesh_status_t status = wmesh_read(&mesh,
+					 ifilename);
+      WMESH_STATUS_CHECK(status);
+      
+      //
+      // Write the mesh.
+      //
+      status = wmesh_write(mesh,
+			   ofilename);
+      WMESH_STATUS_CHECK(status);
+      
+      //
+      // Kill the mesh.
+      //
+      
+      status 	= wmesh_kill(mesh);
+      WMESH_STATUS_CHECK(status);
+      mesh 		= nullptr;
+      return WMESH_STATUS_SUCCESS;
+    }
+  
+  if (!strcmp(ifilename_extension,".mtx") )
+    {
+      //
+      // Read the mesh.
+      //
 
-  //
-  // Kill the mesh.
-  //
+      wmesh_int_t dense_m;
+      wmesh_int_t dense_n;
+      double * dense_v;
+      wmesh_int_t dense_ld;
+      
+      wmesh_status_t status =  bms_matrix_market_dense_dread(&dense_m,
+							     &dense_n,
+							     &dense_v,
+							     &dense_ld,
+							     ifilename);
+      WMESH_STATUS_CHECK(status);      
+
+
+      FILE * f = fopen(ofilename,"w");
+      fprintf(f,"2 " WMESH_INT_FORMAT " " WMESH_INT_FORMAT " 2\n" , dense_n,dense_m);
+      for (wmesh_int_t i=0;i<dense_m;++i)
+	{
+	  for (wmesh_int_t j=0;j<dense_n;++j)
+	    {
+	      fprintf(f, " %8.15e", dense_v[dense_ld*j+i]);
+	    }
+	  fprintf(f,"\n");
+	}
+      fclose(f);
+      free(dense_v);
+      return WMESH_STATUS_SUCCESS;
+    }
   
-  status 	= wmesh_kill(mesh);
-  WMESH_STATUS_CHECK(status);
-  mesh 		= nullptr;
-  return 0;
 }
