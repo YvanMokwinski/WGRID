@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <string.h>
 #include "wmesh-types.hpp"
@@ -173,8 +174,10 @@ wmesh_status_t wmesh_shape_eval_def_init(wmesh_shape_eval_t<T>*__restrict__ 	sel
 				 &iw_n,
 				 &rw_n);
   WMESH_STATUS_CHECK(status);
-  
-  wmesh_int_p iw = (iw_n > 0) ? (wmesh_int_p)malloc(sizeof(T)*iw_n) : nullptr;
+
+  iw_n = 20000;
+  rw_n = 20000;
+  wmesh_int_p iw = (iw_n > 0) ? (wmesh_int_p)malloc(sizeof(wmesh_int_t)*iw_n) : nullptr;
   if (iw_n > 0 && !iw)
     {
       WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
@@ -540,8 +543,8 @@ wmesh_status_t wmesh_fem_laplace_def(wmesh_fem_laplace_t<T> *	self_,
 
   status = wmesh_shape_eval_def(&self_->m_shape_eval_f[element_],
 				element_,				
-				shape_element_family_,
-				shape_element_degree_,
+				shape_f_family_,
+				shape_f_degree_,
 				self_->m_cubature[element_].m_c_storage,
 				&self_->m_cubature[element_].m_c,
 				&self_->m_cubature[element_].m_w);
@@ -772,7 +775,9 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *__re
 		{
 		  lnabla_phi_i[idim] = shape_eval_f->m_diff[idim].v[shape_eval_f->m_diff[idim].ld * k + i];
 		}
-
+	      
+	      //	      std::cout << " " << shape_eval_f->m_diff[0] << std::endl;
+	      //	      exit(1);
 	      BLAS_dgemm("T",
 			 "N",
 			 &topodim,
@@ -796,13 +801,43 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *__re
 		{
 		  dot += nabla_phi_i[idim]*nabla_phi_j[idim];
 		}
-	      
+#if 0
+	      if (i==2)
+		{
+		  std::cout << "lnabla phi_i = " << lnabla_phi_i[0] << " " << lnabla_phi_i[1] << std::endl;
+		  std::cout << "lnabla phi_j = " << lnabla_phi_j[0] << " " << lnabla_phi_j[1] << std::endl;
+		  std::cout << "nabla phi_i = " << nabla_phi_i[0] << " " << nabla_phi_i[1] << std::endl;
+		  std::cout << "nabla phi_j = " << nabla_phi_j[0] << " " << nabla_phi_j[1] << std::endl;
+		  std::cout << "j= " << j << std::endl;
+		  std::cout << "j= " << j << std::endl;
+		  std::cout << "j= " << j << std::endl;
+		  std::cout << "dot " << dot<<std::endl;
+		  std::cout << "q_w " << q_w[k]<<std::endl;
+		  std::cout << "dets " << dets[k]<<std::endl;
+		}
+#endif
 	      lmat_[lmat_ld_*j+i] += dot *  q_w[k]  *  dets[k];
 	    }
 	  
 	}      
     }
-  
+
+
+#if 0
+  std::cout << " " << std::endl;
+  for (wmesh_int_t i=0;i<lmat_n_;++i)
+    {
+      for (wmesh_int_t j=0;j<lmat_n_;++j)
+	{	      
+	  std::cout << " " << lmat_[j*lmat_ld_ + i];	      
+	}
+      std::cout << std::endl;
+      //      std::cout << "here " << std::endl;
+      //      exit(1);
+    }
+  std::cout << "JHHHHHHHHHHHHHHHHHHHHHHHHHHHH " << std::endl;
+  exit(1);
+#endif
   //
   // Reset the local rhs.
   //
@@ -885,9 +920,6 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
   const wmesh_int_t num_elements 		= self_->m_c2d.m_n[itype_];
   WMESH_CHECK( num_elements > 0 );
   T cooelm[32];
-  T lmat[512];
-  T lrhs[512];
-
 
   const wmesh_int_t cooelm_storage 	= WMESH_STORAGE_INTERLEAVE;
   const wmesh_int_t cooelm_m 		= self_->m_mesh->m_topology_dimension;
@@ -904,9 +936,18 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
   const wmesh_int_t lrhs_inc = 1;
 
 
-  wmesh_int_t rw_n = 2048;
-  T rw[2048];
-  wmesh_int_t c2d[1024];
+
+
+
+  
+  T * lmat = (T*)malloc(sizeof(T)*lmat_ld*lmat_n);
+  T * lrhs = (T*)malloc(sizeof(T)*lmat_m);
+  
+  wmesh_int_t rw_n = num_dofs_per_element*num_dofs_per_element*10;
+  T * rw =  (T*)malloc(sizeof(T)*rw_n);
+  wmesh_int_p c2d  = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*num_dofs_per_element);
+
+  
   const wmesh_t * mesh = self_->m_mesh;
 
   for (wmesh_int_t ielm=0;ielm<num_elements;++ielm)
@@ -938,20 +979,53 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
 					      lrhs_inc,
 					      rw_n,
 					      rw);
+
+
+
+
+
+
+      
 #if 0
-      std::cout << "-----------------------------------------------------" << std::endl;
-      std::cout << "-----------------------------------------------------" << std::endl;
-      std::cout << "-----------------------------------------------------" << std::endl;
-      for (wmesh_int_t i=0;i<cooelm_n;++i)
+      
+
+      
+      for (wmesh_int_t i=0;i<lmat_n;++i)
 	{
-	  for (wmesh_int_t j=0;j<cooelm_n;++j)
+	  std::cout << "rhs before " << lrhs[lrhs_inc*i];	      
+	  std::cout << std::endl;
+	}
+      std::cout << "lmat_n " << lmat_n << std::endl;
+      for (int i=0;i<3+3*(self_->m_degree-1);++i)
+	{
+#if 1
+	  for (int j=0;j<lmat_n;++j)
+	    {
+	      lmat[j*lmat_ld + i] = 0;
+	    }
+	  lmat[i*lmat_ld + i] = 1;
+#endif
+	  lrhs[i*lrhs_inc] = 0;
+	}
+      for (wmesh_int_t i=0;i<lmat_n;++i)
+	{
+	  std::cout << "rhs after["<<i <<"] " << lrhs[lrhs_inc*i];	      
+	  std::cout << std::endl;
+	}
+     
+      std::cout << "-----------------------------------------------------" << std::endl;
+      std::cout << "-----------------------------------------------------" << std::endl;
+      std::cout << "-----------------------------------------------------" << std::endl;
+      for (wmesh_int_t i=0;i<lmat_n;++i)
+	{
+	  for (wmesh_int_t j=0;j<lmat_n;++j)
 	    {	      
 	      std::cout << " " << lmat[j*lmat_ld + i];	      
 	    }
 	  std::cout << std::endl;
 	}
       std::cout << "-----------------------------------------------------" << std::endl;
-      for (wmesh_int_t i=0;i<cooelm_n;++i)
+      for (wmesh_int_t i=0;i<lmat_n;++i)
 	{
 	  std::cout << " " << lrhs[lrhs_inc*i];	      
 	  std::cout << std::endl;
@@ -959,8 +1033,28 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
       std::cout << "-----------------------------------------------------" << std::endl;
       std::cout << "-----------------------------------------------------" << std::endl;
       std::cout << "-----------------------------------------------------" << std::endl;
+      wmesh_int_t perm[2048],n1=1,info_lapack;
+      LAPACK_dgesv((wmesh_int_p)&lmat_n,
+		   (wmesh_int_p)&n1,
+		   lmat,
+		   (wmesh_int_p)&lmat_n,
+		   perm,
+		   lrhs,
+		   (wmesh_int_p)&lmat_n,
+		   (wmesh_int_p)&info_lapack);
+      std::cout << "-----------------------------------------------------" << std::endl;
+      for (wmesh_int_t i=0;i<lmat_n;++i)
+	{
+	  std::cout << " " << lrhs[lrhs_inc*i];	      
+	  std::cout << std::endl;
+	}
+      std::cout << "-----------------------------------------------------" << std::endl;
+      std::cout << "-----------------------------------------------------" << std::endl;
+      std::cout << "-----------------------------------------------------" << std::endl;
+      
+      exit(1);
 #endif 
-
+      
       //
       // Get dof indices.
       //
@@ -1018,9 +1112,9 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
   //
   // Now apply bc.
   //
-  for (wmesh_int_t i=0;i<self_->m_mesh->m_num_nodes;++i)
+  for (wmesh_int_t i=0;i<self_->m_ndofs;++i)
     {
-      if (self_->m_mesh->m_n_c.v[self_->m_mesh->m_n_c.ld * i] == 1)
+      if (self_->m_dof_codes[i] == 1)
 	{
 
 	  for (wmesh_int_t k = csr_ptr_[i];k<csr_ptr_[i+1];++k)
@@ -1105,7 +1199,7 @@ extern "C"
     const wmesh_int_t 	shape_element_degree 	= 1;    
 
     wmesh_int_t 	cubature_family 	= WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE;
-    wmesh_int_t 	cubature_degree 	= 5;//2 * shape_degree;
+    wmesh_int_t 	cubature_degree 	= 3 * (shape_degree+2);
     
     //
     // Initialize data.

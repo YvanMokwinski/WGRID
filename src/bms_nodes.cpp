@@ -427,6 +427,51 @@ bms_nodes(wmesh_int_t 		element_,
   return WMESH_STATUS_INVALID_ENUM;  
 }
 
+template
+wmesh_status_t
+bms_nodes<double>(wmesh_int_t 		element_,
+	  wmesh_int_t 		family_,
+	  wmesh_int_t		degree_,
+
+	  wmesh_int_t		b_storage_,
+	  wmesh_int_t		b_m_,
+	  wmesh_int_t		b_n_,
+	  const_wmesh_int_p 	b_v_,
+	  wmesh_int_t		b_ld_,
+
+	  wmesh_int_t		c_storage_,
+	  wmesh_int_t		c_m_,
+	  wmesh_int_t		c_n_,
+	double*__restrict__ 	c_v_,
+	  wmesh_int_t		c_ld_,
+
+	  wmesh_int_t		iwork_n_,
+	  wmesh_int_p 		iwork_,
+	  wmesh_int_t		rwork_n_,
+		  double* __restrict__ 	rwork_)  ;
+
+template
+wmesh_status_t
+bms_nodes<float>(wmesh_int_t 		element_,
+	  wmesh_int_t 		family_,
+	  wmesh_int_t		degree_,
+
+	  wmesh_int_t		b_storage_,
+	  wmesh_int_t		b_m_,
+	  wmesh_int_t		b_n_,
+	  const_wmesh_int_p 	b_v_,
+	  wmesh_int_t		b_ld_,
+
+	  wmesh_int_t		c_storage_,
+	  wmesh_int_t		c_m_,
+	  wmesh_int_t		c_n_,
+	float*__restrict__ 	c_v_,
+	  wmesh_int_t		c_ld_,
+
+	  wmesh_int_t		iwork_n_,
+	  wmesh_int_p 		iwork_,
+	  wmesh_int_t		rwork_n_,
+		  float* __restrict__ 	rwork_)  ;
 
   
 

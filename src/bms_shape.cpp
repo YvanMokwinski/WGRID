@@ -15,6 +15,7 @@ static inline  wmesh_status_t bms_template_shape_eval(const_wmesh_int_p	diff_,
 						      wmesh_int_t 	c_n_,
 						      const T * 	c_,
 						      wmesh_int_t 	c_ld_,
+
 						      
 						      wmesh_int_t 	b_storage_,
 						      wmesh_int_t 	b_m_,
@@ -63,8 +64,11 @@ static inline  wmesh_status_t bms_template_shape_eval(const_wmesh_int_p	diff_,
 	      funcbasis(diff_,
 		    c_ + c_ld_*i,
 		    1,
+			
 		    b_ + i,
-		    b_ld_);
+			b_ld_);
+
+	      
 	    }
 	  return WMESH_STATUS_SUCCESS;
 	}
@@ -94,7 +98,15 @@ static inline  wmesh_status_t bms_template_shape_eval(const_wmesh_int_p	diff_,
 	    }
 	  return WMESH_STATUS_SUCCESS;
 	}
-	      
+
+
+
+
+
+
+
+
+	
       case 0:
 	{
 	  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
@@ -103,6 +115,7 @@ static inline  wmesh_status_t bms_template_shape_eval(const_wmesh_int_p	diff_,
 
     return WMESH_STATUS_INVALID_ENUM;
 
+    
   };
 
 
@@ -110,29 +123,7 @@ template<wmesh_int_t FAMILY_,typename T>
 struct  bms_shape;
 
 
-
-template<typename T>
-wmesh_status_t bms_template_shape_vandermonde(wmesh_int_t 	element_,
-					      wmesh_int_t 	family_,
-					      wmesh_int_t 	degree_,
-					      
-					      wmesh_int_t 	c_storage_,					  
-					      wmesh_int_t 	c_m_,
-					      wmesh_int_t 	c_n_,
-					      const T * 	c_,
-					      wmesh_int_t 	c_ld_,
-					      
-					      wmesh_int_t 	v_storage_,
-					      wmesh_int_t 	v_m_,
-					      wmesh_int_t 	v_n_,
-					      T* 		v_,
-					      wmesh_int_t 	v_ld_)
-{
-  return WMESH_STATUS_SUCCESS;
-}
-
-
-#include "bms_template_shape_monomial.hpp"
+#include "bms_template_shape_jacobi.hpp"
 #include "bms_template_shape_lagrange.hpp"
 #include "bms_template_shape_legendre.hpp"
 #include "bms_template_shape_orthogonal.hpp"
@@ -204,6 +195,7 @@ bms_shape<WMESH_SHAPE_FAMILY_LAGRANGE,T>
   }
   
 };
+
 
 template<typename T>
 struct 
@@ -389,6 +381,7 @@ wmesh_status_t bms_template_shape(wmesh_int_t 		element_,
     rw_n_,					\
     rw_
 
+  
   return bms_shape<WMESH_SHAPE_FAMILY_LAGRANGE,T>::eval(FORWARD);
 #if 0
   switch(element_)
@@ -409,9 +402,6 @@ wmesh_status_t bms_template_shape(wmesh_int_t 		element_,
 #undef FORWARD
 
 }
-
-
-
 
 template
 wmesh_status_t bms_template_shape<float>(wmesh_int_t 		element_,
@@ -477,6 +467,10 @@ extern "C" wmesh_status_t bms_dshape(wmesh_int_t 		element_,
 				     wmesh_int_t 		family_,
 				     wmesh_int_t 		degree_,
 
+
+
+
+				     
 				     const_wmesh_int_p		diff_,
 				     				     
 				     wmesh_int_t 		c_storage_,					  
@@ -500,8 +494,13 @@ extern "C" wmesh_status_t bms_dshape(wmesh_int_t 		element_,
 			    family_,
 			    degree_,
 
+
+
+
+			    
 			    diff_,
-				     
+
+
 			    
 			    c_storage_,
 			    c_m_,
@@ -527,55 +526,3 @@ extern "C" wmesh_status_t bms_dshape(wmesh_int_t 		element_,
   
 
   
-#if 0
-
-
-template<typename T>
-wmesh_status_t bms_template_shape_nodal(wmesh_int_t 		vn_storage_,
-					wmesh_int_t 		vn_m_,
-					wmesh_int_t 		vn_n_,
-					T* 			vn_,
-					wmesh_int_t 		vn_ld_,
-
-					wmesh_int_t 		vc_storage_,
-					wmesh_int_t 		vc_m_,
-					wmesh_int_t 		vc_n_,
-					const T* 		vc_,
-					wmesh_int_t 		vc_ld_,
-					
-					wmesh_int_t 		e_storage_,
-					wmesh_int_t 		e_m_,
-					wmesh_int_t 		e_n_,
-					const T* 		e_,
-					wmesh_int_t 		e_ld_)
-{
-  
-  if ( (vn_storage_ == WMESH_STORAGE_INTERLEAVE) && (vc_storage_ == WMESH_STORAGE_INTERLEAVE) && (e_storage_ == WMESH_STORAGE_INTERLEAVE) )
-    {
-      wmesh_int_t info_lapack;
-      wmesh_int_p perm 	= (wmesh_int_p)malloc(sizeof(wmesh_int_t)*ndofs);
-      double* id 		= (double*)calloc(ndofs*ndofs,sizeof(double));
-      for (wmesh_int_t i=0;i<ndofs;++i) id[i*ndofs+i] = 1.0;
-  
-      LAPACK_dgesv((wmesh_int_p)&ndofs,
-		   (wmesh_int_p)&ev_n,
-		   vn_,
-		   (wmesh_int_p)&vn_ld_,
-		   perm,
-		   vc_,
-		   (wmesh_int_p)&vc_ld_,
-		   (wmesh_int_p)&info_lapack);
-      WMESH_CHECK( 0 == info_lapack );      
-    }
-  else if ( (vn_storage_ == WMESH_STORAGE_BLOCK) && (vc_storage_ == WMESH_STORAGE_BLOCK) && (e_storage_ == WMESH_STORAGE_BLOCK) )
-    {
-      
-    }
-  else
-    {
-
-    }
-  
-}
-
-#endif

@@ -614,7 +614,7 @@ int main(int 		argc,
 {
 
   
-#if 1
+#if 0
 
 #if 0
 wmesh_nodes_t nodes;

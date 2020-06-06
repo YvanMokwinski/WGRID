@@ -40,7 +40,7 @@ struct bms_template_shape_monomial_functor<WMESH_ELEMENT_EDGE,T>
 	  {
 	    for (wmesh_int_t i=1;i<=m_degree;++i)
 	      {
-		b_[b_inc_*i] = b_[b_inc_*(i-1)] * loo_[lcoo_inc_*0];
+		b_[b_inc_*i] = b_[b_inc_*(i-1)] * lcoo_[lcoo_inc_*0];
 	      }
 	  }
       }
@@ -52,7 +52,7 @@ struct bms_template_shape_monomial_functor<WMESH_ELEMENT_EDGE,T>
 	    b_[b_inc_*1] = static_cast<T>(1);
 	    for (wmesh_int_t i=2;i<=m_degree;++i)
 	      {
-		b_[b_inc_*i] = b_[b_inc_*(i-1)] * loo_[lcoo_inc_*0] * static_cast<T>(i);
+		b_[b_inc_*i] = b_[b_inc_*(i-1)] * lcoo_[lcoo_inc_*0] * static_cast<T>(i);
 	      }
 	  }
       }
@@ -82,7 +82,7 @@ struct bms_template_shape_monomial_functor<WMESH_ELEMENT_TRIANGLE,T>
 	  {
 	    for (wmesh_int_t i=1;i<=m_degree;++i)
 	      {
-		b_[b_inc_*i] = b_[b_inc_*(i-1)] * loo_[lcoo_inc_*0];
+		b_[b_inc_*i] = b_[b_inc_*(i-1)] * lcoo_[lcoo_inc_*0];
 	      }
 	  }
       }
@@ -93,22 +93,28 @@ struct bms_template_shape_monomial_functor<WMESH_ELEMENT_TRIANGLE,T>
 	  {
 	    for (wmesh_int_t i=1;i<=m_degree;++i)
 	      {
-		b_[b_inc_*i] = b_[b_inc_*(i-1)] * loo_[lcoo_inc_*0];
+		b_[b_inc_*i] = b_[b_inc_*(i-1)] * lcoo_[lcoo_inc_*0];
 	      }
 	  }
       }
     else
       {
+	static constexpr T one  = static_cast<T>(1);
 	b_[b_inc_*0] = one;
-	if (degree_>0)
+	if (this->m_degree > 0)
 	  {
 	    wmesh_int_t shift = 1;
+
+	    const T
+	      r = lcoo_[lcoo_inc_* 0],
+	      s = lcoo_[lcoo_inc_* 1];
+		
 	    b_[b_inc_*1] = r;
 	    b_[b_inc_*2] = s;
-	    
-	    if (degree_>1)
+
+	    if (this->m_degree>1)
 	      {
-		for (wmesh_int_t i=2;i<=degree;++i)
+		for (wmesh_int_t i=2;i<=this->m_degree;++i)
 		  {		    
 		    {
 		      wmesh_int_t j = 0;
