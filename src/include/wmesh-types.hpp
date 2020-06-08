@@ -23,6 +23,22 @@ struct wmesh_mat_t
 
 };
 
+extern "C"
+{
+struct wmesh_shape_t
+{
+  wmesh_int_t		m_element;
+  wmesh_int_t		m_family;
+  wmesh_int_t 		m_degree;
+  wmesh_int_t 		m_ndofs;
+};
+
+wmesh_status_t wmesh_shape_def(wmesh_shape_t*__restrict__ self_,
+			       wmesh_int_t 		element_,
+			       wmesh_int_t 		family_,
+			       wmesh_int_t 		degree_);
+};
+
 
 extern "C"
 {

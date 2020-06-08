@@ -1,0 +1,3332 @@
+
+//#define WLS_ILP64 1
+// #include "wls.hpp"
+//#include "wls-sparse-matrix.hpp"
+#include <signal.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <math.h>
+#include "wmesh-blas.hpp"
+#include "app.hpp"
+#include <iostream>
+//#include "Monitor.h"
+#if 0
+#include "Blas.h"
+#include "Type.h"
+#include "ns_sys.h"
+#include "ns_mesh.h"
+#include "mkS.h"
+#include "ns_config_lapack.h"
+#include "ns_constantes.h"
+#include "ExternPardiso.h"
+#include "ensBASIS.h"
+#include "SmoothedHeaviside.h"
+#include "WLA/include/matrix.hpp"
+#endif
+
+struct DG_JACOBIAN;
+struct DG_VAR;
+
+
+#if 0
+struct temp_jacvar
+{
+  const DG_JACOBIAN&j;
+  const DG_VAR&x;
+};
+
+struct vector_handle;
+struct matrix_handle;
+
+struct temp_gemm
+{
+  const double a;
+  const char transA;
+  const char transB;
+  const matrix_handle&A;
+  const matrix_handle&B;
+};
+
+
+
+
+struct temp_gemv
+{
+  const double a;
+  const char trans;
+  const matrix_handle&A;
+  const vector_handle&b;
+};
+struct temp_scal;
+struct temp_transpose
+{
+  const char trans;
+  const matrix_handle&A;
+  inline temp_scal operator * (const double&v_) const;
+  inline temp_gemv operator * (const vector_handle&v_) const;
+  inline temp_gemm operator * (const matrix_handle&v_) const;
+};
+
+struct temp_scal
+{
+  const double a;
+  const char trans;
+  const matrix_handle&A;
+  inline temp_gemv operator * (const vector_handle&v_) const;
+  inline temp_gemm operator * (const matrix_handle&v_) const;
+  inline temp_gemm operator * (const temp_transpose&v_) const;
+};
+
+inline temp_gemm temp_scal::operator * (const temp_transpose&v_) const
+{
+  return {a,trans,v_.trans,A,v_.A};
+}
+
+inline temp_gemv temp_scal::operator * (const vector_handle&v_) const
+{
+  return {a,trans,A, v_};
+};
+inline temp_gemm temp_scal::operator * (const matrix_handle&v_) const
+{
+  return {a, trans,'N',A, v_};
+};
+
+inline temp_scal temp_transpose::operator * (const double&v_) const
+{
+  return {v_,trans,A};
+};
+inline temp_gemv temp_transpose::operator * (const vector_handle&v_) const
+{
+  return {1.0,trans,A, v_};
+};
+  
+inline temp_gemm temp_transpose::operator * (const matrix_handle&v_) const
+{
+  return {1.0, trans,'N', A, v_};
+};
+
+struct matrix_handle
+{
+  double * __restrict__  x{};
+  wmesh_int_t   n{};
+  wmesh_int_t   m{};
+  wmesh_int_t   ld{};
+  
+  matrix_handle();
+  matrix_handle(wmesh_int_t n_, wmesh_int_t m_,double * __restrict__  x_,wmesh_int_t ld_);
+
+
+  inline matrix_handle& operator += (const matrix_handle& that)
+  {
+    wmesh_int_t n1 = 1;    
+    if (that.m != m)
+      {
+	std::cerr << "error dimension"  << std::endl;
+      }
+    double r1=1.0;
+    wmesh_int_t nn = (that.n < n) ? that.n : n;
+    for (wmesh_int_t j=0;j<m;++j)
+      {
+	daxpy(&nn,&r1, that.x + that.ld * j, &n1,x + ld * j,&n1);
+      }
+    return *this;
+  }
+  inline matrix_handle& operator -= (const matrix_handle& that)
+  {
+    wmesh_int_t n1 = 1;    
+    if (that.m != m)
+      {
+	std::cerr << "error dimension"  << std::endl;
+      }
+    double mr1=-1.0;
+    wmesh_int_t nn = (that.n < n) ? that.n : n;
+    for (wmesh_int_t j=0;j<m;++j)
+      {
+	daxpy(&nn,&mr1, that.x + that.ld * j, &n1,x + ld * j,&n1);
+      }
+    return *this;
+  }
+
+  inline matrix_handle& operator *= (double alpha_)
+  {
+    wmesh_int_t n1 = 1;
+    if (n == ld)
+      {
+	wmesh_int_t N = n*m;
+	dscal(&N,&alpha_, x, &n1);
+      }
+    else
+      {
+	for (wmesh_int_t j=0;j<m;++j)
+	  {
+	    dscal(&n,&alpha_, x + ld * j, &n1);
+	  }
+      }
+    return *this;
+  }
+
+  inline temp_gemm operator * (const matrix_handle&v_)const;  
+  inline temp_gemv operator * (const vector_handle&v_)const;  
+  inline temp_scal operator * (const double&v_)const;  
+  inline temp_transpose transpose() const
+  {
+    return {'T',*this};
+  };
+
+  void clear()
+  {
+    if (ld == n)
+      {
+	for (wmesh_int_t i=0;i<n*m;++i)
+	  {
+	    x[i] = 0.0;
+	  }
+      }
+    else
+      {
+	for (wmesh_int_t j=0;j<m;++j)
+	  {
+	    for (wmesh_int_t i=0;i<n;++i)
+	      {	    
+		x[j*ld+i] = 0.0;
+	      }
+	  }
+      }
+  }
+
+  inline matrix_handle& operator=(const temp_gemm&temp)
+  {
+    const double r0 = 0.0;
+    wmesh_int_t k = (temp.transA == 'N') ? temp.A.m : temp.A.n;
+    dgemm(&temp.transA,
+	       &temp.transB,
+	       &n,
+	       &m,
+	       &k,
+	       &temp.a,
+	       temp.A.x,
+	       &temp.A.ld,
+	       temp.B.x,
+	       &temp.B.ld,
+	       &r0,
+	       x,
+	       &ld);
+    return *this;
+  };
+
+};
+
+
+temp_scal operator * (const double&v_,const matrix_handle &m) 
+{
+  return {v_,'N',m};
+};
+
+matrix_handle::matrix_handle(){};
+matrix_handle::matrix_handle(wmesh_int_t n_, wmesh_int_t m_,double * __restrict__  x_,wmesh_int_t ld_) : x(x_), n(n_), m(m_), ld(ld_)
+  {
+  };
+
+  inline temp_gemv matrix_handle::operator * (const vector_handle&v_) const
+  {
+    return {1.0,'N',*this, v_};
+  };
+
+inline temp_gemm matrix_handle::operator * (const matrix_handle&v_) const
+  {
+    return {1.0,'N','N',*this, v_};
+  };
+
+inline temp_scal matrix_handle::operator * (const double&v_) const
+  {
+    return {v_,'N',*this};
+  };
+  
+
+struct vector_handle
+{
+  double * __restrict__  x{};
+  wmesh_int_t   n{};
+  wmesh_int_t   ld{};
+  vector_handle(){};
+  vector_handle(wmesh_int_t n_, double * __restrict__  x_,wmesh_int_t ld_)
+    : x(x_),n(n_),ld(ld_)
+  {};
+
+
+  
+  
+  template <typename F>
+  inline void apply(F f)
+  {
+    for (wmesh_int_t j=0;j<n;++j)
+      {
+	double * __restrict__ e = x + j*ld;
+	*e = f(*e);
+      }    
+  };
+  
+  inline vector_handle& operator=(const temp_gemv&temp)
+  {
+    const double r0 = 0.0;
+    dgemv(&temp.trans,
+	       &temp.A.n,
+	       &temp.A.m,
+	       &temp.a,
+	       temp.A.x,
+	       &temp.A.ld,
+	       temp.b.x,
+	       &temp.b.ld,
+	       &r0,
+	       x,
+	       &ld);
+    return *this;
+  };
+  
+  inline vector_handle& operator+=(const temp_gemv&temp)
+  {
+    const double r1 = 1.0;
+    dgemv(&temp.trans,
+	       &temp.A.n,
+	       &temp.A.m,
+	       &temp.a,
+	       temp.A.x,
+	       &temp.A.ld,
+	       temp.b.x,
+	       &temp.b.ld,
+	       &r1,
+	       x,
+	       &ld);
+    return *this;
+
+  };
+
+  inline vector_handle& operator-=(const temp_gemv&temp)
+  {
+    const double r1 = 1.0;
+    double a = -temp.a;
+    dgemv(&temp.trans,
+	       &temp.A.n,
+	       &temp.A.m,
+	       &a,
+	       temp.A.x,
+	       &temp.A.ld,
+	       temp.b.x,
+	       &temp.b.ld,
+	       &r1,
+	       x,
+	       &ld);
+    return *this;
+
+  };
+
+
+};
+
+void vector_handle_def(struct vector_handle * h,wmesh_int_t n_, double * __restrict__  x_,wmesh_int_t ld_)
+{
+  h->n  = n_;
+  h->x  = x_;
+  h->ld = ld_;
+};
+
+void matrix_handle_def(struct matrix_handle * h,wmesh_int_t n_, wmesh_int_t m_,double * __restrict__  x_,wmesh_int_t ld_)
+{
+  h->n  = n_;
+  h->m  = m_;
+  h->x  = x_;
+  h->ld = ld_;
+};
+
+void matrix_handle_gemv_low(const struct matrix_handle * h,const char * trans,const double * __restrict__ a,const double * __restrict__ x,const_wmesh_int_p xoff,const double * __restrict__ ry,double * __restrict__ y,const_wmesh_int_p yoff)
+{
+
+  dgemv(trans,
+	     &h->n,
+	     &h->m,
+	     a,
+	     h->x,
+	     &h->ld,
+	     x,
+	     xoff,
+	     ry,
+	     y,
+	     yoff);
+
+}
+
+void matrix_handle_gemv(const struct matrix_handle * h,const char * trans,const double * __restrict__ a,const struct vector_handle * x,const double * __restrict__ ry,struct vector_handle * y)
+{
+  matrix_handle_gemv_low(h,trans,a,x->x,&x->ld,ry,y->x,&y->ld);
+}
+
+
+void matrix_handle_gemm(const struct matrix_handle * h,const char * transA,const char * transB,const double * __restrict__ a,const struct matrix_handle * x,const double * __restrict__ ry,struct matrix_handle * y)
+{
+  const wmesh_int_t s = transA[0]=='N' ? h->m : h->n;
+  dgemm(transA,transB,&y->n,&y->m,&s,a,h->x,&h->ld,x->x,&x->ld,ry,y->x,&y->ld);
+
+}
+
+void vector_handle_print(const struct vector_handle * h,FILE * f)
+{
+  for (wmesh_int_t i=0;i<h->n;++i)
+    {
+      fprintf(f," " "%8.15e",h->x[h->ld*i]);	  
+      fprintf(f,"\n");
+    }
+
+}
+
+void matrix_handle_print(const struct matrix_handle * h,FILE * f)
+{
+  for (wmesh_int_t i=0;i<h->n;++i)
+    {
+      for (wmesh_int_t j=0;j<h->m;++j)
+	{
+	  fprintf(f," " "%8.15e",h->x[h->ld*j+i]);	  
+	}
+      fprintf(f,"\n");
+    }
+
+}
+
+void matrix_handle_gesv(const struct matrix_handle * h,struct vector_handle * rhs,wmesh_int_p lcperm)
+{
+  wmesh_int_t n1=1;
+  wmesh_int_t info_lapack;
+  dgesv(&h->n,
+	&n1,
+	h->x,
+	&h->ld,
+	lcperm,
+	rhs->x,
+	&h->n,
+	&info_lapack);
+}
+
+
+
+#endif
+
+
+
+#define DGERR_MEMORY  2
+#define DGERR_USER    3
+
+#define DG_r_lc        			0
+#define DG_r_n         			1
+
+#define DG_ires_err 			0 
+#define DG_ires_convergence 		1
+#define DG_ires_iter_gauss_seidel 	2
+#define DG_ires_required_iw_n 		3
+#define DG_ires_required_rw_n 		4
+#define DG_ires_n 			5
+
+#define DG_rres_max 			0 
+#define DG_rres_nrmL2 			1 
+#define DG_rres_nrmLInf			2 
+#define DG_rres_areaL1 			3 
+#define DG_rres_jumpL2 			4 
+#define DG_rres_johnson			5 
+#define DG_rres_n 			6
+
+
+
+
+#if 0
+cst_mkS 		mkS_derivative	(mkS shape_,const wmesh_int_t idim)
+{
+  if (idim==0)
+    {
+      return mkS_dx(shape_);
+    }
+  else if (idim==1)
+    {
+      return mkS_dy(shape_);
+    }
+  else if (idim==2)
+    {
+      return mkS_dz(shape_);
+    }
+  else
+    {
+      fprintf(stderr,"mkS_derivative error idim = " WMESH_INT_FORMAT "\n",idim);
+      exit(1);
+    }
+  return NULL;
+}
+
+
+void dg_print_sol(mkS shape,wmesh_int_t N,const double * __restrict__ sol,const char * name_,...)
+{
+  wmesh_int_t n = shape.m_ndofs;
+  { char ctmp[512];
+    { char ctmp2[512];
+      va_list args;
+      va_start (args,name_);
+      vsprintf(ctmp2,name_,args);
+      va_end(args);
+      sprintf(ctmp,"%s.bb",ctmp2); }
+
+#if 1
+    
+    wmesh_shape_t shapeP;
+    wmesh_int_t degree = mkS_k(shape);
+    Err err;
+    mkS_definit	(&shapeP,
+		 __eTopology_TRIANGLE,
+		 __emkS_FAMILY_lagrange,
+		 degree,
+		 __emk_discontinuous,
+		 &err);
+
+    double rst[64];
+    double beval[64];
+    
+    double rwork[1024*2];
+    wmesh_int_t rwork_n = 1024*2;
+
+    wmesh_int_t np = mkS_n(&shapeP);
+    wmesh_int_t ee;
+    mkS_lagrange_localspl_tria(&degree,
+			       rst,
+			       &n);
+    printf("THIS BASIS\n");
+    mkS_basis(mkS_b(shape),
+	      &np,	      
+	      beval,
+	      &n,
+	      rst,
+	      &n,
+	      rwork,
+	      &rwork_n,
+	      &ee);
+    printf("THIS BASIS DONE\n");
+    
+#if 0
+    for (wmesh_int_t i=0;i<n;++i)
+      {
+	for (wmesh_int_t j=0;j<n;++j)
+	  {
+	    std::cout << " " <<beval[j*n+i] ;
+	  }
+	std::cout    << std::endl;
+
+      }
+#endif
+#endif
+    
+    double tmp[64];
+    FILE * fil = fopen(ctmp,"w");
+    fprintf(fil,"2 1 " WMESH_INT_FORMAT " 2\n",N*n);
+    { wmesh_int_t j;
+      for (j=0;j<N;++j)
+	{
+	      double r1=1.0;
+	      double r0=0.0;
+	      wmesh_int_t n1=1;
+	      dgemv("T",
+			 &n,
+			 &n,
+			 &r1,
+			 beval,
+			 &n,
+			 &sol[n*j],
+			 &n1,
+			 &r0,
+			 tmp,
+			 &n1);
+	  for (wmesh_int_t i=0;i<n;++i)
+	    {
+	      fprintf(fil,"" "%8.15e" "\n",tmp[i]);
+	    }
+	} } 
+    fclose(fil); }
+}
+
+void dg_print_mod(mkS shape,wmesh_int_t kmod,wmesh_int_t N,const double * __restrict__ sol,const char * name_,...)
+{
+  wmesh_int_t n = shape.m_ndofs;
+  { char ctmp[512];
+    { char ctmp2[512];
+      va_list args;
+      va_start (args,name_);
+      vsprintf(ctmp2,name_,args);
+      va_end(args);
+      sprintf(ctmp,"%s.bb",ctmp2); }
+
+#if 1
+    wmesh_shape_t shapeP;
+    wmesh_int_t degree = mkS_k(shape);
+    Err err;
+    mkS_definit	(&shapeP,
+		 __eTopology_TRIANGLE,
+		 __emkS_FAMILY_lagrange,
+		 degree,
+		 __emk_discontinuous,
+		 &err);
+
+    double rst[64];
+    double beval[64];
+    
+    double rwork[1024*2];
+    wmesh_int_t rwork_n = 1024*2;
+
+    wmesh_int_t np = mkS_n(&shapeP);
+    wmesh_int_t ee;
+    mkS_lagrange_localspl_tria(&degree,
+			       rst,
+			       &n);
+    double tt[64];
+        printf("THIS BASIS2\n");
+
+    mkS_basis(mkS_b(shape),
+	      &np,	      
+	      beval,
+	      &n,
+	      rst,
+	      &n,
+	      rwork,
+	      &rwork_n,
+	      &ee);
+    printf("THIS BASIS2 DONE\n");
+
+    
+#if 0
+    for (wmesh_int_t i=0;i<n;++i)
+      {
+	for (wmesh_int_t j=0;j<n;++j)
+	  {
+	    std::cout << " " <<beval[j*n+i] ;
+	  }
+	std::cout    << std::endl;
+
+      }
+#endif
+#endif
+    
+    double tmp[64];
+    FILE * fil = fopen(ctmp,"w");
+    fprintf(fil,"2 1 " WMESH_INT_FORMAT " 2\n",N*n);
+    { wmesh_int_t j;
+      for (j=0;j<N;++j)
+	{
+	      double r1=1.0;
+	      double r0=0.0;
+	      wmesh_int_t n1=1;
+	      for (wmesh_int_t i=0;i<n;++i)
+		{
+		  tt[i] = sol[n*j+i];
+		}
+
+	      // 0 [0 0[ [1,n[
+	      // 1 [0 1[ [3,n[
+	      // 2 [0 3[ [6,n[
+	      // 3 [0 6[ [10,n[
+	      wmesh_int_t low = kmod==0 ? 0 : kmod-1;	      
+	      wmesh_int_t start = 0;
+	      wmesh_int_t bound = (kmod==0) ? 0 : ((low+1)*(low+2))/2;
+	      for (wmesh_int_t i=start;i<bound;++i)
+		{
+		  tt[i] = 0.0;
+		}
+	      start = ((kmod+1)*(kmod+2))/2;
+
+	      for (wmesh_int_t i=start;i<n;++i)
+		{
+		  tt[i] = 0.0;
+		}
+
+
+	      
+	      dgemv("T",
+			 &n,
+			 &n,
+			 &r1,
+			 beval,
+			 &n,
+			 tt,
+			 &n1,
+			 &r0,
+			 tmp,
+			 &n1);
+		   
+	  for (wmesh_int_t i=0;i<n;++i)
+	    {
+	      fprintf(fil,"" "%8.15e" "\n",tmp[i]);
+	    }
+	} } 
+    fclose(fil); }
+}
+
+void dg_print_mesh(const ns_mesh*s_,const char * name_,...)
+{
+  //  const wmesh_int_t numNodes = ns_mesh_get_numNodes(s_);
+  { char ctmp[512];
+    { char ctmp2[512];
+      va_list args;
+      va_start (args,name_);
+      vsprintf(ctmp2,name_,args);
+      va_end(args);
+      sprintf(ctmp,"%s.mesh",ctmp2); }    
+    wmesh_int_t cncelm[3];
+    FILE * fil = fopen(ctmp,"w");
+    fprintf(fil,"MeshVersionFormatted\n1\nDimension\n2\nVertices\n" WMESH_INT_FORMAT "\n",s_->nelm*3);
+    { wmesh_int_t i;
+      for (i=0;i<s_->nelm;++i)
+	{
+	  ns_mesh_get_cellToNodes(s_,&i,cncelm);
+	  {wmesh_int_t j;for (j=0;j<3;++j){ fprintf(fil,"" "%8.15e" " " "%8.15e" " " WMESH_INT_FORMAT "\n",s_->coo[cncelm[j]*2+0],s_->coo[cncelm[j]*2+1],s_->cod[cncelm[j]]); } }
+	} } 
+
+    fprintf(fil,"Triangles\n" WMESH_INT_FORMAT "\n",s_->nelm); 
+    { wmesh_int_t i;
+      for (i=0;i<s_->nelm;++i)
+	{
+	  fprintf(fil,"" WMESH_INT_FORMAT " " WMESH_INT_FORMAT " " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",i*3+1,i*3+2,i*3+3,((wmesh_int_t)0));
+	} } 
+    fprintf(fil,"End\n");						
+    fclose(fil); }  
+}
+
+
+void dg_print_mesh(const ns_mesh*s_,const_wmesh_int_p codelm,const char * name_,...)
+{
+
+  { char ctmp[512];
+    { char ctmp2[512];
+      va_list args;
+      va_start (args,name_);
+      vsprintf(ctmp2,name_,args);
+      va_end(args);
+      sprintf(ctmp,"%s.mesh",ctmp2); }    
+    wmesh_int_t cncelm[3];
+    FILE * fil = fopen(ctmp,"w");
+    fprintf(fil,"MeshVersionFormatted\n1\nDimension\n2\nVertices\n" WMESH_INT_FORMAT "\n",s_->nelm*3);
+    { wmesh_int_t i;
+      for (i=0;i<s_->nelm;++i)
+	{
+	  ns_mesh_get_cellToNodes(s_,&i,cncelm);
+	  {wmesh_int_t j;for (j=0;j<3;++j){ fprintf(fil,"" "%8.15e" " " "%8.15e" " " WMESH_INT_FORMAT "\n",s_->coo[cncelm[j]*2+0],s_->coo[cncelm[j]*2+1],s_->cod[cncelm[j]]); } }
+	} } 
+
+    fprintf(fil,"Triangles\n" WMESH_INT_FORMAT "\n",s_->nelm); 
+    { wmesh_int_t i;
+      for (i=0;i<s_->nelm;++i)
+	{
+	  fprintf(fil,"" WMESH_INT_FORMAT " " WMESH_INT_FORMAT " " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",i*3+1,i*3+2,i*3+3,codelm[i]);
+	} } 
+    fprintf(fil,"End\n");						
+    fclose(fil); }  
+}
+
+
+void dg_print_mesh(wmesh_int_t numNodes,wmesh_int_t nelm,wmesh_int_p cnc,wmesh_int_t cncoff,double * __restrict__ coo,wmesh_int_p codnodes,wmesh_int_t codnodesoff,wmesh_int_p codelm,wmesh_int_t codelmoff,const char * name_,...)
+{
+
+  { char ctmp[512];
+    { char ctmp2[512];
+      va_list args;
+      va_start (args,name_);
+      vsprintf(ctmp2,name_,args);
+      va_end(args);
+      sprintf(ctmp,"%s.mesh",ctmp2); }    
+    wmesh_int_t cncelm[3];
+    FILE * fil = fopen(ctmp,"w");
+    fprintf(fil,"MeshVersionFormatted\n1\nDimension\n2\nVertices\n" WMESH_INT_FORMAT "\n",nelm*3);
+    { wmesh_int_t i;
+      for (i=0;i<nelm;++i)
+	{
+	  for (wmesh_int_t k=0;k<3;++k)
+	    {
+	      cncelm[k] = cnc[cncoff*i+k];
+	    }
+
+	  {wmesh_int_t j;for (j=0;j<3;++j){ fprintf(fil,"" "%8.15e" " " "%8.15e" " " WMESH_INT_FORMAT "\n",coo[cncelm[j]*2+0],coo[cncelm[j]*2+1],codnodes[codnodesoff * cncelm[j]]); } }
+	} } 
+    
+    fprintf(fil,"Triangles\n" WMESH_INT_FORMAT "\n",nelm); 
+    { wmesh_int_t i;
+      for (i=0;i<nelm;++i)
+	{
+	  fprintf(fil,"" WMESH_INT_FORMAT " " WMESH_INT_FORMAT " " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",i*3+1,i*3+2,i*3+3,codelm[i*codelmoff]);
+	} } 
+    fprintf(fil,"End\n");						
+    fclose(fil); }  
+}
+#endif
+
+#include "CG_VAR.hpp"
+#include "DG_VAR.hpp"
+
+#if 0
+#include "DG_VIEW.hpp"
+
+
+void dg_print_sol(DG_VIEW& 		dg_view_,
+		  mkS shape_x,mkS shape,wmesh_int_t N,const double * __restrict__ sol,const char * name_,...)
+{
+  wmesh_int_t n = shape.m_ndofs;
+  wmesh_int_t nx = shape_x.m_ndofs;
+  { char ctmp[512];
+    { char ctmp2[512];
+      va_list args;
+      va_start (args,name_);
+      vsprintf(ctmp2,name_,args);
+      va_end(args);
+      sprintf(ctmp,"%s.bb",ctmp2); }
+    //    R tmp[64];
+    FILE * fil = fopen(ctmp,"w");
+    fprintf(fil,"2 1 " WMESH_INT_FORMAT " 2\n",N*dg_view_.m_nsubcells*3);
+    WLA::vector_h f;
+    double fx[128];
+    WLA::vector_h::define(f,n,fx,1);
+    WLA::vector_h f2;
+    double fx2[128];
+    WLA::vector_h::define(f2,nx,fx2,1);
+    { wmesh_int_t j;
+      for (j=0;j<N;++j)
+	{
+	  for (wmesh_int_t i=0;i<n;++i)
+	    {
+	      fx[i] = sol[n*j+i];
+	    }
+	  
+	  dg_view_.f(f);
+	  for (wmesh_int_t k=0;k<dg_view_.m_nsubcells;++k)
+	    {
+	      dg_view_.f(k,f2);
+	      for (wmesh_int_t i=0;i<nx;++i)
+		{
+		  fprintf(fil,"" "%8.15e" "\n",f2.x[i]);
+		}
+	    }
+	} } 
+    fclose(fil); }
+}
+
+
+void dg_print_mesh(const ns_mesh*	s_,
+		   DG_VIEW& 		dg_view_,
+		   const char * 	name_,...)
+{
+  
+  //  const wmesh_int_t numNodes = ns_mesh_get_numNodes(s_);
+
+  
+  { char ctmp[512];
+    { char ctmp2[512];
+      va_list args;
+      va_start (args,name_);
+      vsprintf(ctmp2,name_,args);
+      va_end(args);
+      sprintf(ctmp,"%s.mesh",ctmp2); }
+
+    
+    wmesh_int_t nsubcells = dg_view_.m_nsubcells;
+    wmesh_int_t nelm = s_->nelm*nsubcells;
+    wmesh_int_t cncelm[3];
+    FILE * fil = fopen(ctmp,"w");
+    fprintf(fil,"MeshVersionFormatted\n1\nDimension\n2\nVertices\n" WMESH_INT_FORMAT "\n",s_->nelm*nsubcells*3);
+
+
+    
+    double cooelm[6];
+    WLA::matrix_h xyz;
+    WLA::matrix_h::define(xyz,3,2,cooelm,3);
+    double cooelm2[6];
+    WLA::matrix_h xyz2;
+    WLA::matrix_h::define(xyz2,3,2,cooelm2,3);
+    { wmesh_int_t i;
+      for (i=0;i<s_->nelm;++i)
+	{
+	  ns_mesh_get_cellToNodes(s_,&i,cncelm);	  
+	  ns_mesh_cooelm(s_,
+			 &i,
+			 cooelm);	  
+	  dg_view_.xyz(xyz);
+	  
+
+
+	  for (wmesh_int_t k=0;k<nsubcells;++k)
+	    {	      
+	      dg_view_.xyz(k,xyz2);
+	      {wmesh_int_t j;for (j=0;j<3;++j){ fprintf(fil,"" "%8.15e" " " "%8.15e" " " WMESH_INT_FORMAT "\n",xyz2.x[xyz2.ld*0+j],xyz2.x[xyz2.ld*1+j],((wmesh_int_t)0)); }}
+	    }	  
+	} } 
+
+    
+    fprintf(fil,"Triangles\n" WMESH_INT_FORMAT "\n",nelm); 
+    { wmesh_int_t i;
+      for (i=0;i<nelm;++i)
+	{
+	  fprintf(fil,"" WMESH_INT_FORMAT " " WMESH_INT_FORMAT " " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",i*3+1,i*3+2,i*3+3,((wmesh_int_t)0));
+	} }
+
+    
+    fprintf(fil,"End\n");						
+    fclose(fil); }  
+}
+#endif
+#define dim 		((wmesh_int_t)2)
+#define nfaceinelm 	((wmesh_int_t)3)
+
+int comp(const void * a ,const void * b)
+{
+  const_wmesh_int_p a_ = (const_wmesh_int_p)a;
+  const_wmesh_int_p b_ = (const_wmesh_int_p)b;
+  if (a_[0] < b_[0] )
+    {
+      return -1;
+    }
+  else if (a_[0] > b_[0] )
+    {
+      return 1;
+    }
+  else
+    {
+      return 0;
+    }
+}
+
+#include "DG_JACOBIAN.hpp"
+
+#if 0
+DG_VAR& DG_VAR::operator = (const temp_jacvar&that)
+  {
+    that.j.gemv(that.x.m_values3.x,
+		 that.x.m_values3.ld,
+		 m_values3.x,
+		 m_values3.ld);
+    return *this;
+  };
+#endif
+
+#include "DG_DATA.hpp"
+#include "DG_HANDLE.hpp"
+
+
+struct DG
+{  
+
+  
+public:  
+  typedef enum enum_DG
+    {
+    
+      IA_lc=0,
+      IA_lc_elm=1,
+      IA_lc_face=2,
+      IA_lc_elm_a=3,
+      IA_lc_u=4,
+      IA_lc_elm_u0=5,
+      IA_lc_elm_u1=6,
+      I_npoints=11,
+      I_npoints_element=12,
+      I_npoints_boundary=13,
+      RA_lc=14,
+      I_lc_len=16,
+      RA_bmat=17,
+      RA_bmatx=18,
+      I_bmat_n=19,
+      I_bmat_m=20,
+      I_bmat_len=21,
+      ERR=22,
+      RA_EVAL_TETA_U=23,
+
+      I_QFACE_N=28,
+      I_QELM_N=29,
+
+      I_TRIAL_FAMILY=30,
+      I_TRIAL_DEGREE=31,
+      I_TRIAL_NBASIS=32,
+
+    
+      I_TEST_FAMILY=33,
+      I_TEST_DEGREE=34,
+      I_TEST_NBASIS=35,
+    
+      I_TETA_FAMILY=36,
+      I_TETA_DEGREE=37,
+      I_TETA_NBASIS=38,
+    
+      I_TETA_U_FAMILY=39,
+      I_TETA_U_DEGREE=40,
+      I_TETA_U_NBASIS=41,
+    
+      I_TETA_A_FAMILY=42,
+      I_TETA_A_DEGREE=43,
+      I_TETA_A_NBASIS=44,
+
+      I_n=64
+
+    } info_t;
+
+struct INFO
+{
+  wmesh_int_t 		dg_iinfo[DG::I_n];
+  double		dg_rres	[DG_rres_n];
+  wmesh_int_t		dg_ires	[DG_ires_n];
+  wmesh_int_t 		dg_rinfo_n;
+  wmesh_int_t 		dg_iinfo_n;
+  double * __restrict__		dg_rinfo;
+  wmesh_int_t 		dg_rwork_n;
+  double * __restrict__		dg_rwork;
+  wmesh_int_t 		dg_iwork_n;
+  wmesh_int_p		dg_iwork;
+  INFO()
+  {
+    dg_iinfo[DG::I_QELM_N]	= 10;
+    dg_iinfo[DG::I_QFACE_N]  	= 10;  
+    dg_rinfo_n			= (wmesh_int_t)640000;
+    dg_rinfo 			= (double * __restrict__)malloc(sizeof(double)*dg_rinfo_n);
+    dg_rwork_n			= (wmesh_int_t)1280000;
+    dg_rwork 			= (double * __restrict__)malloc(sizeof(double)*dg_rwork_n);
+    dg_iwork_n			= (wmesh_int_t)1280000;
+    dg_iwork 			= (wmesh_int_p)malloc(sizeof(wmesh_int_t)*dg_iwork_n);
+  };
+  
+  static void define(INFO*self)
+  {
+    //    printf("I_QFACE_N %d\n",DG::I_QFACE_N);
+    self->dg_iinfo_n = DG::I_n;
+    self->dg_iinfo[DG::I_QELM_N]	= 10;
+    self->dg_iinfo[DG::I_QFACE_N]  	= 10;  
+    self->dg_rinfo_n			= (wmesh_int_t)640000;
+    self->dg_rinfo 			= (double * __restrict__)malloc(sizeof(double)*self->dg_rinfo_n);
+    self->dg_rwork_n			= (wmesh_int_t)1280000;
+    self->dg_rwork 			= (double * __restrict__)malloc(sizeof(double)*self->dg_rwork_n);
+    self->dg_iwork_n			= (wmesh_int_t)1280000;
+    self->dg_iwork 			= (wmesh_int_p)malloc(sizeof(wmesh_int_t)*self->dg_iwork_n);
+  };
+  
+};
+  
+public: static DG_DATA * create_data(const wmesh_shape_t*__restrict__ 		s_teta_a_,
+				     const wmesh_shape_t*__restrict__ 		s_teta_u_,
+				     const wmesh_shape_t*__restrict__ 		s_teta_,
+				     const wmesh_shape_t*__restrict__ 		s_test_,
+				     const wmesh_shape_t*__restrict__ 		s_trial_)
+  {
+    return new DG_DATA(s_teta_->m_ndofs,
+		       s_trial_->m_ndofs,
+		       s_test_->m_ndofs,
+		       s_teta_u_->m_ndofs);
+  };
+  
+#define WAIT 0
+  
+public: static void dgadvection_init_with_quadrature(const wmesh_shape_t*__restrict__ 		s_teta_a_,
+						     const wmesh_shape_t*__restrict__ 		s_teta_u_,
+						     const wmesh_shape_t*__restrict__ 		s_teta_,
+						     const wmesh_shape_t*__restrict__ 		s_test_,
+						     const wmesh_shape_t*__restrict__ 		s_trial_,
+						     
+						     const_wmesh_int_p 		qelm_n_,
+						     const double * __restrict__ 		qelm_p_,
+						     const double * __restrict__ 		qelm_w_,
+						     
+						     const_wmesh_int_p 		qface_n_,
+						     const double * __restrict__ 		qface_p_,
+						     const double * __restrict__ 		qface_w_,
+						     
+						     const_wmesh_int_p           	iinfo_n_,
+						     wmesh_int_p			iinfo_,
+						     const_wmesh_int_p		rinfo_n_,
+						     double * __restrict__ 		rinfo_,
+						     const_wmesh_int_p 		rwork_n_,
+						     double * __restrict__			rwork_)
+  {
+  
+    wmesh_int_p ferr_ 	= &iinfo_[DG::ERR];  
+    ferr_[0] 	= (wmesh_int_t)0;  
+    if (iinfo_n_[0] < DG::I_n)
+      {
+	ferr_[0] =
+	  DGERR_USER;
+	fprintf(stderr,"*** MOK_DGI_INIT ERROR IINFO[DG::I_N]<1\n");
+	exit(1);
+      }
+    if (iinfo_[DG::I_QFACE_N]<1)
+      {
+	ferr_[0] =
+	  DGERR_USER;
+	fprintf(stderr,"*** MOK_DGI_INIT ERROR IINFO[DG::I_QFACE_N]<1\n");
+	exit(1);
+      }
+  
+    if (iinfo_[DG::I_QELM_N]<1)
+      {
+	ferr_[0] = DGERR_USER;
+	fprintf(stderr,"*** MOK_DGI_INIT ERROR IINFO[DG::I_QELM_N]<1\n");
+	exit(1);
+      }
+  
+    iinfo_[DG::I_TETA_A_NBASIS]  = (s_teta_a_) ? s_teta_a_->m_ndofs:((wmesh_int_t)0);
+    iinfo_[DG::I_TETA_U_NBASIS]	 = s_teta_u_->m_ndofs;
+    iinfo_[DG::I_TETA_NBASIS]	 = s_teta_->m_ndofs;
+    iinfo_[DG::I_TRIAL_NBASIS]	 = s_trial_->m_ndofs;
+    iinfo_[DG::I_TEST_NBASIS]	 = s_test_->m_ndofs;
+    iinfo_[DG::I_QELM_N] 	 = qelm_n_[0];  
+
+    if (ferr_[0]) 
+      {
+	return;
+      }
+  
+    if (iinfo_[DG::I_TRIAL_NBASIS]!=iinfo_[DG::I_TEST_NBASIS])   
+      { 
+	ferr_[0] = DGERR_USER;
+	fprintf(stderr,"*** MOK_DGI_INIT ERROR IINFO[DG::I_TEST_NBASIS]!=IINFO[DG::I_TRIAL_NBASIS]\n");    
+      }
+
+    wmesh_shape_t s_teta_a;
+    wmesh_shape_t s_teta_u;
+    wmesh_shape_t s_teta;
+    wmesh_shape_t s_test;
+    wmesh_shape_t s_trial;
+
+    memcpy(&s_teta_a,s_teta_a_,sizeof(wmesh_shape_t));
+    memcpy(&s_teta_u,s_teta_u_,sizeof(wmesh_shape_t));
+    memcpy(&s_teta,s_teta_,sizeof(wmesh_shape_t));
+    memcpy(&s_test,s_test_,sizeof(wmesh_shape_t));
+    memcpy(&s_trial,s_trial_,sizeof(wmesh_shape_t));
+
+    const wmesh_int_t s_teta_a_degree = s_teta_a_->m_degree;
+    const wmesh_int_t s_teta_u_degree = s_teta_u_->m_degree;
+
+    const wmesh_int_t trial_n	= iinfo_[DG::I_TRIAL_NBASIS];
+    const wmesh_int_t test_n	= iinfo_[DG::I_TEST_NBASIS];
+    const wmesh_int_t teta_n	= iinfo_[DG::I_TETA_NBASIS];
+    const wmesh_int_t teta_a_n 	= iinfo_[DG::I_TETA_A_NBASIS];
+    const wmesh_int_t teta_u_n 	= iinfo_[DG::I_TETA_U_NBASIS];
+
+#if 0
+    fprintf(stdout,"  Discontinuous Galerkin Definition\n");
+    fprintf(stdout,"  trial_n   " WMESH_INT_FORMAT "\n",trial_n);
+    fprintf(stdout,"  test_n    " WMESH_INT_FORMAT "\n",test_n);
+    fprintf(stdout,"  teta_n    " WMESH_INT_FORMAT "\n",teta_n);
+    fprintf(stdout,"  teta_a_n  " WMESH_INT_FORMAT "\n",teta_a_n);
+    fprintf(stdout,"  teta_u_n  " WMESH_INT_FORMAT "\n",teta_u_n);
+#endif
+    
+    const wmesh_int_t trial_nXtrial_n 	= trial_n * trial_n;
+
+    
+    const wmesh_int_t npoints_element	= teta_a_n + dim * teta_u_n;
+    const wmesh_int_t npoints_boundary	= nfaceinelm * qface_n_[0];
+    const wmesh_int_t npoints 	 	= npoints_element + npoints_boundary;  
+    const wmesh_int_t bmat_n 		= trial_n * test_n + teta_n * test_n;
+    //    const wmesh_int_t bmat_m 		= npoints;
+    
+    const wmesh_int_t bmatx_size 		= bmat_n*(nfaceinelm * qface_n_[0] * nfaceinelm);
+    const wmesh_int_t evalu_size 		= teta_u_n * (dim*teta_u_n + nfaceinelm * qface_n_[0]);  
+    if (rinfo_n_[0] < 2 * npoints + bmat_n*npoints + bmatx_size + evalu_size)
+      {
+	fprintf(stderr,"*** DGwmesh_int_t too small rinfo_ array (" WMESH_INT_FORMAT "<" WMESH_INT_FORMAT ")\n",
+		rinfo_n_[0],
+		2*npoints+bmat_n*npoints+bmatx_size+evalu_size);
+	ferr_[0] = DGERR_MEMORY;
+	return;
+      }
+  
+    /* on recopie la quadrature pour les faces */  
+    /* on recopie les interpolants */
+    
+    iinfo_[DG::I_npoints]     		= npoints;
+    iinfo_[DG::I_npoints_element]  	= npoints_element;
+    iinfo_[DG::I_npoints_boundary] 	= npoints_boundary;
+    
+    iinfo_[DG::I_bmat_n] 		= bmat_n;
+    iinfo_[DG::I_bmat_m] 		= iinfo_[DG::I_npoints];
+    iinfo_[DG::I_bmat_len] 		= iinfo_[DG::I_bmat_n]*iinfo_[DG::I_npoints];
+
+    iinfo_[DG::I_lc_len] 		= 2*iinfo_[DG::I_npoints];
+  
+    /* matrice de flux */  
+    /* les points d evaluation en coordonnees locales */
+    iinfo_[DG::IA_lc]        	= 0;
+    iinfo_[DG::IA_lc_elm]    	= 0;
+    iinfo_[DG::IA_lc_elm_a]  	= 0;
+    iinfo_[DG::IA_lc_elm_u0] 	= iinfo_[DG::I_TETA_A_NBASIS];
+    iinfo_[DG::IA_lc_elm_u1] 	= iinfo_[DG::I_TETA_A_NBASIS]+iinfo_[DG::I_TETA_U_NBASIS];
+    iinfo_[DG::IA_lc_face]   	= npoints_element;
+    iinfo_[DG::IA_lc_u]      	= iinfo_[DG::I_TETA_A_NBASIS];
+  
+    iinfo_[DG::RA_bmat] 		= 2*npoints;
+    iinfo_[DG::RA_bmatx] 		= iinfo_[DG::RA_bmat]  + iinfo_[DG::I_bmat_len];
+    iinfo_[DG::RA_EVAL_TETA_U]    = iinfo_[DG::RA_bmatx] + bmatx_size;
+
+    
+
+    const wmesh_int_t npoints_velocity_involved 	= iinfo_[DG::I_npoints]-iinfo_[DG::I_TETA_A_NBASIS];  
+    
+    double * __restrict__ bmat_x = &rinfo_[iinfo_[DG::RA_bmat]];  
+    const wmesh_int_t bmat_ld = bmat_n;
+    double * __restrict__ teta_a_trial_test 	= &bmat_x[0];
+
+    double * __restrict__ teta_u_nabla_trial_test[dim];
+    for (wmesh_int_t idim =0;idim<dim;++idim)
+      {
+	teta_u_nabla_trial_test[idim] = &bmat_x[(teta_a_n+idim*teta_u_n)*bmat_ld];
+      }
+    
+    //    double * __restrict__ teta_u_dxtrial_test 	= &bmat_x[teta_a_n*bmat_ld];
+    //    double * __restrict__ teta_u_dytrial_test 	= &bmat_x[(teta_a_n+teta_u_n)*bmat_ld];
+    double * __restrict__ teta_u_nabla_teta_test[dim];
+    for (wmesh_int_t idim =0;idim<dim;++idim)
+      {
+	teta_u_nabla_teta_test[idim] = &bmat_x[(teta_a_n+idim*teta_u_n)*bmat_ld+trial_nXtrial_n];
+      }
+
+    double * __restrict__ teta_a_teta_test  	= &bmat_x[trial_nXtrial_n];
+    //    double * __restrict__ teta_u_dxteta_test 	= &bmat_x[teta_a_n*bmat_n+trial_nXtrial_n];
+    //    double * __restrict__ teta_u_dyteta_test 	= &bmat_x[(teta_a_n+teta_u_n)*bmat_n+trial_nXtrial_n];
+    
+    if (teta_a_n>0)
+      {
+	
+	//
+	// Form the matrix.
+	//
+#if WAIT
+	mkS_kji(mkS_b(&s_teta_a),
+		mkS_b(&s_trial),
+		mkS_b(&s_test),
+		teta_a_trial_test,
+		&bmat_n,
+		qelm_n_,
+		qelm_w_,
+		qelm_p_,
+		qelm_n_,
+		rwork_n_,
+		rwork_,
+		ferr_);
+#endif
+#if 0
+	wmesh_int_t i;for (i=0;i<36;++i) { printf("hh %e \n",nsFABS(tria_L2_L2[i]-bmat_x[i]));  }      
+#endif
+#if WAIT
+	mkS_kji(mkS_b(&s_teta_a),
+		mkS_b(&s_teta),
+		mkS_b(&s_test),
+		teta_a_teta_test,
+		&bmat_n,
+		qelm_n_,
+		qelm_w_,
+		qelm_p_,
+		qelm_n_,
+		rwork_n_,
+		rwork_,
+		ferr_);
+#endif      
+#if 0
+	for (i=0;i<36;++i) { printf("gg %e \n",nsFABS(tria_L2_L2[i]-bmat_x[i]));  }
+#endif
+      
+      }
+
+  
+    if (teta_u_n>0)
+      {
+#if WAIT	
+	for (wmesh_int_t idim =0;idim < dim;++idim)
+	  {
+	    mkS_kji(mkS_b(&s_teta_u),
+		    mkS_derivative(&s_trial,idim),
+		    mkS_b(&s_test),
+		    teta_u_nabla_trial_test[idim],
+		    &bmat_ld,
+		    qelm_n_,
+		    qelm_w_,
+		    qelm_p_,
+		    qelm_n_,
+		    rwork_n_,
+		    rwork_,
+		    ferr_);
+	  }
+
+	for (wmesh_int_t idim =0;idim < dim;++idim)
+	  {
+	    mkS_kji(mkS_b(&s_teta_u),
+		    mkS_derivative(&s_teta,idim),
+		    mkS_b(&s_test),
+		    teta_u_nabla_teta_test[idim],
+		    &bmat_ld,
+		    qelm_n_,
+		    qelm_w_,
+		    qelm_p_,
+		    qelm_n_,
+		    rwork_n_,
+		    rwork_,
+		    ferr_);
+	  }
+#endif
+      }  
+
+    /* -------------------------------------------------------------------------------------- */
+    /* LOCAL COORDINATES -------------------------------------------------------------------  */
+    /* -------------------------------------------------------------------------------------- */            
+    { double * __restrict__ lc = &rinfo_[iinfo_[DG::IA_lc]];
+
+      if (iinfo_[DG::I_TETA_A_NBASIS]>0)
+	{
+#if WAIT
+	  mkS_lagrange_localspl_tria(&s_teta_a_degree,
+				     &lc[iinfo_[DG::IA_lc_elm_a]],
+				     &npoints);
+#endif
+	}
+#if WAIT
+      mkS_lagrange_localspl_tria	(&s_teta_u_degree,
+					 &lc[iinfo_[DG::IA_lc_elm_u0]],
+					 &npoints);
+    
+      mkS_lagrange_localspl_tria	(&s_teta_u_degree,
+					 &lc[iinfo_[DG::IA_lc_elm_u1]],
+					 &npoints);
+    
+      mkS_bmapping		(qface_n_[0],
+				 &lc[iinfo_[DG::IA_lc_face]],
+				 &npoints,
+				 qface_p_);
+    
+      /* -------------------------------------------------------------------------------------- */
+      /* CALCUL DE L EVALUATION DE TETA_U POUR TOUS LES POINTS D INTEGRATION ELM + 3*NFACES */
+      /* -------------------------------------------------------------------------------------- */            
+      mkS_basis(mkS_b(&s_teta_u),
+		&npoints_velocity_involved,
+		&rinfo_[iinfo_[DG::RA_EVAL_TETA_U]],
+		&iinfo_[DG::I_TETA_U_NBASIS],
+		&rinfo_[iinfo_[DG::IA_lc_u]],
+		&iinfo_[DG::I_npoints],// DG::I_npoints			   			   
+		rwork_,
+		rwork_n_,
+		ferr_);
+
+#endif
+      
+    }
+  
+#if 0
+    {
+      wmesh_int_t i,j;double * __restrict__ lc = &rinfo_[iinfo_[DG::IA_lc]];
+      for (i=0;i<npoints_velocity_involved;++i)
+	{
+	  printf("allo %e %e " WMESH_INT_FORMAT "\n",lc[iinfo_[DG::IA_lc_face]+i],lc[iinfo_[DG::IA_lc_face]+npoints+i],iinfo_[DG::I_TETA_U_NBASIS]);
+	  for (j=0;j<iinfo_[DG::I_TETA_U_NBASIS];++j)
+	    {
+	      printf("%e\n",rinfo_[iinfo_[DG::RA_EVAL_TETA_U] + iinfo_[DG::I_TETA_U_NBASIS]*i+j]);
+	    }
+	}
+      exit(1);}
+#endif
+
+
+    /* -------------------------------------------------------------------------------------- */
+    /* MATRICES PONDEREES SUR LE BORD */
+    /* -------------------------------------------------------------------------------------- */        
+#if WAIT
+    mkS_bwji(qface_n_,
+	     qface_p_,
+	     qface_w_,
+	     mkS_b(&s_trial),
+	     mkS_b(&s_test),
+	     &bmat_x[(teta_a_n+2*teta_u_n)*bmat_n],
+	     bmat_n,
+	     ferr_);
+  
+    mkS_bwji(qface_n_,
+	     qface_p_,
+	     qface_w_,
+	     mkS_b(&s_teta),
+	     mkS_b(&s_test),
+	     &bmat_x[(teta_a_n+2*teta_u_n)*bmat_n+trial_nXtrial_n],
+	     bmat_n,
+	     ferr_);
+#endif
+  
+    /* -------------------------------------------------------------------------------------- */
+    /* MATRICES PONDEREES SUR LE BORD CONTRAPOSEE AVEC LE BORD */
+    /* -------------------------------------------------------------------------------------- */            
+
+    { double * __restrict__ bmatflux = &rinfo_[iinfo_[DG::RA_bmatx]];
+
+#if WAIT
+  mkS_bwji_nei(qface_n_,
+		   qface_p_,
+		   qface_w_,
+		   mkS_b(&s_trial),
+		   mkS_b(&s_test),
+		   bmatflux,
+		   bmat_n,
+		   ferr_);    
+    
+      mkS_bwji_nei(qface_n_,
+		   qface_p_,
+		   qface_w_,
+		   mkS_b(&s_teta),
+		   mkS_b(&s_test),
+		   &bmatflux[trial_nXtrial_n],
+		   bmat_n,
+		   ferr_);
+
+#endif
+    }
+    return;
+  };
+
+  static void define(DG_HANDLE* 	handle_,
+		     const wmesh_shape_t*__restrict__ 		s_teta_a_,
+		     const wmesh_shape_t*__restrict__ 		s_teta_u_,
+		     const wmesh_shape_t*__restrict__ 		s_teta_,
+		     const wmesh_shape_t*__restrict__ 		s_test_,
+		     const wmesh_shape_t*__restrict__ 		s_trial_,
+		     const_wmesh_int_p         	iinfo_n_,
+		     wmesh_int_p			iinfo_,		  
+		     const_wmesh_int_p		rinfo_n_,
+		     double * __restrict__ 		rinfo_,
+		     const_wmesh_int_p 		rwork_n_,
+		     double * __restrict__			rwork_)
+  {
+    
+    wmesh_int_p ferr_ 	= &iinfo_[DG::ERR];  
+    ferr_[0] 	= (wmesh_int_t)0;  
+    if (iinfo_[DG::I_QFACE_N]<1)
+      {
+	ferr_[0] =
+	  DGERR_USER;
+	fprintf(stderr,"*** MOK_DGI_INIT ERROR IINFO[DG::I_QFACE_N]<1\n");
+	exit(1);
+      }
+  
+    if (iinfo_[DG::I_QELM_N]<1)
+      {
+	ferr_[0] = DGERR_USER;
+	fprintf(stderr,"*** MOK_DGI_INIT ERROR IINFO[DG::I_QELM_N]<1\n");
+	exit(1);
+      }
+
+    const wmesh_int_t qelm_n_	[1] 	= {iinfo_[DG::I_QELM_N]*iinfo_[DG::I_QELM_N]};
+    const wmesh_int_t qface_n_	[1] 	= {iinfo_[DG::I_QFACE_N]};
+    
+    double qelm_p_	[64*64*2];
+    double qelm_w_	[64*64];
+    double qface_p_	[64];
+    double qface_w_	[64];
+    
+#if 0  
+    fprintf(stdout,"generate quadrature " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",
+	    qelm_n_[0],
+	    qface_n_[0]);
+#endif  
+    {
+      std::cout << " rwork_n " <<  rwork_n_[0] << std::endl;
+      const wmesh_int_t rwork_n = (rwork_n_[0]>3*iinfo_[DG::I_QELM_N])?rwork_n_[0]-3*iinfo_[DG::I_QELM_N]:(wmesh_int_t)0;
+      if (rwork_n<1)
+	{
+	  fprintf(stderr,"*** MOK_DGI_INIT ERROR TOO SMALL RWORK_N\n");
+	  ferr_[0] = DGERR_MEMORY;
+	  return;
+	}
+      wmesh_int_t nequal1=1;
+#if WAIT
+      mkQ_legendre_interval_(qface_n_,
+			     qface_p_,
+			     &nequal1,
+			     qface_w_,
+			     &nequal1,
+			     rwork_,
+			     rwork_n_,
+			     ferr_);
+      if (ferr_[0])
+	{
+	  ferr_[0] = 1;
+	  fprintf(stderr,"*** MOK_DGI:first mkQ_legendre_interval_ failed (ferr_ = " WMESH_INT_FORMAT "\n",ferr_[0]);
+	  return;
+	}
+      mkQ_legendre_interval_(&iinfo_[DG::I_QELM_N],
+			     rwork_,
+			     &nequal1,
+			     &rwork_[2*iinfo_[DG::I_QELM_N]],
+			     &nequal1,
+			     &rwork_[3*iinfo_[DG::I_QELM_N]],
+			     rwork_n_,
+			     ferr_);    
+      if (ferr_[0])
+	{
+	  ferr_[0] = 1;
+	  fprintf(stderr,"*** MOK_DGI:second mkQ_legendre_interval_ failed (ferr_ = " WMESH_INT_FORMAT "\n",ferr_[0]);
+	  return;
+	}
+      wmesh_int_t qelm_n=0;
+      mkQ_collapse_		(&iinfo_[DG::I_QELM_N],
+				 rwork_,
+				 &nequal1,
+				 &rwork_[2*iinfo_[DG::I_QELM_N]],
+				 &nequal1,
+				 &qelm_n,
+				 qelm_p_,
+				 qelm_n_,
+				 qelm_w_,
+				 &nequal1,
+				 ferr_);
+    
+      if (ferr_[0])
+	{
+	  ferr_[0] = 1;
+	  fprintf(stderr,"*** MOK_DGI:mkQ_legendre_interval_ failed\n");
+	  return;
+	}
+#endif
+    }
+#if 0
+    fprintf(stdout,"generate quadrature done\n");
+#endif
+
+
+    dgadvection_init_with_quadrature(s_teta_a_,
+				     s_teta_u_,
+				     s_teta_,
+				     s_test_,
+				     s_trial_,
+		  
+				     qelm_n_,
+				     qelm_p_,
+				     qelm_w_,
+		  
+				     qface_n_,
+				     qface_p_,
+				     qface_w_,
+
+				     iinfo_n_,
+				     iinfo_,
+
+				     rinfo_n_,
+				     rinfo_,
+				     
+				     rwork_n_,
+				     rwork_);
+
+
+    const_wmesh_int_p	nu      = &iinfo_[DG::I_TETA_U_NBASIS];
+    const_wmesh_int_p	na      = &iinfo_[DG::I_TETA_A_NBASIS];
+    const wmesh_int_t bmat_n 		= iinfo_[DG::I_bmat_n];  
+    const wmesh_int_t bmat_m 		= iinfo_[DG::I_bmat_m];  
+
+
+    
+    double * __restrict__ brhs      		= &rwork_[0];
+    double * __restrict__ brhs_uelm 		= &rwork_[1];
+    wmesh_int_t  npts_involving_u 	= bmat_m-na[0];/*nTot-teta_a_n*/    
+    double * __restrict__ tmpbrhs        		= &rwork_[bmat_m]; 
+    double * __restrict__ tmpbrhs_uelm   		= &tmpbrhs[na[0]]; 
+    double * __restrict__ tmpbrhs_u 		= tmpbrhs_uelm;
+    const wmesh_int_t tmpbrhs_ufaceoff 	= bmat_m;
+    
+    const double * __restrict__ bmat	 		= &rinfo_[iinfo_[DG::RA_bmat]];
+    //    const double * __restrict__ bmatflux 		= &rinfo_[iinfo_[DG::RA_bmatx]];
+    wmesh_mat_t<double>::define(&handle_->m_BMAT,
+		      bmat_n,
+		      bmat_m,(double * __restrict__)bmat,
+		      bmat_n);
+    
+
+    wmesh_mat_t<double>::define(&handle_->m_mat_tmpbrhs_uelm,
+		      nu[0],
+		      dim,
+		      tmpbrhs_uelm,
+		      tmpbrhs_ufaceoff);
+
+    wmesh_mat_t<double>::define(&handle_->m_UVWDOFS,
+		      nu[0],
+		      dim,
+		      brhs_uelm,
+		      nu[0]);
+
+    wmesh_mat_t<double>::define(&handle_->m_brhs_uvw,
+		      npts_involving_u,
+		      dim,
+		      tmpbrhs_u,
+		      tmpbrhs_ufaceoff);
+    
+    wmesh_mat_t<double>::define(&handle_->m_BRHS,
+		      1,
+		      bmat_m,
+		      brhs,
+		      1);
+
+    wmesh_mat_t<double>::define(&handle_->m_EVALU,
+		      nu[0],
+		      npts_involving_u,
+		      &rinfo_[iinfo_[DG::RA_EVAL_TETA_U]],
+		      iinfo_[DG::I_TETA_U_NBASIS]);
+    
+    for (wmesh_int_t localFaceIndex=0;localFaceIndex < nfaceinelm;++localFaceIndex)
+      {    
+	wmesh_mat_t<double>::define(&handle_->m_mat_tmpbrhs_uface[localFaceIndex],
+			  qface_n_[0],
+			  dim,
+			  &tmpbrhs[na[0]+dim*nu[0]+localFaceIndex*qface_n_[0]],
+			  tmpbrhs_ufaceoff);
+      }
+    
+    
+  };
+
+
+  
+  static void solve(DG_HANDLE*  handle_,
+		    DG_DATA*    data_,
+		    const double * __restrict__ 	xa_,
+		    const double * __restrict__ 	xu_,
+		    const double * __restrict__	rhs_,
+		    const_wmesh_int_p 	rhsoff_,
+		    
+		    const_wmesh_int_p  	cnc_u_,
+		    const_wmesh_int_p  	cncoff_u_,
+		    const double * __restrict__ 	data_u_,		       
+		    const double * __restrict__	data_v_,
+		    
+		    const double * __restrict__	sol_,
+		    const_wmesh_int_p 	soloff_,
+		    
+		    double * __restrict__		corr_,
+		    const_wmesh_int_p 	corroff_,
+		    
+		    const double * __restrict__ 	t_,
+		    const_wmesh_int_p 	nelm_,
+		    const double * __restrict__ 	coo_,
+		    const_wmesh_int_p 	cooff_,
+		    const_wmesh_int_p 	cnc_,
+		    const_wmesh_int_p 	cncoff_,
+		    const_wmesh_int_p 	adj_,
+		    const_wmesh_int_p 	adjoff_,
+		    const_wmesh_int_p 	vcod_,
+		    const_wmesh_int_p 	noboundary_cod_,
+		    
+		    const_wmesh_int_p 	rwork_n_,
+		    double * __restrict__  	rwork_,
+		    const_wmesh_int_p 	iwork_n_,
+		    wmesh_int_p	iwork_,
+		    
+		    const double * __restrict__ 	rinfo_,
+		    const wmesh_int_t  	iinfo_[DG::I_n],
+		    double 		rres_[DG_rres_n],
+		    wmesh_int_t 		ires_[DG_ires_n])
+  {
+    
+    const_wmesh_int_p	trial_n = &iinfo_[DG::I_TRIAL_NBASIS];
+    const_wmesh_int_p	test_n  = &iinfo_[DG::I_TEST_NBASIS];
+    const_wmesh_int_p	teta_n  = &iinfo_[DG::I_TETA_NBASIS];
+    const_wmesh_int_p	nu      = &iinfo_[DG::I_TETA_U_NBASIS];
+    const_wmesh_int_p	teta_a_n      = &iinfo_[DG::I_TETA_A_NBASIS];
+    const_wmesh_int_p	qface_n = &iinfo_[DG::I_QFACE_N];
+    const wmesh_int_t q_nx3 		= qface_n[0]*3;
+    const wmesh_int_t bmat_n 		= iinfo_[DG::I_bmat_n];
+    const wmesh_int_t bmat_m 		= iinfo_[DG::I_bmat_m];  
+    const double * __restrict__ eval_u_ 		= &rinfo_[iinfo_[DG::RA_EVAL_TETA_U]];
+    const wmesh_int_t eval_uoff_        	= iinfo_[DG::I_TETA_U_NBASIS];
+    const double * __restrict__ bmat 	 		= &rinfo_[iinfo_[DG::RA_bmat]];
+    const double * __restrict__ bmatflux 		= &rinfo_[iinfo_[DG::RA_bmatx]];
+    const double * __restrict__ fpart[3][3];
+    { wmesh_int_t i,j;
+      for (i=0;i<3;++i)
+	for (j=0;j<3;++j)
+	  fpart[i][j] = &bmatflux[bmat_n*( (i*3+j)*qface_n[0]  ) ];
+    }
+    
+    for (wmesh_int_t localFaceIndex=0;localFaceIndex < nfaceinelm;++localFaceIndex)
+      {
+	wmesh_mat_t<double>::define(&data_->vec_uface[localFaceIndex],1,qface_n[0],&rwork_[iinfo_[DG::IA_lc_face]+localFaceIndex*qface_n[0]],1);
+      }
+  
+    /*_____________________________________________________*/
+
+    static const double
+      r1=(double)1.0,
+      r0=(double)0.0;
+  
+    static const wmesh_int_t
+      n1	= (wmesh_int_t)1,
+      n2 	= (wmesh_int_t)2;
+  
+    /*_____________________________________________________*/
+    const double mxu=xu_[0]*((double)1.0);
+
+    /*_____________________________________________________*/
+
+    wmesh_int_t marker_size	= 0;
+  
+    wmesh_int_p
+      lcperm 	= NULL,
+      perm 	= NULL,
+      graph 	= NULL,
+      marker 	= NULL,
+      marker_begin= NULL,
+      marker_flag = NULL;
+
+    double * __restrict__
+      brhs_a      = NULL, * __restrict__
+      uface0 	= NULL, * __restrict__
+      uface1 	= NULL, * __restrict__
+      uface2 	= NULL;
+  
+    double mx;  
+    wmesh_int_t
+      id,
+      ielm,
+      iter_gauss_seidel,
+      b1,
+      b2,
+      pp,
+      n,
+      //      vcod[3*1],codface[8*1]
+      cnc[3*1],neids[8*1],neids_face[8*1];
+  
+    double
+      jacelm[1],
+      x,
+      longueurs[3],
+      jacface[3*1],
+      cooelm[6*1],
+      lcsol[21];
+    double * __restrict__ data_a_ = nullptr;
+
+    //
+    // VELOCITY EVALUATION
+    //
+
+    //
+    // Pointers to bmat and bmatx
+    //
+
+#if __mk_debug__
+    if (bmat_m!=1 + 2*nu[0]+3*qface_n[0]) 
+      {
+	fprintf(stderr,"*** DGERR " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "",1 + 2*nu[0]+3*qface_n[0],bmat_m);exit(1);
+      }
+#endif
+    //    wmesh_int_t npts_involving_u = bmat_m-1;/*nTot-teta_a_n*/
+
+
+
+    //
+    //
+    //
+
+#if 0
+    double 	matflux[21*(21+21)];/*trial_n*(trial_n+teta_n)*/
+    double * __restrict__ 		matflux_corr 	= &matflux[0];
+    double * __restrict__ 		matflux_residu 	= &matflux[trial_n[0]*trial_n[0]];
+
+    wmesh_mat_t<double>::define(&handle_->m_FC,trial_n[0],trial_n[0],matflux_corr,trial_n[0]);
+    wmesh_mat_t<double>::define(&handle_->m_FR,trial_n[0],teta_n[0],matflux_residu,trial_n[0]);
+#endif
+
+    // R lcrhs[21*2];
+    const wmesh_int_t renum_iwork_n = 3*nelm_[0] + 4*(nelm_[0]+1) + trial_n[0];
+    ires_[DG_ires_err] = (wmesh_int_t)0;
+  
+    /*_____________________________________________________*/
+    if (rwork_n_[0]< bmat_m + 2 * bmat_m)
+      {      
+	ires_[DG_ires_err] = (wmesh_int_t)1;
+	ires_[DG_ires_required_rw_n] = 3*bmat_m;
+	fprintf(stderr,"too small rwork_n_ " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",3*bmat_m,rwork_n_[0]);
+	return;
+      }
+
+
+    brhs_a    	= &rwork_[0];  
+    uface0 	= &rwork_[iinfo_[DG::IA_lc_face]];
+    uface1 	= &rwork_[iinfo_[DG::IA_lc_face]+qface_n[0]];
+    uface2 	= &rwork_[iinfo_[DG::IA_lc_face]+2*qface_n[0]];
+
+    double * __restrict__ ufaces[3] = {uface0,uface1,uface2};
+  
+    const wmesh_int_t tmpbrhs_ufaceoff 	= bmat_m;
+    double * __restrict__ tmpbrhs        	= &rwork_[bmat_m]; 
+    double * __restrict__ tmpbrhs_ufaces 	= &tmpbrhs[1+2*nu[0]]; 
+    double * __restrict__ tmpbrhs_uface0 	= &tmpbrhs[1+2*nu[0]]; 
+    double * __restrict__ tmpbrhs_uface1 	= &tmpbrhs[1+2*nu[0]+qface_n[0]];
+    double * __restrict__ tmpbrhs_uface2 	= &tmpbrhs[1+2*nu[0]+2*qface_n[0]];
+    
+    //  double * __restrict__ tmpbrhs_uelm   	= &tmpbrhs[1]; 
+    //  double * __restrict__ tmpbrhs_u	= tmpbrhs_uelm;
+    /*_____________________________________________________*/
+    if (renum_iwork_n>iwork_n_[0])
+      {
+	ires_[DG_ires_err] = (wmesh_int_t)1;
+	ires_[DG_ires_required_iw_n] = renum_iwork_n;
+	fprintf(stderr,"too small iwork_n_ " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",renum_iwork_n,iwork_n_[0]);
+	return;
+      }
+
+    lcperm  	= &iwork_[0];
+    perm  	= &iwork_[trial_n[0]];
+    graph 	= &iwork_[(nelm_[0]+1) + trial_n[0] ];
+    marker 	= &iwork_[(nelm_[0]+1) + trial_n[0] + 3*nelm_[0]];
+    marker_begin 	= &iwork_[(nelm_[0]+1) + trial_n[0] + 3*nelm_[0]+ (nelm_[0]+1)];
+    marker_flag 	= &iwork_[(nelm_[0]+1) + trial_n[0] + 3*nelm_[0]+ 2*(nelm_[0]+1)];
+    /*_____________________________________________________*/
+
+    goto __state_renum;
+
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+  
+  __state_renum:
+    b1=1;
+    b2=0;    
+    { wmesh_int_t j;for (j=trial_n[0];j<renum_iwork_n;++j) iwork_[j]=(wmesh_int_t)0;}  
+    /* */
+    /* on donne un sens a l adjacence */
+    { wmesh_int_t jelm;
+      for (jelm=0;jelm<nelm_[0];++jelm)
+	{        
+	  /* compute jaface and nrmelm */
+	  neids[0]   = adj_[jelm*adjoff_[0]];neids[1]	= adj_[jelm*adjoff_[0]+1];neids[2]	= adj_[jelm*adjoff_[0]+2];
+	  cnc[0]     = cnc_[jelm*cncoff_[0]+0];cnc[1]     = cnc_[jelm*cncoff_[0]+1];cnc[2]     = cnc_[jelm*cncoff_[0]+2];
+	  cooelm[0]  = coo_[cooff_[0]*(cnc[0]-1)+0];cooelm[1]  = coo_[cooff_[0]*(cnc[1]-1)+0];cooelm[2]  = coo_[cooff_[0]*(cnc[2]-1)+0];
+	  cooelm[3]  = coo_[cooff_[0]*(cnc[0]-1)+1];cooelm[4]  = coo_[cooff_[0]*(cnc[1]-1)+1];cooelm[5]  = coo_[cooff_[0]*(cnc[2]-1)+1];
+
+	  jacface[0] = sqrt( (cooelm[0]-cooelm[1])*(cooelm[0]-cooelm[1]) + (cooelm[3]-cooelm[4])*(cooelm[3]-cooelm[4]) ); 
+	  jacface[1] = sqrt( (cooelm[1]-cooelm[2])*(cooelm[1]-cooelm[2]) + (cooelm[4]-cooelm[5])*(cooelm[4]-cooelm[5]) ); 
+	  jacface[2] = sqrt( (cooelm[2]-cooelm[0])*(cooelm[2]-cooelm[0]) + (cooelm[5]-cooelm[3])*(cooelm[5]-cooelm[3]) ); 	  
+
+	  longueurs[0] = jacface[0];longueurs[1] = jacface[1];longueurs[2] = jacface[2];  
+	  data_->nrmelm[0] = cooelm[4] - cooelm[3];data_->nrmelm[1] = cooelm[0] - cooelm[1];				
+	  x = ((double)1.0)/jacface[0];data_->nrmelm[0] *= x;data_->nrmelm[1] *= x;						  
+	  data_->nrmelm[2] = cooelm[5] - cooelm[4];data_->nrmelm[3] = cooelm[1] - cooelm[2];
+	  x = ((double)1.0)/jacface[1];data_->nrmelm[2] *= x;data_->nrmelm[3] *= x;  
+	  data_->nrmelm[4] = cooelm[3] - cooelm[5];data_->nrmelm[5] = cooelm[2] - cooelm[0] ;
+	  x = ((double)1.0)/jacface[2];data_->nrmelm[4] *= x;data_->nrmelm[5] *= x;
+	  jacface[0] *=(double)0.5;jacface[1] *=(double)0.5;jacface[2] *=(double)0.5;	  
+	  /*____ INFO ELEMENT DONE */ 	
+	  /*___________________________________________________________________________________________________________________*/  
+	  /* 
+	     eval u faces
+	  */      
+	  { wmesh_int_t k;
+	    for (k=0;k<nu[0];++k)
+	      {
+		data_->uvw_ldofs.v[k] = data_u_[cnc_u_[jelm*cncoff_u_[0]+k]-1];
+	      } }
+	  { wmesh_int_t k;
+	    for (k=0;k<nu[0];++k)
+	      {
+		data_->uvw_ldofs.v[data_->uvw_ldofs.ld+k] = data_v_[cnc_u_[jelm*cncoff_u_[0]+k]-1];
+	      } }
+  
+	  /*___________________________________________________________________________________________________________________*/
+	  dgemv("T",nu,&q_nx3,&r1,&eval_u_[eval_uoff_*(iinfo_[DG::IA_lc_face]-1)],&eval_uoff_,data_->uvw_ldofs.v,&n1,&r0,tmpbrhs_ufaces,&n1);
+	  dgemv("T",nu,&q_nx3,&r1,&eval_u_[eval_uoff_*(iinfo_[DG::IA_lc_face]-1)],&eval_uoff_,data_->uvw_ldofs.v + data_->uvw_ldofs.ld,&n1,&r0,&tmpbrhs_ufaces[tmpbrhs_ufaceoff],&n1);
+
+
+	  
+	  dgemv("N",qface_n,&n2,&jacface[0],tmpbrhs_uface0,&tmpbrhs_ufaceoff,&data_->nrmelm[2*0],&n1,&r0,uface0,&n1);
+	  dgemv("N",qface_n,&n2,&jacface[1],tmpbrhs_uface1,&tmpbrhs_ufaceoff,&data_->nrmelm[2*1],&n1,&r0,uface1,&n1);
+	  dgemv("N",qface_n,&n2,&jacface[2],tmpbrhs_uface2,&tmpbrhs_ufaceoff,&data_->nrmelm[2*2],&n1,&r0,uface2,&n1);	
+	
+	  { wmesh_int_t k;
+	    for (k=0;k<qface_n[0];++k) if (uface0[k]<((double)0.0)) break;
+	    graph[jelm*3+0] = (neids[0]) ? ( (k<qface_n[0])?-neids[0]:neids[0] ) : ( (k<qface_n[0]) ? -nelm_[0]-1 : (wmesh_int_t)0 ); }
+	  { wmesh_int_t k;
+	    for (k=0;k<qface_n[0];++k)if (uface1[k]<((double)0.0))break;
+	    graph[jelm*3+1] = (neids[1]) ? ( (k<qface_n[0])?-neids[1]:neids[1] ) : ( (k<qface_n[0]) ? -nelm_[0]-1 : (wmesh_int_t)0 ); }
+	  { wmesh_int_t k;
+	    for (k=0;k<qface_n[0];++k)if (uface2[k]<((double)0.0))break;
+	    graph[jelm*3+2] = (neids[2]) ? ( (k<qface_n[0])?-neids[2]:neids[2] ) : ( (k<qface_n[0]) ? -nelm_[0]-1 : (wmesh_int_t)0 ); }	
+	} }
+    /* on met tous ceux qui n'ont pas d antecedent en premier*/
+    { wmesh_int_t jelm;
+      for (jelm=0;jelm<nelm_[0];++jelm)
+	{ 
+	  if (graph[jelm*3]<-nelm_[0]) {perm[++b2]=jelm+1; marker_flag[jelm+1]=1;}
+	  if (graph[jelm*3+1]<-nelm_[0]){perm[++b2]=jelm+1; marker_flag[jelm+1]=1;}
+	  if (graph[jelm*3+2]<-nelm_[0]){perm[++b2]=jelm+1; marker_flag[jelm+1]=1;}
+	} }
+    /*________________________________________________________________________________________________________________*/  
+    pp	= b2;
+    n	= (wmesh_int_t)1;
+  __state_renum_do1:
+    marker_size=0;
+    /* INJECTION */
+    n=0;
+    { wmesh_int_t i;	
+      for (i=b1;i<=b2;++i)
+	{
+	  { wmesh_int_t j;
+	    for (j=0;j<3;++j)
+	      {
+		const wmesh_int_t s = graph[(perm[i]-1)*3+j];
+		if ( (s>0) && ( (! marker[s]) && (! marker_flag[s]) ))
+		  {
+		    marker_size=marker_size+1; marker_begin[marker_size] = s;
+		    marker[s] = marker_size;n=n+1;
+		  }
+	      } }
+	} }
+    
+    /* FIN INJECTION */
+    { wmesh_int_t i;	    
+      for (i=1;i<=marker_size;++i)
+	{
+	  marker_flag[marker_begin[i]]=1;perm[b2+i]=marker_begin[i];
+	  marker[marker_begin[i]]=0;marker_begin[i]=0;
+	} }
+  
+    pp+=n;b1 = b2+1;b2 = b2+n;
+    if (b1>b2)
+      {
+	if (pp==nelm_[0])
+	  goto __state_renum_do1_done;
+	else
+	  {
+	    /* on cherche un element*/
+	    { wmesh_int_t jelm;
+	      for (jelm=1;jelm<=nelm_[0];++jelm)
+		{
+		  if (! marker_flag[jelm])
+		    {
+		      marker_flag[jelm]=(wmesh_int_t)1;
+		      perm[b1] = jelm;
+		      ++n;b2 = b1;
+		      break;
+		    }
+		} }
+	  }
+      }
+    if (n>0)
+      {
+	/* on continue a injecter */
+	goto __state_renum_do1;
+      }
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+  __state_renum_do1_done:
+    if (b2!=nelm_[0])
+      {      
+	fprintf(stderr,"*** DGERR RENUM FAILED " WMESH_INT_FORMAT "!=" WMESH_INT_FORMAT "",b2,nelm_[0]);
+	goto __state_error;
+      }
+    
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    iter_gauss_seidel = 0;
+  __state_next_iter_gauss_seidel:
+
+    fprintf(stdout,"next iter gauss seidel \n");
+    mx = (double)0.0;
+    /*___________________________________________________________________________________________________________________*/  
+    ielm=0;      
+  __state_next_elm:
+    id 		= perm[ielm+1]-1;
+    neids[0]	= adj_[id*adjoff_[0]];
+    neids[1]	= adj_[id*adjoff_[0]+1];
+    neids[2]	= adj_[id*adjoff_[0]+2];
+
+    cnc[0]        = cnc_[id*cncoff_[0]+0];
+    cnc[1]        = cnc_[id*cncoff_[0]+1];
+    cnc[2]        = cnc_[id*cncoff_[0]+2];
+
+#if 0    
+    vcod[0] 	= vcod_[cnc[0]-1];
+    vcod[1] 	= vcod_[cnc[1]-1];
+    vcod[2] 	= vcod_[cnc[2]-1];
+    codface[0] 	= (neids[0])? noboundary_cod_[0] :  MAX(vcod_[0],vcod_[1]);
+    codface[1] 	= (neids[1])? noboundary_cod_[0] :  MAX(vcod_[1],vcod_[2]);
+    codface[2] 	= (neids[2])? noboundary_cod_[0] :  MAX(vcod_[2],vcod_[0]);
+#endif
+    
+    neids_face[0]=0;neids_face[1]=0;neids_face[2]=0;
+    /*---*/
+    if (neids[0])
+      {	if (neids[0]<0) neids[0]=-neids[0];
+	if ( (adj_[(neids[0]-1)*adjoff_[0]+0]==id+1) ) neids_face[0]=0;
+	else if ( (adj_[(neids[0]-1)*adjoff_[0]+1]==id+1) ) neids_face[0]=1;
+	else if ( (adj_[(neids[0]-1)*adjoff_[0]+2]==id+1) ) neids_face[0]=2; }
+    if (neids[1])
+      {	if (neids[1]<0) neids[1]=-neids[1];
+	if ( (adj_[(neids[1]-1)*adjoff_[0]+0]==id+1) ) neids_face[1]=0;
+	else if ( (adj_[(neids[1]-1)*adjoff_[0]+1]==id+1) ) neids_face[1]=1;
+	else if ( (adj_[(neids[1]-1)*adjoff_[0]+2]==id+1) ) neids_face[1]=2; }
+    if (neids[2])
+      {	if (neids[2]<0) neids[2]=-neids[2];
+	if ( (adj_[(neids[2]-1)*adjoff_[0]+0]==id+1) ) neids_face[2]=0;
+	else if ( (adj_[(neids[2]-1)*adjoff_[0]+1]==id+1) ) neids_face[2]=1;
+	else if ( (adj_[(neids[2]-1)*adjoff_[0]+2]==id+1) ) neids_face[2]=2; }
+    /*---*/
+    cooelm[0]  = coo_[cooff_[0]*(cnc[0]-1)+0];
+    cooelm[1]  = coo_[cooff_[0]*(cnc[1]-1)+0];
+    cooelm[2]  = coo_[cooff_[0]*(cnc[2]-1)+0];
+    cooelm[3]  = coo_[cooff_[0]*(cnc[0]-1)+1];
+    cooelm[4]  = coo_[cooff_[0]*(cnc[1]-1)+1];
+    cooelm[5]  = coo_[cooff_[0]*(cnc[2]-1)+1];
+    
+    jacface[0] = sqrt( (cooelm[0]-cooelm[1])*(cooelm[0]-cooelm[1]) + (cooelm[3]-cooelm[4])*(cooelm[3]-cooelm[4]) ); 
+    jacface[1] = sqrt( (cooelm[1]-cooelm[2])*(cooelm[1]-cooelm[2]) + (cooelm[4]-cooelm[5])*(cooelm[4]-cooelm[5]) ); 
+    jacface[2] = sqrt( (cooelm[2]-cooelm[0])*(cooelm[2]-cooelm[0]) + (cooelm[5]-cooelm[3])*(cooelm[5]-cooelm[3]) ); 	  
+    longueurs[0] = jacface[0];longueurs[1] = jacface[1];longueurs[2] = jacface[2];	  
+    data_->nrmelm[0] = cooelm[4] - cooelm[3];data_->nrmelm[1] = cooelm[0] - cooelm[1];					
+    x = ((double)1.0)/jacface[0];data_->nrmelm[0] *= x;data_->nrmelm[1] *= x;							  
+    data_->nrmelm[2] = cooelm[5] - cooelm[4];data_->nrmelm[3] = cooelm[1] - cooelm[2];
+    x = ((double)1.0)/jacface[1];data_->nrmelm[2] *= x;data_->nrmelm[3] *= x;	  
+    data_->nrmelm[4] = cooelm[3] - cooelm[5];data_->nrmelm[5] = cooelm[2] - cooelm[0] ;
+    x = ((double)1.0)/jacface[2];data_->nrmelm[4] *= x;data_->nrmelm[5] *= x;
+    if (longueurs[1]<longueurs[2]) { x = longueurs[1]; longueurs[1] = longueurs[2]; longueurs[2] = x; } 
+    if (longueurs[0]<longueurs[1]) { x = longueurs[0]; longueurs[0] = longueurs[1]; longueurs[1] = x; } 
+    if (longueurs[1]<longueurs[2]) { x = longueurs[1]; longueurs[1] = longueurs[2]; longueurs[2] = x; } 	  
+    jacelm[0]  = sqrt((longueurs[0]+longueurs[1]+longueurs[2])*(longueurs[2]-(longueurs[0]-longueurs[1]))*(longueurs[2]+(longueurs[0]-longueurs[1]) )*(longueurs[0]+(longueurs[1]-longueurs[2]) ))/((double)2.0); 	  
+
+    data_->mat_belm.v[0] = cooelm[5]-cooelm[3];
+    data_->mat_belm.v[1] = cooelm[0]-cooelm[2];
+    data_->mat_belm.v[2] = cooelm[3]-cooelm[4];
+    data_->mat_belm.v[3] = cooelm[1]-cooelm[0];    
+    x = data_->mat_belm.v[2];
+    data_->mat_belm.v[2]=data_->mat_belm.v[1];
+    data_->mat_belm.v[1]=x;
+    
+    jacface[0] *=(double)0.5;jacface[1] *=(double)0.5;jacface[2] *=(double)0.5;	  
+    /*____ INFO ELEMENT DONE */ 
+    /*____ COPY LOCAL RHS */ 
+    {wmesh_int_t j;for (j=0;j<test_n[0];++j) data_->m_local_rhs.v[j] = rhs_[rhsoff_[0]*id+j];}	
+
+
+    if (data_a_)
+      {
+	for (wmesh_int_t k=0;k<teta_a_n[0];++k)
+	  {
+	    brhs_a[k] = jacelm[0] * xa_[0] * data_a_[k] ;
+	  }
+      }
+    else
+      {
+	brhs_a[0] = jacelm[0] * xa_[0];
+      }
+      
+  
+    /*___________________________________________________________________________________________________________________*/  
+    /* 
+       eval u : elm and faces
+    */  
+    /*___________________________________________________________________________________________________________________*/  
+
+    //
+    // Copy the velocity.
+    //
+    { wmesh_int_t k;
+      for (k=0;k<nu[0];++k)
+	{
+	  data_->uvw_ldofs.v[k] = data_u_[cnc_u_[id*cncoff_u_[0]+k]-1];
+	} }
+    { wmesh_int_t k;
+      for (k=0;k<nu[0];++k)
+	{
+	  data_->uvw_ldofs.v[data_->uvw_ldofs.ld+k] = data_v_[cnc_u_[id*cncoff_u_[0]+k]-1];
+	} }
+
+    //
+    // Wrap the solution.
+    //
+    wmesh_mat_t<double>::define(&data_->hsol,1,teta_n[0],(double * __restrict__)&sol_[id*soloff_[0]],1);
+  
+    //
+    // Evaluate u at all the required coordinates.
+    //
+    dgemm("T","N", &handle_->m_brhs_uvw.m,&handle_->m_brhs_uvw.n,&data_->uvw_ldofs.m,&r1,handle_->m_EVALU.v,&handle_->m_EVALU.ld,data_->uvw_ldofs.v,&data_->uvw_ldofs.ld,&r0,
+	  handle_->m_brhs_uvw.v,
+	  &handle_->m_brhs_uvw.ld);
+    
+    //    handle_->m_brhs_uvw = handle_->m_EVALU.transpose() * data_->uvw_ldofs;
+    
+    /*____ TRANSFORM ON UELM */
+    dgemm("N","T", &handle_->m_brhs_uvw.m,&handle_->m_brhs_uvw.n,&data_->uvw_ldofs.m,&mxu,handle_->m_mat_tmpbrhs_uelm.v,&handle_->m_mat_tmpbrhs_uelm.ld,data_->mat_belm.v,&data_->mat_belm.ld,&r0,
+	  handle_->m_UVWDOFS.v,
+	  &handle_->m_UVWDOFS.ld);
+
+    // handle_->m_UVWDOFS = mxu * handle_->m_mat_tmpbrhs_uelm * data_->mat_belm.transpose();
+
+    //
+    // On the boundary.
+    //
+    for (wmesh_int_t localFaceIndex=0;localFaceIndex < nfaceinelm;++localFaceIndex)
+      {
+    dgemm("N","N", &handle_->m_brhs_uvw.m,&handle_->m_brhs_uvw.n,&data_->uvw_ldofs.m,&jacface[localFaceIndex],handle_->m_mat_tmpbrhs_uface[localFaceIndex].v,&handle_->m_mat_tmpbrhs_uface[localFaceIndex].ld,data_->vec_nrmelm[localFaceIndex].v,&data_->vec_nrmelm[localFaceIndex].ld,&r0,
+	 	data_->vec_uface[localFaceIndex].v,
+	 	&data_->vec_uface[localFaceIndex].ld);
+    //	data_->vec_uface[localFaceIndex] = jacface[localFaceIndex] * handle_->m_mat_tmpbrhs_uface[localFaceIndex] * data_->vec_nrmelm[localFaceIndex];
+      }
+    
+    for (wmesh_int_t localFaceIndex=0;localFaceIndex<nfaceinelm;++localFaceIndex)
+      {
+	data_->vec_uface[localFaceIndex].apply([xu_](const double r)
+					       {
+						 return (r<0.0) ? -r*xu_[0] : ((double)0.0);
+					       });
+      }
+      
+    /*____ APPLY FLUX ON UPWIND STREAM FOR CORRECTION AND SOLUTION */ 
+    for (wmesh_int_t localFaceIndex=0;localFaceIndex<nfaceinelm;++localFaceIndex)
+      {
+	if (neids[localFaceIndex])
+	  {
+	    dgemv("N",&bmat_n,qface_n,&r1,fpart[localFaceIndex][neids_face[localFaceIndex]],&bmat_n,ufaces[localFaceIndex],&n1,&r0,data_->m_flux_memory,&n1);
+
+	    
+	    wmesh_mat_t<double>::define(&data_->vec_neicorr,1,trial_n[0],  &corr_[(neids[localFaceIndex]-1)*corroff_[0]], 1);
+	    wmesh_mat_t<double>::define(&data_->vec_neisol,1,teta_n[0],   (double * __restrict__)&sol_[(neids[localFaceIndex]-1)*soloff_[0]], 1);
+
+	    
+	    dgemv("N", &data_->m_flux_part_corr.m,&data_->m_flux_part_corr.n,&r1,data_->m_flux_part_corr.v ,&data_->m_flux_part_corr.ld , data_->vec_neicorr.v,&data_->vec_neicorr.ld,
+		  &r1,data_->m_local_rhs.v,&n1);
+	    dgemv("N", &data_->m_flux_part_sol.m,&data_->m_flux_part_sol.n,&r1,data_->m_flux_part_sol.v ,&data_->m_flux_part_sol.ld , data_->vec_neisol.v,&data_->vec_neisol.ld,
+		  &r1,data_->m_local_rhs.v,&n1);
+
+	    
+	    //	    data_->m_local_rhs += data_->m_flux_part_corr * data_->vec_neicorr;	 
+	    //	    data_->m_local_rhs += data_->m_flux_part_sol  * data_->vec_neisol;	 
+	  }
+      }S
+  
+  
+    /*--- COMPUTE MATRICES  */
+    dgemv("N",&handle_->m_BMAT.m,&handle_->m_BMAT.n,&r1,handle_->m_BMAT.v,&handle_->m_BMAT.ld, handle_->m_BRHS.v,&handle_->m_BRHS.ld,&r0,data_->m_local_matrices.v,&data_->m_local_matrices.ld);
+    //    data_->m_local_matrices = handle_->m_BMAT * handle_->m_BRHS;
+    const double mr1=-1.0;
+    dgemv("N",&data_->m_local_matrix_part_sol.m,&data_->m_local_matrix_part_sol.n,&mr1,data_->m_local_matrix_part_sol.v,&data_->m_local_matrix_part_sol.ld, data_->hsol.v,&data_->hsol.ld,&r1,data_->m_local_rhs.v,&data_->m_local_rhs.ld);
+  
+    /*--- COMPUTE LOCAL RESIDUAL  */
+    //    data_->m_local_rhs -= data_->m_local_matrix_part_sol * data_->hsol;
+  
+    /*--- COMPUTE LOCAL CORRECTION   */
+#if 0
+    std::cout << "ielm " << ielm << std::endl;
+    matrix_handle_print(&data_->m_local_matrix_part_corr,stdout);
+    std::cout << " rhs " << ielm << std::endl;
+    vector_handle_print(&data_->m_local_rhs,stdout);
+#endif    
+    matrix_handle_gesv(&data_->m_local_matrix_part_corr,&data_->m_local_rhs,lcperm);
+  
+    /*--- COMPUTE NRMS OF LOCAL CORRECTION */
+    { wmesh_int_t j; for (j=0;j<test_n[0];++j) {lcsol[j] = corr_[corroff_[0]*id+j];}}
+    { wmesh_int_t j;for (j=0;j<test_n[0];++j) corr_[corroff_[0]*id+j] = data_->m_local_rhs.v[j];}
+    { wmesh_int_t j;for (j=0;j<test_n[0];++j) data_->m_local_rhs.v[j]-=lcsol[j];}
+    { double xx=(double)0.0; {wmesh_int_t j;for (j=0;j<test_n[0];++j) xx+=data_->m_local_rhs.v[j]*data_->m_local_rhs.v[j];}
+      if (mx<xx) mx = xx; }		    
+  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    ++ielm;
+    if (ielm<nelm_[0])
+      {
+	goto  __state_next_elm;
+      }  
+    else
+      {
+	goto  __state_next_elm_done;
+      }
+    
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+  __state_next_elm_done:
+    {
+      fprintf(stdout,"*** DGINFO time %.5f iter " WMESH_INT_FORMAT "/" WMESH_INT_FORMAT " tol = %8.15e\n",t_[0],iter_gauss_seidel,nelm_[0],mx);
+      if ( (mx>((double)1.0e-24)) && (iter_gauss_seidel<nelm_[0]) )
+	{
+	  ++iter_gauss_seidel;
+	  goto __state_next_iter_gauss_seidel;
+	}
+      else
+	{	
+	  goto __state_computation_done;
+	}
+    }
+    
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+    /*___________________________________________________________________________________________________________________*/  
+  __state_computation_done:
+    {    
+      ires_[DG_ires_iter_gauss_seidel] 	= iter_gauss_seidel;
+      rres_[DG_rres_max] 			= mx;
+      if (iter_gauss_seidel<nelm_[0])
+	{
+	  ires_[DG_ires_convergence] = (wmesh_int_t)1;
+	}
+      else
+	{
+	  ires_[DG_ires_convergence] = (wmesh_int_t)0;
+	}
+
+      rres_[DG_rres_areaL1]	= 0.0; 
+      rres_[DG_rres_nrmL2]	= 0.0; 
+      rres_[DG_rres_nrmLInf]	= 0.0; 
+      rres_[DG_rres_jumpL2]	= 0.0; 
+      rres_[DG_rres_johnson]	= 0.0;   
+      { wmesh_int_t jelm;
+	for (jelm=0;jelm<nelm_[0];++jelm)
+	  { 
+	    /**/
+	    neids[0]   = adj_[jelm*adjoff_[0]];neids[1]	= adj_[jelm*adjoff_[0]+1];neids[2]	= adj_[jelm*adjoff_[0]+2];
+
+	    cnc[0]        = cnc_[jelm*cncoff_[0]+0];
+	    cnc[1]        = cnc_[jelm*cncoff_[0]+1];
+	    cnc[2]        = cnc_[jelm*cncoff_[0]+2];	  
+	    cooelm[0]  = coo_[cooff_[0]*(cnc[0]-1)+0];
+	    cooelm[1]  = coo_[cooff_[0]*(cnc[1]-1)+0];
+	    cooelm[2]  = coo_[cooff_[0]*(cnc[2]-1)+0];
+	    cooelm[3]  = coo_[cooff_[0]*(cnc[0]-1)+1];
+	    cooelm[4]  = coo_[cooff_[0]*(cnc[1]-1)+1];
+	    cooelm[5]  = coo_[cooff_[0]*(cnc[2]-1)+1];
+	    jacface[0] = sqrt( (cooelm[0]-cooelm[1])*(cooelm[0]-cooelm[1]) + (cooelm[3]-cooelm[4])*(cooelm[3]-cooelm[4]) ); 
+	    jacface[1] = sqrt( (cooelm[1]-cooelm[2])*(cooelm[1]-cooelm[2]) + (cooelm[4]-cooelm[5])*(cooelm[4]-cooelm[5]) ); 
+	    jacface[2] = sqrt( (cooelm[2]-cooelm[0])*(cooelm[2]-cooelm[0]) + (cooelm[5]-cooelm[3])*(cooelm[5]-cooelm[3]) ); 	  
+	    longueurs[0] = jacface[0];longueurs[1] = jacface[1];longueurs[2] = jacface[2];	  
+	    data_->nrmelm[0] = cooelm[4] - cooelm[3];data_->nrmelm[1] = cooelm[0] - cooelm[1];					
+	    x = ((double)1.0)/jacface[0];data_->nrmelm[0] *= x;data_->nrmelm[1] *= x;							  
+	    data_->nrmelm[2] = cooelm[5] - cooelm[4];data_->nrmelm[3] = cooelm[1] - cooelm[2];
+	    x = ((double)1.0)/jacface[1];data_->nrmelm[2] *= x;data_->nrmelm[3] *= x;	  
+	    data_->nrmelm[4] = cooelm[3] - cooelm[5];data_->nrmelm[5] = cooelm[2] - cooelm[0] ;
+	    x = ((double)1.0)/jacface[2];data_->nrmelm[4] *= x;data_->nrmelm[5] *= x;
+	    if (longueurs[1]<longueurs[2]) { x = longueurs[1]; longueurs[1] = longueurs[2]; longueurs[2] = x; } 
+	    if (longueurs[0]<longueurs[1]) { x = longueurs[0]; longueurs[0] = longueurs[1]; longueurs[1] = x; } 
+	    if (longueurs[1]<longueurs[2]) { x = longueurs[1]; longueurs[1] = longueurs[2]; longueurs[2] = x; } 	  
+	    jacelm[0]  = sqrt((longueurs[0]+longueurs[1]+longueurs[2])*(longueurs[2]-(longueurs[0]-longueurs[1]))*(longueurs[2]+(longueurs[0]-longueurs[1]) )*(longueurs[0]+(longueurs[1]-longueurs[2]) ))/((double)2.0); 	  
+	    data_->mat_belm.v[0] = cooelm[5]-cooelm[3];data_->mat_belm.v[1] = cooelm[0]-cooelm[2];data_->mat_belm.v[2] = cooelm[3]-cooelm[4];data_->mat_belm.v[3] = cooelm[1]-cooelm[0];  	  
+	    x = data_->mat_belm.v[2];data_->mat_belm.v[2]=data_->mat_belm.v[1];data_->mat_belm.v[1]=x;	  
+	    jacface[0] *=(double)0.5;jacface[1] *=(double)0.5;jacface[2] *=(double)0.5;	  
+	    /**/	  
+
+	    dgemv("N",trial_n,trial_n,jacelm,bmat,trial_n,&corr_[jelm*corroff_[0]],&n1,&r0,data_->m_local_rhs.v,&n1);
+
+	    rres_[DG_rres_nrmL2]+=ddot(trial_n,data_->m_local_rhs.v,&n1,&corr_[corroff_[0]*jelm],&n1);
+
+	    { wmesh_int_t j;
+	      for (j=0;j<trial_n[0];++j)
+		{
+		  rres_[DG_rres_areaL1] += data_->m_local_rhs.v[j];
+		  auto e = (corr_[corroff_[0]*jelm+j] < 0.0) ?  -corr_[corroff_[0]*jelm+j] : corr_[corroff_[0]*jelm+j];
+		  if (rres_[DG_rres_nrmLInf]< e)
+		    {
+		      rres_[DG_rres_nrmLInf]=e;
+		    }
+		} }
+
+	    { wmesh_int_t k;
+	      for (k=0;k<nu[0];++k)
+		{
+		  data_->uvw_ldofs.v[k] = data_u_[cnc_u_[jelm*cncoff_u_[0]+k]-1];
+		} }
+	    { wmesh_int_t k;
+	      for (k=0;k<nu[0];++k)
+		{
+		  data_->uvw_ldofs.v[data_->uvw_ldofs.ld+k] = data_v_[cnc_u_[jelm*cncoff_u_[0]+k]-1];
+		} }
+	  
+	    /* u au points de gauss de l element */
+	    dgemv("T",nu,&q_nx3,&r1,&eval_u_[eval_uoff_*(iinfo_[DG::IA_lc_face]-1)],&eval_uoff_,data_->uvw_ldofs.v,&n1,&r0,tmpbrhs_ufaces,&n1);
+	    dgemv("T",nu,&q_nx3,&r1,&eval_u_[eval_uoff_*(iinfo_[DG::IA_lc_face]-1)],&eval_uoff_,data_->uvw_ldofs.v + data_->uvw_ldofs.ld,&n1,&r0,&tmpbrhs_ufaces[tmpbrhs_ufaceoff],&n1);
+	  
+	    /* u.n sur les faces */
+	    dgemv("N",qface_n,&n2,&jacface[0],tmpbrhs_uface0,&tmpbrhs_ufaceoff,&data_->nrmelm[2*0],&n1,&r0,uface0,&n1);
+	    dgemv("N",qface_n,&n2,&jacface[1],tmpbrhs_uface1,&tmpbrhs_ufaceoff,&data_->nrmelm[2*1],&n1,&r0,uface1,&n1);
+	    dgemv("N",qface_n,&n2,&jacface[2],tmpbrhs_uface2,&tmpbrhs_ufaceoff,&data_->nrmelm[2*2],&n1,&r0,uface2,&n1);	
+	  
+	    /* mise en a zero */
+	    { wmesh_int_t j;for (j=0;j<qface_n[0];++j) uface0[j] = (uface0[j]<0.0) ? uface0[j]*(-xu_[0]) : (double)0.0;}       
+	    { wmesh_int_t j;for (j=0;j<qface_n[0];++j) uface1[j] = (uface1[j]<0.0) ? uface1[j]*(-xu_[0]) : (double)0.0;}	
+	    { wmesh_int_t j;for (j=0;j<qface_n[0];++j) uface2[j] = (uface2[j]<0.0) ? uface2[j]*(-xu_[0]) : (double)0.0;}
+	  	  
+	    { wmesh_int_t k;
+	      for (k=0;k<3;++k)
+		{
+		  if ( neids[k] )
+		    { 
+		      /* 
+			 on forme la matrice de flux pour l'arete
+		      */
+		      dgemv("N",&bmat_n,qface_n,&r1,fpart[k][neids_face[k]],&bmat_n,(k==2)?uface2:((k==1)?uface1:uface0),&n1,&r0,data_->m_flux_memory,&n1);
+		      
+		      /* 
+			 on calcule le produit scalaire
+		      */
+		      dgemv("N",trial_n,trial_n,&jacface[k],data_->m_flux_part_corr.v,trial_n,&corr_[(neids[k]-1)*corroff_[0]],&n1,&r1,data_->m_local_rhs.v,&n1);	   
+		      rres_[DG_rres_jumpL2]+=ddot(trial_n,data_->m_local_rhs.v,&n1,&corr_[corroff_[0]*jelm],&n1);/* saut */	
+		    } 
+		} }
+	  
+	  } }
+
+      printf("compute nrms\n"
+	     "   areaL1  : %e\n"
+	     "   nrmL2   : %e\n"
+	     "   nrmLInf : %e\n"
+	     "   jumpL2  : %e\n"
+	     "   jhonson : %e\n",
+	     rres_[DG_rres_areaL1],
+	     rres_[DG_rres_nrmL2],
+	     rres_[DG_rres_nrmLInf],
+	     rres_[DG_rres_jumpL2],
+	     rres_[DG_rres_johnson]);
+    
+      return;
+    }  
+    /*_________________________________________________________________________________________________________________*/    
+  __state_error:
+    {
+      printf("out\n");
+      ires_[DG_ires_err] = (wmesh_int_t)1;
+      return;
+    }
+  }
+
+// x_{n+1} = (D-L)^{-1} * U * x_n + (D-L)^{-1} * b_;
+// x_{n+1} - x_n = ( (D-L)^{-1} * U - I) x_n + (D-L)^{-1} * b_;
+
+
+
+
+
+
+
+  
+  static DG_JACOBIAN* create_jacobian(DG_HANDLE* 	handle_,				      
+				      DG::INFO * 	dgi,
+				      DG_DATA*   	data_,
+				      const double * __restrict__ 		xa_,
+				      const double * __restrict__ 		xu_,
+				      const CG_VAR&	velocity_,
+				      const_wmesh_int_p 		nelm_,
+				      const double * __restrict__ 		coo_,
+				      const_wmesh_int_p 		cooff_,
+				      const_wmesh_int_p 		cnc_,
+				      const_wmesh_int_p 		cncoff_,
+				      const_wmesh_int_p 		adj_,
+				      const_wmesh_int_p 		adjoff_,
+				      const_wmesh_int_p 		vcod_,
+				      const_wmesh_int_p 		noboundary_cod_)
+  {
+    const_wmesh_int_p 	rwork_n_ 	= &dgi->dg_rwork_n;      
+    double * __restrict__  	rwork_ 		= &dgi->dg_rwork[0];
+    //    const_wmesh_int_p 	iwork_n_	= &dgi->dg_iwork_n;
+    //    wmesh_int_p		iwork_		= &dgi->dg_iwork[0];			      
+    const double * __restrict__ 	rinfo_ 		= &dgi->dg_rinfo[0];
+    wmesh_int_p  	iinfo_ 		= &dgi->dg_iinfo[0];
+    //    double * __restrict__ 		rres_ 		= &dgi->dg_rres[0];
+    wmesh_int_p 		ires_		= &dgi->dg_ires[0];
+
+
+    
+    const_wmesh_int_p	trial_n = &iinfo_[DG::I_TRIAL_NBASIS];
+    
+    DG_JACOBIAN* jacobian = new DG_JACOBIAN(nelm_[0],
+					    nfaceinelm,
+					    trial_n[0],
+					    adj_,
+					    adjoff_);
+    
+    //    const_wmesh_int_p	test_n  = &iinfo_[DG::I_TEST_NBASIS];
+    //    const_wmesh_int_p	teta_n  = &iinfo_[DG::I_TETA_NBASIS];
+
+    //    const_wmesh_int_p	teta_n      = &iinfo_[DG::I_TETA_NBASIS];
+    //    const_wmesh_int_p	test_n      = &iinfo_[DG::I_TEST_NBASIS];
+    //    const_wmesh_int_p	teta_u_n      = &iinfo_[DG::I_TETA_U_NBASIS];
+    const_wmesh_int_p	teta_a_n      = &iinfo_[DG::I_TETA_A_NBASIS];
+    const_wmesh_int_p	qface_n = &iinfo_[DG::I_QFACE_N];
+    //const wmesh_int_t q_nx3 		= qface_n[0]*3;
+    const wmesh_int_t bmat_n 		= iinfo_[DG::I_bmat_n];
+    const wmesh_int_t bmat_m 		= iinfo_[DG::I_bmat_m];  
+    //    const double * __restrict__ eval_u_ 		= &rinfo_[iinfo_[DG::RA_EVAL_TETA_U]];
+    //    const wmesh_int_t eval_uoff_        	= iinfo_[DG::I_TETA_U_NBASIS];
+    //    const double * __restrict__ bmat	 		= &rinfo_[iinfo_[DG::RA_bmat]];
+    const double * __restrict__ bmatflux 		= &rinfo_[iinfo_[DG::RA_bmatx]];
+    const double * __restrict__ fpart[3][3];
+    { wmesh_int_t i,j;
+      for (i=0;i<3;++i)
+	for (j=0;j<3;++j)
+	  fpart[i][j] = &bmatflux[bmat_n*( (i*3+j)*qface_n[0]  ) ];
+    }
+    
+    for (wmesh_int_t localFaceIndex=0;localFaceIndex < nfaceinelm;++localFaceIndex)
+      {
+	wmesh_mat_t<double>::define(&data_->vec_uface[localFaceIndex],1,qface_n[0],&rwork_[iinfo_[DG::IA_lc_face]+localFaceIndex*qface_n[0]],1);
+      }
+  
+    /*_____________________________________________________*/
+
+    static const double
+      //      r1=(double)1.0,
+      r0=(double)0.0;
+  
+    static const wmesh_int_t
+      n1	= (wmesh_int_t)1;
+  
+    /*_____________________________________________________*/
+    const double mxu=xu_[0]*((double)1.0);
+
+    /*_____________________________________________________*/
+
+
+    double * __restrict__
+      brhs_a      = NULL, * __restrict__
+      uface0 	= NULL, * __restrict__
+      uface1 	= NULL, * __restrict__
+      uface2 	= NULL;
+  
+
+    wmesh_int_t
+      id,
+      ielm,
+      //      vcod[3*1],codface[8*1]
+      cnc[3*1],neids[8*1],neids_face[8*1];
+  
+    double jacelm[1],
+      x,
+      longueurs[3],
+      jacface[3*1],
+      cooelm[6*1];
+      
+    double * __restrict__ data_a_ = nullptr;
+
+    //
+    // VELOCITY EVALUATION
+    //
+
+    //
+    // Pointers to bmat and bmatx
+    //
+#if 0
+#if __mk_debug__
+    if (bmat_m!=1 + 2*teta_u_n[0]+3*qface_n[0]) 
+      {
+	fprintf(stderr,"*** DGERR " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "",1 + 2*teta_u_n[0]+3*qface_n[0],bmat_m);exit(1);
+      }
+#endif
+#endif
+    //    wmesh_int_t npts_involving_u = bmat_m-1;/*nTot-teta_a_n*/
+
+    //
+    //
+    //
+    // double lcrhs[21*2];
+
+    ires_[DG_ires_err] = (wmesh_int_t)0;
+  
+    /*_____________________________________________________*/
+    if (rwork_n_[0]< bmat_m + 2 * bmat_m)
+      {      
+	ires_[DG_ires_err] = (wmesh_int_t)1;
+	ires_[DG_ires_required_rw_n] = 3*bmat_m;
+	fprintf(stderr,"too small rwork_n_ " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",3*bmat_m,rwork_n_[0]);
+	return NULL;
+      }
+
+
+    brhs_a    	= &rwork_[0];  
+    uface0 	= &rwork_[iinfo_[DG::IA_lc_face]];
+    uface1 	= &rwork_[iinfo_[DG::IA_lc_face]+qface_n[0]];
+    uface2 	= &rwork_[iinfo_[DG::IA_lc_face]+2*qface_n[0]];
+
+    double * __restrict__ ufaces[3] = {uface0,uface1,uface2};
+      
+    /*___________________________________________________________________________________________________________________*/  
+    for (ielm = 0; ielm < nelm_[0];++ielm)
+      {
+	id = ielm;
+
+	//	std::cout << "ielm " << ielm << std::endl;
+	neids[0]	= adj_[id*adjoff_[0]];
+	neids[1]	= adj_[id*adjoff_[0]+1];
+	neids[2]	= adj_[id*adjoff_[0]+2];
+	cnc[0]        = cnc_[id*cncoff_[0]+0];
+	cnc[1]        = cnc_[id*cncoff_[0]+1];
+	cnc[2]        = cnc_[id*cncoff_[0]+2];
+
+	
+	neids_face[0]=0;neids_face[1]=0;neids_face[2]=0;
+	/*---*/
+	if (neids[0])
+	  {	if (neids[0]<0) neids[0]=-neids[0];
+	    if ( (adj_[(neids[0]-1)*adjoff_[0]+0]==id+1) ) neids_face[0]=0;
+	    else if ( (adj_[(neids[0]-1)*adjoff_[0]+1]==id+1) ) neids_face[0]=1;
+	    else if ( (adj_[(neids[0]-1)*adjoff_[0]+2]==id+1) ) neids_face[0]=2; }
+	if (neids[1])
+	  {	if (neids[1]<0) neids[1]=-neids[1];
+	    if ( (adj_[(neids[1]-1)*adjoff_[0]+0]==id+1) ) neids_face[1]=0;
+	    else if ( (adj_[(neids[1]-1)*adjoff_[0]+1]==id+1) ) neids_face[1]=1;
+	    else if ( (adj_[(neids[1]-1)*adjoff_[0]+2]==id+1) ) neids_face[1]=2; }
+	if (neids[2])
+	  {	if (neids[2]<0) neids[2]=-neids[2];
+	    if ( (adj_[(neids[2]-1)*adjoff_[0]+0]==id+1) ) neids_face[2]=0;
+	    else if ( (adj_[(neids[2]-1)*adjoff_[0]+1]==id+1) ) neids_face[2]=1;
+	    else if ( (adj_[(neids[2]-1)*adjoff_[0]+2]==id+1) ) neids_face[2]=2; }
+	/*---*/
+	cooelm[0]  = coo_[cooff_[0]*(cnc[0]-1)+0];
+	cooelm[1]  = coo_[cooff_[0]*(cnc[1]-1)+0];
+	cooelm[2]  = coo_[cooff_[0]*(cnc[2]-1)+0];
+	cooelm[3]  = coo_[cooff_[0]*(cnc[0]-1)+1];
+	cooelm[4]  = coo_[cooff_[0]*(cnc[1]-1)+1];
+	cooelm[5]  = coo_[cooff_[0]*(cnc[2]-1)+1];
+    
+	jacface[0] = sqrt( (cooelm[0]-cooelm[1])*(cooelm[0]-cooelm[1]) + (cooelm[3]-cooelm[4])*(cooelm[3]-cooelm[4]) ); 
+	jacface[1] = sqrt( (cooelm[1]-cooelm[2])*(cooelm[1]-cooelm[2]) + (cooelm[4]-cooelm[5])*(cooelm[4]-cooelm[5]) ); 
+	jacface[2] = sqrt( (cooelm[2]-cooelm[0])*(cooelm[2]-cooelm[0]) + (cooelm[5]-cooelm[3])*(cooelm[5]-cooelm[3]) ); 	  
+	longueurs[0] = jacface[0];longueurs[1] = jacface[1];longueurs[2] = jacface[2];	  
+	data_->nrmelm[0] = cooelm[4] - cooelm[3];data_->nrmelm[1] = cooelm[0] - cooelm[1];					
+	x = ((double)1.0)/jacface[0];data_->nrmelm[0] *= x;data_->nrmelm[1] *= x;							  
+	data_->nrmelm[2] = cooelm[5] - cooelm[4];data_->nrmelm[3] = cooelm[1] - cooelm[2];
+	x = ((double)1.0)/jacface[1];data_->nrmelm[2] *= x;data_->nrmelm[3] *= x;	  
+	data_->nrmelm[4] = cooelm[3] - cooelm[5];data_->nrmelm[5] = cooelm[2] - cooelm[0] ;
+	x = ((double)1.0)/jacface[2];data_->nrmelm[4] *= x;data_->nrmelm[5] *= x;
+	if (longueurs[1]<longueurs[2]) { x = longueurs[1]; longueurs[1] = longueurs[2]; longueurs[2] = x; } 
+	if (longueurs[0]<longueurs[1]) { x = longueurs[0]; longueurs[0] = longueurs[1]; longueurs[1] = x; } 
+	if (longueurs[1]<longueurs[2]) { x = longueurs[1]; longueurs[1] = longueurs[2]; longueurs[2] = x; } 	  
+	jacelm[0]  = sqrt((longueurs[0]+longueurs[1]+longueurs[2])*(longueurs[2]-(longueurs[0]-longueurs[1]))*(longueurs[2]+(longueurs[0]-longueurs[1]) )*(longueurs[0]+(longueurs[1]-longueurs[2]) ))/((double)2.0); 	  
+
+	data_->mat_belm.v[0] = cooelm[5]-cooelm[3];
+	data_->mat_belm.v[1] = cooelm[0]-cooelm[2];
+	data_->mat_belm.v[2] = cooelm[3]-cooelm[4];
+	data_->mat_belm.v[3] = cooelm[1]-cooelm[0];    
+	x = data_->mat_belm.v[2];
+	data_->mat_belm.v[2]=data_->mat_belm.v[1];
+	data_->mat_belm.v[1]=x;
+    
+	jacface[0] *=(double)0.5;jacface[1] *=(double)0.5;jacface[2] *=(double)0.5;	  
+
+	//
+	//
+	//
+	if (data_a_)
+	  {
+	    for (wmesh_int_t k=0;k<teta_a_n[0];++k)
+	      {
+		brhs_a[k] = jacelm[0] * xa_[0] * data_a_[k] ;
+	      }
+	  }
+	else
+	  {
+	    brhs_a[0] = jacelm[0] * xa_[0];
+	  }
+  
+	/*___________________________________________________________________________________________________________________*/  
+	/* 
+	   eval u : elm and faces
+	*/  
+	/*___________________________________________________________________________________________________________________*/  
+
+	//
+	// Copy the velocity.
+	//
+	velocity_.dofselm(id,0,data_->uvw_ldofs.v,1);
+	velocity_.dofselm(id,1,data_->uvw_ldofs.v+data_->uvw_ldofs.ld,1);
+#if 0
+	{ wmesh_int_t k;
+	  for (k=0;k<teta_u_n[0];++k)
+	    {
+	      data_->uvw_ldofs.v[k] = data_u_[cnc_u_[id*cncoff_u_[0]+k]-1];
+	    } }
+
+	{ wmesh_int_t k;
+	  for (k=0;k<teta_u_n[0];++k)
+	    {
+	      data_->uvw_ldofs.v[data_->uvw_ldofs.ld+k] = data_v_[cnc_u_[id*cncoff_u_[0]+k]-1];
+	    } }
+#endif
+	
+	//
+	// Evaluate u at all the required coordinates.
+	//
+	double r1=1.0;
+	dgemm("T","N", &handle_->m_brhs_uvw.m,&handle_->m_brhs_uvw.n,&data_->uvw_ldofs.m,&r1,handle_->m_EVALU.v,&handle_->m_EVALU.ld,data_->uvw_ldofs.v,&data_->uvw_ldofs.ld,&r0,
+	      handle_->m_brhs_uvw.v,
+	      &handle_->m_brhs_uvw.ld);	
+	// handle_->m_brhs_uvw = handle_->m_EVALU.transpose() * data_->uvw_ldofs;
+
+	
+
+
+	dgemm("N","T", &handle_->m_brhs_uvw.m,&handle_->m_brhs_uvw.n,&data_->uvw_ldofs.m,&mxu,handle_->m_mat_tmpbrhs_uelm.v,&handle_->m_mat_tmpbrhs_uelm.ld,data_->mat_belm.v,&data_->mat_belm.ld,&r0,
+	      handle_->m_UVWDOFS.v,
+	      &handle_->m_UVWDOFS.ld);
+	
+	
+	/*____ TRANSFORM ON UELM */
+	// 	handle_->m_UVWDOFS = mxu * handle_->m_mat_tmpbrhs_uelm * data_->mat_belm.transpose();
+
+	//
+	// On the boundary.
+	//
+	    dgemm("N","N", &handle_->m_brhs_uvw.m,&handle_->m_brhs_uvw.n,&data_->uvw_ldofs.m,&jacface[localFaceIndex],handle_->m_mat_tmpbrhs_uface[localFaceIndex].v,&handle_->m_mat_tmpbrhs_uface[localFaceIndex].ld,data_->vec_nrmelm[localFaceIndex].v,&data_->vec_nrmelm[localFaceIndex].ld,&r0,
+	 	data_->vec_uface[localFaceIndex].v,
+	 	&data_->vec_uface[localFaceIndex].ld);
+#if 0
+	for (wmesh_int_t localFaceIndex=0;localFaceIndex < nfaceinelm;++localFaceIndex)
+	  {
+	    data_->vec_uface[localFaceIndex] = jacface[localFaceIndex] * handle_->m_mat_tmpbrhs_uface[localFaceIndex] * data_->vec_nrmelm[localFaceIndex];
+	  }
+#endif    
+	for (wmesh_int_t localFaceIndex=0;localFaceIndex<nfaceinelm;++localFaceIndex)
+	  {
+	    data_->vec_uface[localFaceIndex].apply([xu_](const double r)
+						   {
+						     return (r<0.0) ? -r*xu_[0] : ((double)0.0);
+						   });
+	  }
+	
+	/*____ APPLY FLUX ON UPWIND STREAM FOR CORRECTION && SOLUTION */ 
+	for (wmesh_int_t localFaceIndex=0;localFaceIndex<nfaceinelm;++localFaceIndex)
+	  {
+	    if (neids[localFaceIndex])
+	      {
+		//		printf("  flux edge " WMESH_INT_FORMAT " \n",localFaceIndex);
+		const double mr1= -1.0;
+		dgemv("N",&bmat_n,qface_n,&mr1,fpart[localFaceIndex][neids_face[localFaceIndex]],&bmat_n,ufaces[localFaceIndex],&n1,&r0,data_->m_flux_memory,&n1);
+		// vector_handle_def(&data_->vec_neicorr,trial_n[0],  &corr_[(neids[localFaceIndex]-1)*corroff_[0]], 1);
+		// vector_handle_def(&data_->vec_neisol,teta_n[0],   (double * __restrict__)&sol_[(neids[localFaceIndex]-1)*soloff_[0]], 1);		
+		jacobian->addelm(id,neids[localFaceIndex]-1,0.0,data_->m_flux_part_corr.v,data_->m_flux_part_corr.ld);
+		
+		//
+		//
+		//
+		//		data_->m_flux_part_corr;
+		//
+		//		data_->m_flux_part_sol;
+
+		// data_->m_local_rhs += data_->m_flux_part_corr * data_->vec_neicorr;	 
+		//	vector_handle_def(&data_->vec_neisol,teta_n[0],   (double * __restrict__)&sol_[(neids[localFaceIndex]-1)*soloff_[0]], 1);
+		//		data_->m_local_rhs -= data_->m_flux_part_sol  * data_->vec_neisol;	 
+	      }
+	  }
+	
+	/*--- COMPUTE MATRICES  */
+	{
+	  // matrix_handle msub;
+	  // vector_handle rsub;
+	  
+	  // wmesh_mat_t<double>::define(&msub,handle_->m_BMAT.n,teta_a_n[0] + dim * teta_u_n[0],handle_->m_BMAT.v,handle_->m_BMAT.ld);
+	  // vector_handle_def(&rsub,teta_a_n[0] + dim * teta_u_n[0],handle_->m_BRHS.v,1);
+	  dgemv("N",&handle_->m_BMAT.m,&handle_->m_BMAT.n,&r1,handle_->m_BMAT.v,&handle_->m_BMAT.ld, handle_->m_BRHS.v,&handle_->m_BRHS.ld,&r0,data_->m_local_matrices.v,&data_->m_local_matrices.ld);
+	  
+	  //	  data_->m_local_matrices = handle_->m_BMAT * handle_->m_BRHS;
+	  
+	  // data_->m_local_matrices = msub * rsub;
+	  jacobian->addelm(id,id,0.0,data_->m_local_matrix_part_corr.v,data_->m_local_matrix_part_corr.ld);
+
+	  
+	  
+	  //	  vector_handle_print(&data_->m_local_matrices,stdout);
+	  //	  matrix_handle hh;
+	  //	  wmesh_mat_t<double>::define(&hh,trial_n[0],trial_n[0],data_->m_local_matrix_part_corr.v,trial_n[0]);
+	  //	  printf("$$$$ " WMESH_INT_FORMAT "\n",data_->m_local_matrix_part_corr.ld);
+	  //	  matrix_handle_print(&hh,stdout);
+	  //	  exit(1);
+
+	  
+	  //	  vector_handle_def(&data_->hsol,teta_n[0],(double * __restrict__)&sol_[id*soloff_[0]],1);
+	  //	  data_->m_local_rhs -= data_->m_local_matrix_part_sol * data_->hsol;
+	  //	  printf("addelmcorr\n");
+	}
+	
+
+	//	{wmesh_int_t j;for (j=0;j<test_n[0];++j) printf(" sisis" WMESH_INT_FORMAT " %e\n",j, rhs_[rhsoff_[0]*id+j]);}
+	//
+	// aE + u.nabla(E) + h(u,E) = -aF - u.nabla(F) - h(u,F)
+	// JACOBIAN(trial,test) E = -R(F,test)
+	// 
+	// corr P3 F P2  Operator P2-P3 Operator P3-P3
+	//
+	// P0
+	//   P1\P0
+	//        P2\P0
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+
+	//	data_->m_local_matrix_part_corr;
+	/*--- COMPUTE LOCAL RESIDUAL  */
+	// data_->m_local_rhs -= data_->m_local_matrix_part_sol * data_->hsol;
+	/*--- COMPUTE LOCAL CORRECTION   */
+	//	matrix_handle_gesv(&data_->m_local_matrix_part_corr,&data_->m_local_rhs,lcperm);
+	// wmesh_mat_t<double>::define(&this->m_flux_part_corr,test_n_,trial_n_,this->m_flux_memory,test_n_);
+      }
+    return jacobian;
+  }
+
+
+  static void compute_residual(DG_HANDLE* 	handle_,				      
+			       DG::INFO * 	dgi,
+			       DG_DATA*   	data_,
+			       const double * __restrict__ 		xa_,
+			       const double * __restrict__ 		xu_,
+			       const DG_VAR& 	sol_,
+			       const CG_VAR& 	velocity_,
+			       DG_VAR& 		residual_,
+			       const_wmesh_int_p 		rwork_n_,
+			       double * __restrict__  		rwork_)
+  {
+    wmesh_t* mesh = residual_.mesh();
+    wmesh_int_t nelm_[1];
+    nelm_[0] = mesh->nelm;
+    const_wmesh_int_p adj_ = mesh->adj;
+    wmesh_int_t adjoff_[1];
+    adjoff_[0] =3;
+    const_wmesh_int_p cnc_ = mesh->cnc;
+    wmesh_int_t cncoff_[1];
+    cncoff_[0]=6;
+    const double * __restrict__ coo_ = mesh->coo;
+    wmesh_int_t cooff_[1];
+    cooff_[0]=2;
+    const_wmesh_int_p	teta_n      	= &dgi->dg_iinfo[DG::I_TETA_NBASIS];
+    //  const_wmesh_int_p	test_n  = &dgi->dg_iinfo[DG::I_TEST_NBASIS];
+    //  const_wmesh_int_p	teta_u_n      = &dgi->dg_iinfo[DG::I_TETA_U_NBASIS];
+    const_wmesh_int_p	teta_a_n      = &dgi->dg_iinfo[DG::I_TETA_A_NBASIS];
+    const_wmesh_int_p	qface_n = &dgi->dg_iinfo[DG::I_QFACE_N];
+    const wmesh_int_t bmat_n 		= dgi->dg_iinfo[DG::I_bmat_n];
+    const wmesh_int_t bmat_m 		= dgi->dg_iinfo[DG::I_bmat_m];  
+    const double * __restrict__ bmatflux 		= &dgi->dg_rinfo[dgi->dg_iinfo[DG::RA_bmatx]];
+    const double * __restrict__ fpart[3][3];
+    { wmesh_int_t i,j;
+      for (i=0;i<3;++i)
+	for (j=0;j<3;++j)
+	  fpart[i][j] = &bmatflux[bmat_n*( (i*3+j)*qface_n[0]  ) ];
+    }
+    
+    for (wmesh_int_t localFaceIndex=0;localFaceIndex < nfaceinelm;++localFaceIndex)
+      {
+	wmesh_mat_t<double>::define(&data_->vec_uface[localFaceIndex],1,qface_n[0],&rwork_[dgi->dg_iinfo[DG::IA_lc_face]+localFaceIndex*qface_n[0]],1);
+      }
+  
+    /*_____________________________________________________*/
+
+    static const double
+      //      r1=(double)1.0,
+      r0=(double)0.0;
+  
+    static const wmesh_int_t
+      n1	= (wmesh_int_t)1;
+  
+    /*_____________________________________________________*/
+    const double mxu=xu_[0]*((double)1.0);
+
+    /*_____________________________________________________*/
+
+
+    double * __restrict__
+      brhs_a      = NULL, * __restrict__
+      uface0 	= NULL, * __restrict__
+      uface1 	= NULL, * __restrict__
+      uface2 	= NULL;
+  
+
+    wmesh_int_t
+      id,
+      ielm,
+      //      vcod[3*1],codface[8*1]
+      cnc[3*1],neids[8*1],neids_face[8*1];
+  
+    double jacelm[1],
+      x,
+      longueurs[3],
+      jacface[3*1],
+      cooelm[6*1];
+      
+    double * __restrict__ data_a_ = nullptr;
+
+    //
+    // VELOCITY EVALUATION
+    //
+
+    //
+    // Pointers to bmat and bmatx
+    //
+
+    dgi->dg_ires[DG_ires_err] = (wmesh_int_t)0;
+  
+    /*_____________________________________________________*/
+    if (rwork_n_[0]< bmat_m + 2 * bmat_m)
+      {      
+	dgi->dg_ires[DG_ires_err] = (wmesh_int_t)1;
+	dgi->dg_ires[DG_ires_required_rw_n] = 3*bmat_m;
+	fprintf(stderr,"too small rwork_n_ " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",3*bmat_m,rwork_n_[0]);
+	return;
+      }
+
+
+    brhs_a    	= &rwork_[0];  
+    uface0 	= &rwork_[dgi->dg_iinfo[DG::IA_lc_face]];
+    uface1 	= &rwork_[dgi->dg_iinfo[DG::IA_lc_face]+qface_n[0]];
+    uface2 	= &rwork_[dgi->dg_iinfo[DG::IA_lc_face]+2*qface_n[0]];
+
+    double * __restrict__ ufaces[3] = {uface0,uface1,uface2};
+      
+    /*___________________________________________________________________________________________________________________*/  
+    for (ielm = 0; ielm < nelm_[0];++ielm)
+      {
+	id = ielm;
+	residual_.dofselm(id,0,data_->m_local_rhs.v,1);
+	//	{wmesh_int_t j;for (j=0;j<test_n[0];++j) data_->m_local_rhs.v[j] = rhs_[rhsoff_[0]*id+j];}	
+	
+	
+	//	std::cout << "ielm " << ielm << std::endl;
+	neids[0]	= adj_[id*adjoff_[0]];
+	neids[1]	= adj_[id*adjoff_[0]+1];
+	neids[2]	= adj_[id*adjoff_[0]+2];
+	cnc[0]        = cnc_[id*cncoff_[0]+0];
+	cnc[1]        = cnc_[id*cncoff_[0]+1];
+	cnc[2]        = cnc_[id*cncoff_[0]+2];
+
+	
+	neids_face[0]=0;neids_face[1]=0;neids_face[2]=0;
+	/*---*/
+	if (neids[0])
+	  {	if (neids[0]<0) neids[0]=-neids[0];
+	    if ( (adj_[(neids[0]-1)*adjoff_[0]+0]==id+1) ) neids_face[0]=0;
+	    else if ( (adj_[(neids[0]-1)*adjoff_[0]+1]==id+1) ) neids_face[0]=1;
+	    else if ( (adj_[(neids[0]-1)*adjoff_[0]+2]==id+1) ) neids_face[0]=2; }
+	if (neids[1])
+	  {	if (neids[1]<0) neids[1]=-neids[1];
+	    if ( (adj_[(neids[1]-1)*adjoff_[0]+0]==id+1) ) neids_face[1]=0;
+	    else if ( (adj_[(neids[1]-1)*adjoff_[0]+1]==id+1) ) neids_face[1]=1;
+	    else if ( (adj_[(neids[1]-1)*adjoff_[0]+2]==id+1) ) neids_face[1]=2; }
+	if (neids[2])
+	  {	if (neids[2]<0) neids[2]=-neids[2];
+	    if ( (adj_[(neids[2]-1)*adjoff_[0]+0]==id+1) ) neids_face[2]=0;
+	    else if ( (adj_[(neids[2]-1)*adjoff_[0]+1]==id+1) ) neids_face[2]=1;
+	    else if ( (adj_[(neids[2]-1)*adjoff_[0]+2]==id+1) ) neids_face[2]=2; }
+	/*---*/
+	cooelm[0]  = coo_[cooff_[0]*(cnc[0]-1)+0];
+	cooelm[1]  = coo_[cooff_[0]*(cnc[1]-1)+0];
+	cooelm[2]  = coo_[cooff_[0]*(cnc[2]-1)+0];
+	cooelm[3]  = coo_[cooff_[0]*(cnc[0]-1)+1];
+	cooelm[4]  = coo_[cooff_[0]*(cnc[1]-1)+1];
+	cooelm[5]  = coo_[cooff_[0]*(cnc[2]-1)+1];
+    
+	jacface[0] = sqrt( (cooelm[0]-cooelm[1])*(cooelm[0]-cooelm[1]) + (cooelm[3]-cooelm[4])*(cooelm[3]-cooelm[4]) ); 
+	jacface[1] = sqrt( (cooelm[1]-cooelm[2])*(cooelm[1]-cooelm[2]) + (cooelm[4]-cooelm[5])*(cooelm[4]-cooelm[5]) ); 
+	jacface[2] = sqrt( (cooelm[2]-cooelm[0])*(cooelm[2]-cooelm[0]) + (cooelm[5]-cooelm[3])*(cooelm[5]-cooelm[3]) ); 	  
+	longueurs[0] = jacface[0];longueurs[1] = jacface[1];longueurs[2] = jacface[2];	  
+	data_->nrmelm[0] = cooelm[4] - cooelm[3];data_->nrmelm[1] = cooelm[0] - cooelm[1];					
+	x = ((double)1.0)/jacface[0];data_->nrmelm[0] *= x;data_->nrmelm[1] *= x;							  
+	data_->nrmelm[2] = cooelm[5] - cooelm[4];data_->nrmelm[3] = cooelm[1] - cooelm[2];
+	x = ((double)1.0)/jacface[1];data_->nrmelm[2] *= x;data_->nrmelm[3] *= x;	  
+	data_->nrmelm[4] = cooelm[3] - cooelm[5];data_->nrmelm[5] = cooelm[2] - cooelm[0] ;
+	x = ((double)1.0)/jacface[2];data_->nrmelm[4] *= x;data_->nrmelm[5] *= x;
+	if (longueurs[1]<longueurs[2]) { x = longueurs[1]; longueurs[1] = longueurs[2]; longueurs[2] = x; } 
+	if (longueurs[0]<longueurs[1]) { x = longueurs[0]; longueurs[0] = longueurs[1]; longueurs[1] = x; } 
+	if (longueurs[1]<longueurs[2]) { x = longueurs[1]; longueurs[1] = longueurs[2]; longueurs[2] = x; } 	  
+	jacelm[0]  = sqrt((longueurs[0]+longueurs[1]+longueurs[2])*(longueurs[2]-(longueurs[0]-longueurs[1]))*(longueurs[2]+(longueurs[0]-longueurs[1]) )*(longueurs[0]+(longueurs[1]-longueurs[2]) ))/((double)2.0); 	  
+
+	data_->mat_belm.v[0] = cooelm[5]-cooelm[3];
+	data_->mat_belm.v[1] = cooelm[0]-cooelm[2];
+	data_->mat_belm.v[2] = cooelm[3]-cooelm[4];
+	data_->mat_belm.v[3] = cooelm[1]-cooelm[0];    
+	x = data_->mat_belm.v[2];
+	data_->mat_belm.v[2]=data_->mat_belm.v[1];
+	data_->mat_belm.v[1]=x;
+    
+	jacface[0] *=(double)0.5;jacface[1] *=(double)0.5;jacface[2] *=(double)0.5;	  
+
+	//
+	//
+	//
+	if (data_a_)
+	  {
+	    for (wmesh_int_t k=0;k<teta_a_n[0];++k)
+	      {
+		brhs_a[k] = jacelm[0] * xa_[0] * data_a_[k] ;
+	      }
+	  }
+	else
+	  {
+	    brhs_a[0] = jacelm[0] * xa_[0];
+	  }
+  
+	/*___________________________________________________________________________________________________________________*/  
+	/* 
+	   eval u : elm and faces
+	*/  
+	/*___________________________________________________________________________________________________________________*/  
+
+	//
+	// Copy the velocity.
+	//
+	velocity_.dofselm(id,0,data_->uvw_ldofs.v,1);
+	velocity_.dofselm(id,1,data_->uvw_ldofs.v+data_->uvw_ldofs.ld,1);
+	//
+	// Evaluate u at all the required coordinates.
+	//
+	handle_->m_brhs_uvw = handle_->m_EVALU.transpose() * data_->uvw_ldofs;
+	
+	/*____ TRANSFORM ON UELM */
+	handle_->m_UVWDOFS = mxu * handle_->m_mat_tmpbrhs_uelm * data_->mat_belm.transpose();
+
+	//
+	// On the boundary.
+	//
+	for (wmesh_int_t localFaceIndex=0;localFaceIndex < nfaceinelm;++localFaceIndex)
+	  {
+	    data_->vec_uface[localFaceIndex] = jacface[localFaceIndex] * handle_->m_mat_tmpbrhs_uface[localFaceIndex] * data_->vec_nrmelm[localFaceIndex];
+	  }
+    
+	for (wmesh_int_t localFaceIndex=0;localFaceIndex<nfaceinelm;++localFaceIndex)
+	  {
+	    data_->vec_uface[localFaceIndex].apply([xu_](const double r)
+						   {
+						     return (r<0.0) ? -r*xu_[0] : ((double)0.0);
+						   });
+	  }
+	
+	const WLA::matrix_h& solmat = sol_.matrix();
+	/*____ APPLY FLUX ON UPWIND STREAM FOR CORRECTION && SOLUTION */ 
+	for (wmesh_int_t localFaceIndex=0;localFaceIndex<nfaceinelm;++localFaceIndex)
+	  {
+	    if (neids[localFaceIndex])
+	      {
+		const double mr1= -1.0;
+		dgemv("N",&bmat_n,qface_n,&mr1,fpart[localFaceIndex][neids_face[localFaceIndex]],&bmat_n,ufaces[localFaceIndex],&n1,&r0,data_->m_flux_memory,&n1);
+
+		wmesh_mat_t<double>::define(&data_->vec_neisol,1,teta_n[0],   (double * __restrict__)&solmat.v[(neids[localFaceIndex]-1)*solmat.ld], 1);
+		//		vector_handle_def(&data_->vec_neisol,teta_n[0],   (double * __restrict__)&sol_.m_values3.v[(neids[localFaceIndex]-1)*sol_.m_values3.ld], 1);
+		data_->m_local_rhs -= data_->m_flux_part_sol  * data_->vec_neisol;	 
+	      }
+	    
+	  }
+	
+	/*--- COMPUTE MATRICES  */
+	{
+	  data_->m_local_matrices = handle_->m_BMAT * handle_->m_BRHS;
+	  wmesh_mat_t<double>::define(&data_->hsol,1,teta_n[0],(double * __restrict__)&solmat.v[id*solmat.ld],1);
+	  data_->m_local_rhs -= data_->m_local_matrix_part_sol * data_->hsol;
+	}
+
+	residual_.setdofselm(id,0,data_->m_local_rhs.v,1);
+	//	{wmesh_int_t j;for (j=0;j<test_n[0];++j) rhs_[rhsoff_[0]*id+j] = data_->m_local_rhs.v[j];}	
+      }
+
+  }
+  
+};
+
+
+
+#include "DG_BOUNDARY_CONDITION.hpp"
+
+struct DG_OPERATOR
+{
+  DG_JACOBIAN* 			m_jacobian;
+  DG_BOUNDARY_CONDITION* 	m_bc;
+  DG_DATA* 			m_dgdata;
+  DG_HANDLE* 			m_dghandle;
+  DG::INFO* 			m_dginfo;
+  
+  DG_OPERATOR(wmesh_shape_t* 		shape_X,
+	      wmesh_shape_t* 		shape_A,
+	      wmesh_shape_t* 		shape_F,
+	      wmesh_shape_t* 		shape_E,
+	      wmesh_shape_t* 		shape_Test,
+	      const double * __restrict__ 		xa_,
+	      const double * __restrict__ 		xu_,
+	      CG_VAR&		velocity_,
+	      const_wmesh_int_p 		nelm_,
+	      const double * __restrict__ 		coo_,
+	      const_wmesh_int_p 		cooff_,
+	      const_wmesh_int_p 		cnc_,
+	      const_wmesh_int_p 		cncoff_,
+	      const_wmesh_int_p 		adj_,
+	      const_wmesh_int_p 		adjoff_,
+	      const_wmesh_int_p 		vcod_,
+	      const_wmesh_int_p 		noboundary_cod_)
+  {
+    wmesh_shape_t shape_U_st;
+    memcpy(&shape_U_st,velocity_.shape(),sizeof(wmesh_shape_t));
+    wmesh_shape_t* shape_U = &shape_U_st;
+    
+    double iw[6];
+    double ip[6];
+    iw[0] = 1.713244923791704e-1;
+    iw[1] = 3.607615730481386e-1;
+    iw[2] = 4.679139345726911e-1;
+    iw[3] = 4.679139345726911e-1;
+    iw[4] = 3.607615730481386e-1;
+    iw[5] = 1.713244923791704e-1;
+  
+    ip[0] = -9.32469514203152e-1;
+    ip[1] = -6.612093864662645e-1;
+    ip[2] = -2.386191860831969e-1;
+    ip[3] = 2.386191860831969e-1;
+    ip[4] = 6.612093864662645e-1;
+    ip[5] = 9.32469514203152e-1;
+    
+    //    wmesh_int_t rhsoff 	= mkS_n(shape_E);
+    //    wmesh_int_t soloff 	= mkS_n(shape_F);
+    //    wmesh_int_t corroff 	= mkS_n(shape_E);
+    //    wmesh_int_t adjoff=3;
+    //    wmesh_int_t cncoff=6;
+
+    this->m_bc 		= (DG_BOUNDARY_CONDITION *)calloc(1,sizeof(DG_BOUNDARY_CONDITION));
+    this->m_dghandle 	= (DG_HANDLE *)calloc(1,sizeof(DG_HANDLE));
+    this->m_dginfo 	= (DG::INFO *)calloc(1,sizeof(DG::INFO));
+    //    printf("info define\n");
+    DG::INFO::define(this->m_dginfo);
+
+    printf("bc define\n");
+    DG_BOUNDARY_CONDITION::define(this->m_bc,
+				  shape_E,
+				  shape_U,
+				  shape_X,
+
+				  6,
+				  iw,
+				  ip);
+    printf("solver define \n");
+    std::cout << "size rowkr_n " << this->m_dginfo->dg_rwork_n  << std::endl;
+    DG::define(this->m_dghandle,
+	       shape_A,
+	       shape_U,
+	       shape_F,
+	       shape_E,
+	       shape_E,
+	       &this->m_dginfo->dg_iinfo_n,
+	       this->m_dginfo->dg_iinfo,
+	       &this->m_dginfo->dg_rinfo_n,
+	       this->m_dginfo->dg_rinfo,
+	       &this->m_dginfo->dg_rwork_n,
+	       this->m_dginfo->dg_rwork);
+
+    this->m_dgdata 	= DG::create_data	(shape_A,
+						 shape_U,
+						 shape_F,
+						 shape_E,
+						 shape_Test);
+    
+    this->m_jacobian 	= DG::create_jacobian	(this->m_dghandle,
+						 this->m_dginfo,
+						 this->m_dgdata,
+						 xa_,
+						 xu_,
+						 velocity_,
+						 nelm_,
+						 coo_,
+						 cooff_,
+						 cnc_,
+						 cncoff_,
+						 adj_,
+						 adjoff_,
+						 vcod_,
+						 noboundary_cod_);
+    
+  };
+
+  void compute_residual(const DG_VAR& sol_,
+			const CG_VAR& velocity_,
+			DG_VAR& residual_,
+			const_wmesh_int_p rwork_n_,
+			double * __restrict__ rwork_)
+  {
+    double xa_[1] = {0.0};
+    double xu_[1] = {1.0};
+    DG::compute_residual(this->m_dghandle,
+			 this->m_dginfo,
+			 this->m_dgdata,
+			 xa_,
+			 xu_,					   
+			 sol_,
+			 velocity_,
+			 residual_,
+			 rwork_n_,
+			 rwork_);
+  };
+  
+};
+
+wmesh_int_t jj{};
+
+void compute_nrm(DG_JACOBIAN*jacobian,const double * __restrict__ jacelms_,wmesh_int_t degree,double * __restrict__ 		x_)
+{
+  {
+    wmesh_int_t n1 = 1;
+    double h = dnrm2(&jacobian->m_n,x_,&n1);
+    printf(" " WMESH_INT_FORMAT " %e",jj++,h);
+    {
+      for (wmesh_int_t ideg=0;ideg<=degree;++ideg)
+	{
+	  double nrm=0.0;
+	  for (wmesh_int_t ielm=0;ielm<jacobian->nelm();++ielm)
+	    {
+	      double h1 = 0.0;
+	      wmesh_int_t start = ((ideg) * (ideg+1) )/2;
+	      wmesh_int_t bound = ((ideg+1) * (ideg+2) )/2;
+	      for (wmesh_int_t j = start;j<bound;++j)
+		{
+		  double x = x_[ielm*jacobian->size_block()+j];
+		  h1 += x*x;
+		}
+	      h1 *= jacelms_[ielm];
+	      nrm+=h1;
+	    }
+	  printf(" %e",sqrt(nrm));
+	}
+      printf("\n");
+    }	
+  }  
+}
+
+void linear_residual(DG_OPERATOR*	dg,
+		     double * __restrict__ 		x_,
+		     double * __restrict__ 		b_,
+		     double * __restrict__ 		r_)
+{
+  double mr1=-1.0;
+  double r1=1.0;
+  wmesh_int_t n1=1;
+  DG_JACOBIAN*jacobian 	= dg->m_jacobian;
+  jacobian->gemv(x_,r_);
+  dscal(&jacobian->m_n,&mr1, r_, &n1);
+  daxpy(&jacobian->m_n,&r1,b_,&n1,r_,&n1);
+}
+
+
+void down(DG_OPERATOR * dg[],wmesh_int_t degree,const double * __restrict__ y_,double * __restrict__ x_)
+{
+  wmesh_int_t k = degree-1;
+  {
+    for (wmesh_int_t ielm=0;ielm<dg[degree]->m_jacobian->nelm();++ielm)
+      {
+	// wmesh_int_t start = ((k) * (k+1) )/2;
+	wmesh_int_t bound = ((k+1) * (k+2) )/2;
+	//		  for (wmesh_int_t j = start;j<bound;++j)
+	for (wmesh_int_t j = 0;j<bound;++j)
+	  {
+	    x_[ielm*dg[k]->m_jacobian->size_block()+j] = y_[ielm*dg[degree]->m_jacobian->size_block()+j];
+	  }
+      }    
+  }  
+}
+
+//
+// What is the shape of the residual? 
+//
+//
+void down_residual(DG_OPERATOR * dg[],wmesh_int_t degree,const double * __restrict__ y_,double * __restrict__ x_)
+{
+  wmesh_int_t k = degree-1;
+  {
+    for (wmesh_int_t ielm=0;ielm<dg[degree]->m_jacobian->nelm();++ielm)
+      {
+	// wmesh_int_t start = ((k) * (k+1) )/2;
+	wmesh_int_t bound = ((k+1) * (k+2) )/2;
+	//		  for (wmesh_int_t j = start;j<bound;++j)
+	for (wmesh_int_t j = 0;j<bound;++j)
+	  {
+	    x_[ielm*dg[k]->m_jacobian->size_block()+j] = y_[ielm*dg[degree]->m_jacobian->size_block()+j] ;
+	  }
+      }    
+  }
+  
+}
+
+void up(DG_OPERATOR * dg[],wmesh_int_t yk_,const double * __restrict__ y_,wmesh_int_t xk_,double * __restrict__ x_)
+{
+  {
+    for (wmesh_int_t ielm=0;ielm<dg[yk_]->m_jacobian->nelm();++ielm)
+      {
+	//	double h1 = 0.0;
+	// wmesh_int_t start = ((k) * (k+1) )/2;
+	wmesh_int_t bound = ((yk_+1) * (yk_+2) )/2;
+	//		  for (wmesh_int_t j = start;j<bound;++j)
+	for (wmesh_int_t j = 0;j<bound;++j)
+	  {
+	    x_[ielm*dg[xk_]->m_jacobian->size_block()+j] += y_[ielm*dg[yk_]->m_jacobian->size_block()+j];
+	  }
+#if 0
+	wmesh_int_t bound2 = ((xk_+1) * (xk_+2) )/2;
+	for (wmesh_int_t j = bound;j<bound2;++j)
+	  {
+	    x_[ielm*dg[xk_]->m_jacobian->size_block()+j] =0.0;
+	  }
+#endif
+	//
+      }    
+  }  
+}
+
+#if 0
+#include "DG_LINEAR_SOLVER.hpp"
+#include "DG_LINEAR_SOLVER_JACOBI.hpp"
+#include "DG_LS.hpp"
+#endif
+void eval_u(double x,
+	    double y,
+	    double u[])
+{
+  u[0] = 10.0*y*y-12.0*x+1.0;  
+  u[1] = 1.0 + y;
+};
+
+
+
+
+int main(int 		argc,
+	 const char**	argv)
+{
+  const char * ifilename = argv[1];
+  wmesh_int_t degree = atol(argv[2]);
+  char bbname[256];
+  sprintf(   bbname,"%s",argv[4]);
+
+
+#if 0
+  Err err;
+  ns_mesh * mesh = (ns_mesh*)calloc(1,sizeof(ns_mesh));
+  {
+    STR errmsg;
+    ns_mesh_read(mesh,
+		 errmsg,
+		 &err,
+		 ifilename);
+  }
+#endif
+
+  wmesh_t * mesh = nullptr;
+
+  
+  std::cout << " degree "  << degree << std::endl;
+
+  wmesh_int_t degree_A = 0;
+  wmesh_int_t degree_X = 1;
+  wmesh_int_t degree_U = 1;
+  wmesh_int_t degree_F = degree;
+  wmesh_int_t degree_E = degree;
+  
+  wmesh_shape_t shape_A;
+  wmesh_shape_t shape_F;
+  wmesh_shape_t shape_U;
+  wmesh_shape_t shape_E;
+  wmesh_shape_t shape_X;
+  wmesh_shape_t shape_EE[32];
+  wmesh_shape_t shape_FF[32];
+  
+  wmesh_shape_def	(&shape_X,WMESH_ELEMENT_TRIANGLE,WMESH_SHAPE_FAMILY_LAGRANGE,degree_X);
+  wmesh_shape_def	(&shape_A,WMESH_ELEMENT_TRIANGLE,WMESH_SHAPE_FAMILY_LAGRANGE,degree_A);
+  wmesh_shape_def	(&shape_U,WMESH_ELEMENT_TRIANGLE,WMESH_SHAPE_FAMILY_LAGRANGE,degree_U);
+  wmesh_shape_def	(&shape_F,WMESH_ELEMENT_TRIANGLE,WMESH_SHAPE_FAMILY_LAGRANGE,degree_F);
+  wmesh_shape_def	(&shape_E,WMESH_ELEMENT_TRIANGLE,WMESH_SHAPE_FAMILY_LAGRANGE,degree_E);
+  
+  for (wmesh_int_t i=0;i<=degree;++i)
+    {
+      wmesh_shape_def	(&shape_EE[i],
+			 WMESH_ELEMENT_TRIANGLE,
+			 WMESH_SHAPE_FAMILY_LAGRANGE,
+			 i);
+      
+      wmesh_shape_def	(&shape_FF[i],
+			 WMESH_ELEMENT_TRIANGLE,
+			 WMESH_SHAPE_FAMILY_LAGRANGE,
+			 i);
+    }
+#if 0  
+  {
+
+    DG_VIEW view(&shape_X,&shape_F);
+    dg_print_mesh( mesh,
+		   view,
+		   "debug");
+  }
+  exit(1);
+#endif
+  //
+  // Create variables.
+  //
+
+  //  wmesh_shape_t shape_U;
+  //  wmesh_shape_t shape_F;
+  
+  //
+  // Fluid
+  //
+  DG_VAR F(mesh,
+	   &shape_F);
+
+  //
+  // Velocity
+  //
+  CG_VAR U(mesh,2,
+	   &shape_U);
+  //
+  // Interpolate velocity.
+  //
+  U.ih(eval_u);
+
+  DG_OPERATOR*dg;    
+  const wmesh_int_t noboundary_cod  	= 100;  
+  const wmesh_int_t cooff = 2;
+  const wmesh_int_t cncoff = 6;
+  const wmesh_int_t adjoff = 3;
+
+  //
+  // A0 corr0 = R(F0)
+  //
+  // A0 E  corr0   = R(F0)
+  // F  Q1 corr1\0 = R(F1\F0)
+  //
+  //
+  //
+  //  const_wmesh_int_p cnc_u = mesh->cnc;
+  double xa = 0.0, xu = 1.0;
+  dg = new DG_OPERATOR(&shape_X,
+		       &shape_A,				
+		       &shape_FF[degree],
+		       &shape_FF[degree],
+		       &shape_FF[degree],
+		       &xa,
+		       &xu,
+		       U,
+		       &mesh->m_num_triangles,
+		       mesh->m_coo,
+		       &mesh->m_coo_ld,
+		       mesh->m_c2n.m_data,
+		       &mesh->m_c2n.m_ld[0], // 0 because TRIANGLE 0 QUAD 1
+		       nullptr, // mesh->adj,
+		       &adjoff,
+		       nullptr,// mesh->cod,
+		       &noboundary_cod);
+  
+  F.clear();// = 0.0;
+  
+  DG_VAR Residual(mesh,
+		  &shape_EE[degree]);
+  
+  dg->m_bc->boundary_condition(U,
+			       Residual);
+  
+  dg->compute_residual(F,
+		       U,
+		       Residual,
+		       &dg[degree].m_dginfo->dg_rwork_n,
+		       dg[degree].m_dginfo->dg_rwork);
+  
+  //  linear_solver.write_mm(Residual,"%s_rhs.mtx",bbname);
+  //  linear_solver.write_mm(*dg[degree]->m_jacobian,"%s.mtx",bbname);
+  return 0;
+}
