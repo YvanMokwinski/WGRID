@@ -568,6 +568,22 @@ static inline T determinant3x3(const T * __restrict__ 	jacobian_,
 }
 
 template <typename T>
+wmesh_status_t wmesh_fem_laplace_local_system_buffer_size(const wmesh_fem_laplace_t<T> *__restrict__	self_,
+							  wmesh_int_t 					element_,							
+							  wmesh_int_p 					rw_n_)
+{
+  const wmesh_cubature_t<T>*__restrict__ 	cubature		= &self_->m_cubature[element_];
+  const wmesh_int_t 				q_n 			= cubature->m_w.n;
+  wmesh_status_t status;
+  wmesh_int_t topodim;
+  status = bms_element2topodim	(element_,
+				 &topodim);
+  WMESH_STATUS_CHECK(status);
+  rw_n_[0] = topodim * topodim * q_n + q_n;
+  return WMESH_STATUS_SUCCESS;
+}
+
+template <typename T>
 wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *__restrict__	self_,
 					      wmesh_int_t 					element_,
 					      wmesh_int_t 					cooelm_storage_,
@@ -588,7 +604,18 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *__re
   static constexpr T r1 = static_cast<T>(1);
 
   WMESH_CHECK_POINTER(self_);
-
+  
+  wmesh_status_t status;
+  wmesh_int_t required_rw_n;
+  status = wmesh_fem_laplace_local_system_buffer_size(self_,
+						      element_,
+						      &required_rw_n);
+  WMESH_STATUS_CHECK(status);
+  
+  if (rw_n_ < required_rw_n)
+    {
+      WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_WORKSPACE);       
+    }
   
   const wmesh_shape_eval_t<T> * __restrict__ 	shape_eval_element 	= &self_->m_shape_eval_element[element_];
   const wmesh_shape_eval_t<T> * __restrict__	shape_eval_f 		= &self_->m_shape_eval_f[element_];
@@ -598,17 +625,15 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *__re
   const wmesh_int_t 	topodim  					= cooelm_m_;
   const wmesh_int_t  	topodimXtopodim 				= topodim*topodim;;
   
-  if (rw_n_ < topodimXtopodim * q_n)
-    {
-      WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_WORKSPACE);
-    }
-
   //
   // Compute Jacobians and determinants.
   //
   T *__restrict__ jacobians 	= rw_;
   T *__restrict__ dets 		= rw_ + topodimXtopodim * q_n;
+  rw_ += required_rw_n;
+  rw_n_ -= required_rw_n;
 
+  
   for (wmesh_int_t idim=0;idim<topodim;++idim)
     {
       BLAS_dgemm("N",
@@ -670,13 +695,13 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *__re
       
       {	wmesh_int_t info_lapack,perm[3];
 	LAPACK_dgesv((wmesh_int_p)&topodim,
-		 (wmesh_int_p)&topodim,
-		 jacobian,
-		 (wmesh_int_p)&topodim,
-		 perm,
-		 B,
-		 (wmesh_int_p)&topodim,
-		 (wmesh_int_p)&info_lapack);
+		     (wmesh_int_p)&topodim,
+		     jacobian,
+		     (wmesh_int_p)&topodim,
+		     perm,
+		     B,
+		     (wmesh_int_p)&topodim,
+		     (wmesh_int_p)&info_lapack);
 	if (info_lapack)
 	  {
 	    fprintf(stderr,"error lapack\n");
@@ -901,7 +926,6 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
   const wmesh_int_t num_elements 		= self_->m_c2d.m_n[itype_];
   WMESH_CHECK( num_elements > 0 );
   T cooelm[32];
-
   const wmesh_int_t cooelm_storage 	= WMESH_STORAGE_INTERLEAVE;
   const wmesh_int_t cooelm_m 		= self_->m_mesh->m_topology_dimension;
   const wmesh_int_t cooelm_n 		= self_->m_mesh->m_c2n.m_m[itype_];
@@ -923,11 +947,16 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
   
   T * lmat = (T*)malloc(sizeof(T)*lmat_ld*lmat_n);
   T * lrhs = (T*)malloc(sizeof(T)*lmat_m);
-  
-  wmesh_int_t rw_n = num_dofs_per_element*num_dofs_per_element*10;
+
+
+  wmesh_int_t rw_n;
+  status = wmesh_fem_laplace_local_system_buffer_size(fem_,
+						      element,
+						      &rw_n);
+  WMESH_STATUS_CHECK(status);
+
   T * rw =  (T*)malloc(sizeof(T)*rw_n);
   wmesh_int_p c2d  = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*num_dofs_per_element);
-
   
   const wmesh_t * mesh = self_->m_mesh;
 
@@ -960,7 +989,7 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
 					      lrhs_inc,
 					      rw_n,
 					      rw);
-
+      WMESH_STATUS_CHECK(status);
 
 
 
@@ -1115,7 +1144,7 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
 	  
 	}
     }
-
+  free(rw);
   return WMESH_STATUS_SUCCESS;
 }
 
@@ -1196,6 +1225,7 @@ extern "C"
 				   elements);
     WMESH_STATUS_CHECK(status);
     
+    std::cout << "laplace def .. " << std::endl;
     for (wmesh_int_t itype=0;itype<self_->m_c2d.m_size;++itype)
       {
 	if (self_->m_c2d.m_n[itype] > 0)
@@ -1211,6 +1241,7 @@ extern "C"
 	    WMESH_STATUS_CHECK(status);
 	  }
       }
+    std::cout << "compute global system .. " << std::endl;
 
     status = wmeshspace_fem_laplace_global_system(self_,
 						  &fem,
@@ -1220,6 +1251,7 @@ extern "C"
 						  csr_val_,
 						  rhs_);
     WMESH_STATUS_CHECK(status);
+    std::cout << "compute global systemdone. " << std::endl;
 
     
 #if 0    

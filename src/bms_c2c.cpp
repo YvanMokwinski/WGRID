@@ -1,6 +1,9 @@
+#include <limits>
+#include <iostream>
 
 #include "bms.h"
 
+#include "GenericEncoding.hpp"
 extern "C"
 {
 
@@ -143,5 +146,19 @@ extern "C"
     num_faces_[1] = ((c2n_n_[1]*1+c2n_n_[2]*3+c2n_n_[3]*6) + num_bfaces_[1])/2;    
     return WMESH_STATUS_SUCCESS;
   }
-  
+
+  wmesh_status_t bms_c2c_cindex(wmesh_int_t 	c_,
+				wmesh_int_p 	cindex_)
+  {
+    cindex_[0] = GenericEncoding<wmesh_int_t,2>::Up(c_) - 1;
+    return WMESH_STATUS_SUCCESS;
+  }
+
+  wmesh_status_t bms_c2c_ctype(wmesh_int_t 	c_,
+			       wmesh_int_p 	ctype_)
+  {
+    ctype_[0] = GenericEncoding<wmesh_int_t,2>::Low(c_);
+    return WMESH_STATUS_SUCCESS;
+  }
+
 }

@@ -1,6 +1,11 @@
 
 #include "wmesh.h"
 #include "cmdline.hpp"
+#include <iostream>
+#include "wmesh-blas.hpp"
+#include <algorithm>
+#include "bms.h"
+
 
 #if 0
 wmesh_status_t wmesh_csrjacobian(wmesh_int_t 		c2n_size_,
@@ -361,7 +366,11 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
     
     for (I i=0;i<this->m_n;++i)
       {
-	qsort(&m_index[m_begin[i]],m_begin[i+1]-m_begin[i],sizeof(I),comp);
+	std::sort(&m_index[m_begin[i]],
+		  &m_index[m_begin[i+1]],
+		  [](const wmesh_int_t& a,const wmesh_int_t& b){return a < b;});
+	
+	//	qsort(&m_index[m_begin[i]],m_begin[i+1]-m_begin[i],sizeof(I),comp);
       }
     //    this->spy("dg.txt");
 
@@ -373,8 +382,9 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
 #include "DG_JACOBIAN.hpp"
   // #include "DG_BOUNDARY_CONDITION.hpp"
 #endif  
-int main(int argc, char ** argv)
-{  
+
+  int main(int argc, char ** argv)
+  {  
   wmesh_t* 		mesh 		= nullptr;
   wmesh_status_t 	status;
 
@@ -439,6 +449,39 @@ int main(int argc, char ** argv)
   status = wmesh_analysis(mesh);
   
   WMESH_STATUS_CHECK(status);
+
+  wmesh_int_t csr_size 	= 0;
+  wmesh_int_p csr_ptr 	= nullptr;
+  wmesh_int_p csr_ind 	= nullptr;
+  wmeshspacedg_sparse(mesh,
+		      degree,
+		      &csr_size,
+		      &csr_ptr,
+		      &csr_ind);
+  
+  //
+  // Spy the symbolic matrix.
+  //
+  std::cout << "size " << csr_size << std::endl;
+  std::cout << "nnz  " << csr_ptr[csr_size] << std::endl;
+
+  FILE * f = fopen("out.txt","w");
+  for (wmesh_int_t i=0;i<csr_size;++i)
+    {
+      for (wmesh_int_t s=csr_ptr[i];s<csr_ptr[i+1];++s)
+	{
+	  wmesh_int_t j = csr_ind[s];
+	  fprintf(f," " WMESH_INT_FORMAT " " WMESH_INT_FORMAT "\n",csr_size - i, j);
+	  //	  std::cout << csr_size - i << " " << j << std::endl;
+	}
+    }
+  fclose(f);
+  //
+  // Now we can discretize some equations.
+  //
+  std::cout << "hello " << std::endl;
+  exit(1);
+
   
   //
   // Write the refined mesh.

@@ -37,6 +37,28 @@ extern "C"
 				       wmesh_int_t 		degree_,
 				       wmesh_int_p 		iw_n_,
 				       wmesh_int_p 		rw_n_);
+
+
+  wmesh_status_t bms_sparse_dg(const_wmesh_int_p 	size_blocks_,
+			       wmesh_int_t 		c2c_size_,
+			       const_wmesh_int_p 	c2c_ptr_,
+			       const_wmesh_int_p 	c2c_m_,
+			       const_wmesh_int_p 	c2c_n_,
+			       const_wmesh_int_p 	c2c_v_,
+			       const_wmesh_int_p 	c2c_ld_,
+			       wmesh_int_t		csr_n_,
+			       wmesh_int_p		csr_ptr_,
+			       wmesh_int_p		csr_ind_);
+  wmesh_status_t bms_sparse_dg_nnz(const_wmesh_int_p 	size_blocks_,
+				   wmesh_int_t 		c2c_size_,
+				   const_wmesh_int_p 	c2c_ptr_,
+				   const_wmesh_int_p 	c2c_m_,
+				   const_wmesh_int_p 	c2c_n_,
+				   const_wmesh_int_p 	c2c_v_,
+				   const_wmesh_int_p 	c2c_ld_,
+				   wmesh_int_p		num_dofs_,
+				   wmesh_int_p		nnz_);
+
   
   wmesh_status_t 	bms_sparse_buffer_size	(wmesh_int_t 		num_dofs_,
 						 wmesh_int_t 		c2d_size_,
@@ -413,6 +435,11 @@ extern "C"
    wmesh_int_p 		num_faces_,
    wmesh_int_p 		num_bfaces_);
 
+
+  wmesh_status_t bms_c2c_cindex(wmesh_int_t 	c_,
+				wmesh_int_p 	cindex_);
+  wmesh_status_t bms_c2c_ctype(wmesh_int_t 	c_,
+			       wmesh_int_p 	ctype_);
 
 
 

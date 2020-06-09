@@ -261,6 +261,8 @@ wmesh_status_t bms_c2c_x_search(wmesh_int_t 				cell_type_,
 		  c2c_x_v_[c2c_x_ptr_[tested_cell_type] + at] = GenericEncoding<wmesh_int_t,2>::Encod(cellIndex + 1,cell_type_);
 		  c2c_x_v_[c2c_x_ptr_[cell_type_] + c2c_x_ld_[cell_type_] * cellIndex  + t_lidx] = GenericEncoding<wmesh_int_t,2>::Encod(tested_cell_idx + 1,tested_cell_type);
 		  break;
+
+
 		}
 	      else
 		{

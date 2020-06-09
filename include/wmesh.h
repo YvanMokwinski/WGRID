@@ -15,6 +15,11 @@ extern "C"
   struct wmeshspace_t;
   struct wmesh_bspline_t;
 
+  wmesh_status_t wmeshspacedg_sparse	(const wmesh_t*__restrict__ 	self_,
+					 wmesh_int_t 			degree_,
+					 wmesh_int_p 			csr_size_,
+					 wmesh_int_p*__restrict__ 	csr_ptr_,
+					 wmesh_int_p*__restrict__ 	csr_ind_);
   
   wmesh_status_t 	wmeshspace_def			(wmeshspace_t ** 			self__,
 							 wmesh_int_t 				family_,

@@ -108,7 +108,7 @@ struct bms_template_shape_lagrange
 
 	  
 	  status = bms_nodes_buffer_sizes(ELEMENT_,
-					  WMESH_NODES_FAMILY_GAUSSLOBATTO,
+					  WMESH_NODES_FAMILY_LAGRANGE,
 					  degree_,
 					  &iwork_n,
 					  &rwork_n);	  
@@ -118,7 +118,7 @@ struct bms_template_shape_lagrange
 	  T* __restrict__ rwork = (rwork_n>0)?(T* __restrict__ )malloc(sizeof(T)*rwork_n):nullptr;
 	  
 	  status = bms_nodes(ELEMENT_,
-			     WMESH_NODES_FAMILY_GAUSSLOBATTO,
+			     WMESH_NODES_FAMILY_LAGRANGE,
 			     degree_,
 			     o_storage,
 			     o_m,

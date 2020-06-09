@@ -147,7 +147,7 @@ int main(int argc, char ** argv)
 
   double * csr_val 	= (double*)calloc(csr_ptr[csr_size],sizeof(double));
   double * rhs 		= (double*)calloc(csr_size,sizeof(double));
-
+  std::cout << "compute laplace ... " << std::endl;
   status = wmeshspace_laplace(meshspace,
 			      csr_size,
 			      csr_ptr,
@@ -155,7 +155,9 @@ int main(int argc, char ** argv)
 			      csr_val,
 			      rhs);
   WMESH_STATUS_CHECK(status);
+  std::cout << "compute laplace done. " << std::endl;
 
+  std::cout << "output ... " << std::endl;
   status =  bms_matrix_market_dense_dwrite(csr_size,
 					   1,
 					   rhs,
