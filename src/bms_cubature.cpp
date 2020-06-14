@@ -633,6 +633,47 @@ bms_template_cubature(wmesh_int_t	element_,
    return WMESH_STATUS_INVALID_ENUM;  
 }
 
+
+template
+wmesh_status_t
+bms_template_cubature<float>(wmesh_int_t		element_,
+			     wmesh_int_t		family_,
+			     wmesh_int_t		n1d_,
+			     
+			     wmesh_int_t		c_storage_,
+			     wmesh_int_t		c_m_,
+			     wmesh_int_t		c_n_,
+			     float*__restrict__ 	c_v_,
+			     wmesh_int_t		c_ld_,
+	     
+			     wmesh_int_t		w_n_,
+			     float*__restrict__ 	w_v_,
+			     wmesh_int_t		w_inc_,
+			     
+			     wmesh_int_t		rwork_n_,
+			     float* __restrict__ 	rwork_);
+
+template
+wmesh_status_t
+bms_template_cubature<double>(wmesh_int_t		element_,
+			      wmesh_int_t		family_,
+			      wmesh_int_t		n1d_,
+
+			      wmesh_int_t		c_storage_,
+			      wmesh_int_t		c_m_,
+			      wmesh_int_t		c_n_,
+			      double*__restrict__ 	c_v_,
+			      wmesh_int_t		c_ld_,
+	     
+			      wmesh_int_t		w_n_,
+			      double*__restrict__ 	w_v_,
+			      wmesh_int_t		w_inc_,
+	     
+			      wmesh_int_t		rwork_n_,
+			      double* __restrict__ 	rwork_);
+
+
+
 extern "C"
 {
 

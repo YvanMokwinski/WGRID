@@ -15,6 +15,20 @@ inline void xcopy<float>(const_wmesh_int_p n,const float *x,const_wmesh_int_p xi
 }
 
 
+template <typename T>
+inline void xscal(const_wmesh_int_p n,const T* x,T *y,const_wmesh_int_p yinc);
+template <>
+inline void xscal<double>(const_wmesh_int_p n,const double *x,double *y,const_wmesh_int_p yinc)
+{
+  dscal(n,x,y,yinc);
+}
+template <>
+inline void xscal<float>(const_wmesh_int_p n,const float *x,float *y,const_wmesh_int_p yinc)
+{
+  sscal(n,x,y,yinc);
+}
+
+
 
 
 

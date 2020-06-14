@@ -450,6 +450,24 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
   
   WMESH_STATUS_CHECK(status);
 
+  //
+  // Generate the finite element space for the velocity.
+  // 
+  const wmesh_int_t velocity_degree 		= 2;
+  const wmesh_int_t velocity_family 		= WMESH_SHAPE_FAMILY_LAGRANGE;
+  const wmesh_int_t velocity_nodes_family 	= WMESH_NODES_FAMILY_LAGRANGE;
+
+  wmeshspace_t * velocity_space;
+  status = wmeshspace_def(&velocity_space,
+			  velocity_nodes_family,
+			  velocity_degree,
+			  mesh);
+  WMESH_STATUS_CHECK(status);
+  
+  //
+  // 
+  //
+
   wmesh_int_t csr_size 	= 0;
   wmesh_int_p csr_ptr 	= nullptr;
   wmesh_int_p csr_ind 	= nullptr;
@@ -476,6 +494,12 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
 	}
     }
   fclose(f);
+
+
+
+  
+
+  
   //
   // Now we can discretize some equations.
   //

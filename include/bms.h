@@ -937,6 +937,11 @@ extern "C"
 			   wmesh_int_p	s_v_,
 			   wmesh_int_p	s_ld_);
 
+  wmesh_status_t
+  bms_element_facets(wmesh_int_t 		element_,			 
+			 wmesh_int_p 		num_facets_,
+			 wmesh_int_p 		facets_);
+  
   wmesh_status_t bms_topodim2elements	(wmesh_int_t 	topodim_,
 					 wmesh_int_p 	num_elements_,
 					 wmesh_int_p 	elements_);
@@ -948,8 +953,8 @@ extern "C"
 					 wmesh_int_p 	topodim_);
 
   wmesh_status_t
-  bms_elements_num_hyperfaces(wmesh_int_t 		topodim_,
-				wmesh_int_p 		num_hyperfaces_);
+  bms_elements_num_facets(wmesh_int_t 		topodim_,
+				wmesh_int_p 		num_facets_);
 
 
   

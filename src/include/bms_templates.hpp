@@ -715,44 +715,143 @@ inline wmesh_status_t bms_template_element2topodim(wmesh_int_p 	topodim_)
 }
 
 template<wmesh_int_t TOPODIM_>
-inline wmesh_status_t bms_template_elements_num_hyperfaces(wmesh_int_p 	num_hyperfaces_);
+inline wmesh_status_t bms_template_elements_num_facets(wmesh_int_p 	num_facets_);
 
 template<>
-inline wmesh_status_t bms_template_elements_num_hyperfaces<WMESH_TOPODIM_VOLUME>(wmesh_int_p 	num_hyperfaces_)
+inline wmesh_status_t bms_template_elements_num_facets<WMESH_TOPODIM_VOLUME>(wmesh_int_p 	num_facets_)
 {
-  WMESH_CHECK_POINTER(num_hyperfaces_);
-  num_hyperfaces_[0] = 4;
-  num_hyperfaces_[1] = 5;
-  num_hyperfaces_[2] = 5;
-  num_hyperfaces_[3] = 6;
+  WMESH_CHECK_POINTER(num_facets_);
+  num_facets_[0] = 4;
+  num_facets_[1] = 5;
+  num_facets_[2] = 5;
+  num_facets_[3] = 6;
   return WMESH_STATUS_SUCCESS;
 }
 
 template<>
-inline wmesh_status_t bms_template_elements_num_hyperfaces<WMESH_TOPODIM_FACE>(wmesh_int_p 	num_hyperfaces_)
+inline wmesh_status_t bms_template_elements_num_facets<WMESH_TOPODIM_FACE>(wmesh_int_p 	num_facets_)
 {
-  WMESH_CHECK_POINTER(num_hyperfaces_);
-  num_hyperfaces_[0] = 3;
-  num_hyperfaces_[1] = 4;
+  WMESH_CHECK_POINTER(num_facets_);
+  num_facets_[0] = 3;
+  num_facets_[1] = 4;
   return WMESH_STATUS_SUCCESS;
 }
 
 
 template<>
-inline wmesh_status_t bms_template_elements_num_hyperfaces<WMESH_TOPODIM_EDGE>(wmesh_int_p 	num_hyperfaces_)
+inline wmesh_status_t bms_template_elements_num_facets<WMESH_TOPODIM_EDGE>(wmesh_int_p 	num_facets_)
 {
-  WMESH_CHECK_POINTER(num_hyperfaces_);
-  num_hyperfaces_[0] = 2;
+  WMESH_CHECK_POINTER(num_facets_);
+  num_facets_[0] = 2;
   return WMESH_STATUS_SUCCESS;
 }
 
 template<>
-inline wmesh_status_t bms_template_elements_num_hyperfaces<WMESH_TOPODIM_NODE>(wmesh_int_p 	num_hyperfaces_)
+inline wmesh_status_t bms_template_elements_num_facets<WMESH_TOPODIM_NODE>(wmesh_int_p 	num_facets_)
 {
-   WMESH_CHECK_POINTER(num_hyperfaces_);
-  num_hyperfaces_[0] = 0;
+  WMESH_CHECK_POINTER(num_facets_);
+  num_facets_[0] = 0;
   return WMESH_STATUS_SUCCESS;
 }
+
+
+template<wmesh_int_t ELEMENT_>
+inline wmesh_status_t bms_template_element_facets(wmesh_int_p num_facets_,wmesh_int_p facets_);
+
+template<>
+inline wmesh_status_t bms_template_element_facets<WMESH_ELEMENT_EDGE>(wmesh_int_p num_facets_,wmesh_int_p facets_)
+{
+  WMESH_CHECK_POINTER(facets_);
+  num_facets_[0] = 2;
+  facets_[0] = WMESH_ELEMENT_NODE;
+  facets_[1] = WMESH_ELEMENT_NODE;
+  return WMESH_STATUS_SUCCESS;
+}
+
+
+template<>
+inline wmesh_status_t bms_template_element_facets<WMESH_ELEMENT_TRIANGLE>(wmesh_int_p num_facets_,wmesh_int_p facets_)
+{
+  WMESH_CHECK_POINTER(facets_);
+  num_facets_[0] = 3;
+  facets_[0] = WMESH_ELEMENT_EDGE;
+  facets_[1] = WMESH_ELEMENT_EDGE;
+  facets_[2] = WMESH_ELEMENT_EDGE;
+  return WMESH_STATUS_SUCCESS;
+}
+
+template<>
+inline wmesh_status_t bms_template_element_facets<WMESH_ELEMENT_QUADRILATERAL>(wmesh_int_p num_facets_,wmesh_int_p facets_)
+{
+  WMESH_CHECK_POINTER(facets_);
+  num_facets_[0] = 4;
+  facets_[0] = WMESH_ELEMENT_EDGE;
+  facets_[1] = WMESH_ELEMENT_EDGE;
+  facets_[2] = WMESH_ELEMENT_EDGE;
+  facets_[3] = WMESH_ELEMENT_EDGE;
+  return WMESH_STATUS_SUCCESS;
+}
+
+
+
+template<>
+inline wmesh_status_t bms_template_element_facets<WMESH_ELEMENT_TETRAHEDRON>(wmesh_int_p num_facets_,wmesh_int_p facets_)
+{
+  WMESH_CHECK_POINTER(facets_);
+  num_facets_[0] = 4;
+  facets_[0] = WMESH_ELEMENT_TRIANGLE;
+  facets_[1] = WMESH_ELEMENT_TRIANGLE;
+  facets_[2] = WMESH_ELEMENT_TRIANGLE;
+  facets_[3] = WMESH_ELEMENT_TRIANGLE;
+  return WMESH_STATUS_SUCCESS;
+}
+
+template<>
+inline wmesh_status_t bms_template_element_facets<WMESH_ELEMENT_PYRAMID>(wmesh_int_p num_facets_,wmesh_int_p facets_)
+{
+  WMESH_CHECK_POINTER(facets_);
+  num_facets_[0] = 5;
+
+  facets_[0] = WMESH_ELEMENT_TRIANGLE;
+  facets_[1] = WMESH_ELEMENT_TRIANGLE;
+  facets_[2] = WMESH_ELEMENT_TRIANGLE;
+  facets_[3] = WMESH_ELEMENT_TRIANGLE;
+  facets_[4] = WMESH_ELEMENT_QUADRILATERAL;
+  return WMESH_STATUS_SUCCESS;
+}
+
+template<>
+inline wmesh_status_t bms_template_element_facets<WMESH_ELEMENT_WEDGE>(wmesh_int_p num_facets_,wmesh_int_p facets_)
+{
+  WMESH_CHECK_POINTER(facets_);
+  num_facets_[0] = 5;
+
+  facets_[0] = WMESH_ELEMENT_TRIANGLE;
+  facets_[1] = WMESH_ELEMENT_TRIANGLE;
+  facets_[2] = WMESH_ELEMENT_QUADRILATERAL;
+  facets_[3] = WMESH_ELEMENT_QUADRILATERAL;
+  facets_[4] = WMESH_ELEMENT_QUADRILATERAL;
+  return WMESH_STATUS_SUCCESS;
+}
+
+template<>
+inline wmesh_status_t bms_template_element_facets<WMESH_ELEMENT_HEXAHEDRON>(wmesh_int_p num_facets_,wmesh_int_p facets_)
+{
+  WMESH_CHECK_POINTER(facets_);
+  num_facets_[0] = 6;
+  facets_[0] = WMESH_ELEMENT_QUADRILATERAL;
+  facets_[1] = WMESH_ELEMENT_QUADRILATERAL;
+  facets_[2] = WMESH_ELEMENT_QUADRILATERAL;
+  facets_[3] = WMESH_ELEMENT_QUADRILATERAL;
+  facets_[4] = WMESH_ELEMENT_QUADRILATERAL;
+  facets_[5] = WMESH_ELEMENT_QUADRILATERAL;
+  return WMESH_STATUS_SUCCESS;
+}
+
+
+
+
+
 
 template<wmesh_int_t ENTITY_>
 inline wmesh_status_t bms_template_elements_num_entities(wmesh_int_t 		num_elements_,
@@ -848,3 +947,80 @@ bms_nodes(wmesh_int_t 		element_,
 	  wmesh_int_p 		iwork_,
 	  wmesh_int_t		rwork_n_,
 	  T* __restrict__ 	rwork_);
+
+
+
+
+
+template<typename T>
+wmesh_status_t bms_mirrored_local_coordinates_edge(wmesh_int_t 			signed_rotation_,
+						   wmesh_int_t 			c_storage_,
+						   wmesh_int_t 			c_m_,
+						   wmesh_int_t 			c_n_,
+						   const T * __restrict__ 	c_v_,
+						   wmesh_int_t 			c_ld_,
+						   wmesh_int_t 			x_storage_,
+						   wmesh_int_t 			x_m_,
+						   wmesh_int_t 			x_n_,
+						   T * __restrict__ 		x_v_,
+						   wmesh_int_t 			x_ld_);
+
+template<typename T>
+wmesh_status_t bms_mirrored_local_coordinates_triangle(wmesh_int_t 			signed_rotation_,
+						       wmesh_int_t 			c_storage_,
+						       wmesh_int_t 			c_m_,
+						       wmesh_int_t 			c_n_,
+						       const T * __restrict__ 	c_v_,
+						       wmesh_int_t 			c_ld_,
+						       wmesh_int_t 			x_storage_,
+						       wmesh_int_t 			x_m_,
+						       wmesh_int_t 			x_n_,
+						       T * __restrict__ 		x_v_,
+						       wmesh_int_t 			x_ld_);;
+
+template<typename T>
+wmesh_status_t bms_mirrored_local_coordinates_quadrilateral(wmesh_int_t 			signed_rotation_,
+							    wmesh_int_t 			c_storage_,
+							    wmesh_int_t 			c_m_,
+							    wmesh_int_t 			c_n_,
+							    const T * __restrict__ 	c_v_,
+							    wmesh_int_t 			c_ld_,
+							    wmesh_int_t 			x_storage_,
+							    wmesh_int_t 			x_m_,
+							    wmesh_int_t 			x_n_,
+							    T * __restrict__ 		x_v_,
+							    wmesh_int_t 			x_ld_);
+
+template<typename T>
+wmesh_status_t bms_mirrored_local_coordinates(wmesh_int_t 	       		element_,
+					      wmesh_int_t 			signed_rotation_,
+					      wmesh_int_t 			c_storage_,
+					      wmesh_int_t 			c_m_,
+					      wmesh_int_t 			c_n_,
+					      const T * __restrict__ 		c_v_,
+					      wmesh_int_t 			c_ld_,
+					      wmesh_int_t 			x_storage_,
+					      wmesh_int_t 			x_m_,
+					      wmesh_int_t 			x_n_,
+					      T * __restrict__ 			x_v_,
+					      wmesh_int_t 			x_ld_);
+
+template<typename T>
+wmesh_status_t
+bms_template_cubature(wmesh_int_t	element_,
+		      wmesh_int_t	family_,
+		      wmesh_int_t	n1d_,
+
+		      wmesh_int_t	c_storage_,
+		      wmesh_int_t	c_m_,
+		      wmesh_int_t	c_n_,
+		      T*__restrict__ 	c_v_,
+		      wmesh_int_t	c_ld_,
+	     
+		      wmesh_int_t	w_n_,
+		      T*__restrict__ 	w_v_,
+		      wmesh_int_t	w_inc_,
+	     
+		      wmesh_int_t	rwork_n_,
+		      T* __restrict__ 	rwork_);
+

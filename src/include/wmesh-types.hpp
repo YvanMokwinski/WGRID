@@ -23,6 +23,35 @@ struct wmesh_mat_t
 
 };
 
+
+
+template<typename T>
+struct wmesh_cubature_t
+{
+  wmesh_int_t 		m_element;
+  wmesh_int_t 		m_family;
+  wmesh_int_t 		m_degree;
+  wmesh_int_t 		m_c_storage;
+  wmesh_mat_t<T> 	m_c;
+  wmesh_mat_t<T> 	m_w;
+};
+
+
+template<typename T>
+wmesh_status_t wmesh_cubature_def(wmesh_cubature_t<T>*__restrict__ self_,
+				  wmesh_int_t 		element_,
+				  wmesh_int_t 		family_,
+				  wmesh_int_t 		degree_);
+
+
+
+
+
+
+
+
+
+
 extern "C"
 {
 struct wmesh_shape_t
@@ -38,6 +67,38 @@ wmesh_status_t wmesh_shape_def(wmesh_shape_t*__restrict__ self_,
 			       wmesh_int_t 		family_,
 			       wmesh_int_t 		degree_);
 };
+
+
+
+template<typename T>
+struct wmesh_shape_eval_t
+{
+  wmesh_shape_t 	m_shape;
+
+
+  wmesh_int_t 		m_f_storage;
+  wmesh_mat_t<T> 	m_f;
+  wmesh_int_t 		m_diff_storage;
+  wmesh_mat_t<T> 	m_diff[3];
+
+  wmesh_int_t 		m_wf_storage;
+  wmesh_mat_t<T> 	m_wf;
+  wmesh_int_t 		m_wdiff_storage;
+  wmesh_mat_t<T> 	m_wdiff[3];
+
+};
+
+
+
+template<typename T>
+wmesh_status_t wmesh_shape_eval_def(wmesh_shape_eval_t<T>*__restrict__ 	self_,
+				    wmesh_int_t 			element_,				
+				    wmesh_int_t 			shape_family_,
+				    wmesh_int_t 			shape_degree_,				
+				    wmesh_int_t 			nodes_storage_,
+				    const wmesh_mat_t<T> * 		nodes_,
+				    const wmesh_mat_t<T> * 		weights_ = nullptr);
+
 
 
 extern "C"

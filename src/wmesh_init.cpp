@@ -69,8 +69,8 @@ extern "C"
 
     WMESH_STATUS_CHECK(status);
 
-    status = bms_elements_num_hyperfaces(topodim_,
-					 c2c_m);
+    status = bms_elements_num_facets(topodim_,
+				     c2c_m);
     WMESH_STATUS_CHECK(status);
     
     status = wmesh_int_sparsemat_init(c2c_size,

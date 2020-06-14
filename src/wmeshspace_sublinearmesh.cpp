@@ -1139,13 +1139,19 @@ extern "C"
 
 
   
-  wmesh_status_t wmeshspace_sublinearmesh(wmeshspace_t * 	self_,
-					  wmesh_t ** 		mesh__)
+  wmesh_status_t wmeshspace_generate_coodofs(wmeshspace_t * 	self_,
+					     wmesh_int_t 	coo_storage_,
+					     wmesh_int_t 	coo_m_,
+					     wmesh_int_t 	coo_n_,
+					     double * 		coo_,
+					     wmesh_int_t 	coo_ld_)
   {    
+    static constexpr double r0 = 0.0;
+    static constexpr double r1 = 1.0;
     wmesh_status_t 	status;
-    wmesh_t * 		mesh = self_->m_mesh;
+    wmesh_t * 		mesh 	= self_->m_mesh;
     wmesh_int_t         topodim = mesh->m_topology_dimension;
-    wmesh_int_t 	coo_m  = mesh->m_coo_m;
+    wmesh_int_t 	coo_m  	= mesh->m_coo_m;
     
     wmesh_int_t 	num_types;
     wmesh_int_t 	elements[4];
@@ -1154,12 +1160,9 @@ extern "C"
     wmesh_int_t 	cell_xyz_ld = coo_m;
 
     status = bms_topodim2elements(topodim,
-				    &num_types,
-				    elements);
-    WMESH_STATUS_CHECK(status);    
-
-
-    
+				  &num_types,
+				  elements);
+    WMESH_STATUS_CHECK(status);        
     for (wmesh_int_t l=0;l<num_types;++l)
       {
 	if (mesh->m_c2n.m_n[l]>0)
@@ -1168,8 +1171,6 @@ extern "C"
 	    const double * 	rmacro_coo 		= wmesh_get_coo(rmacro);
 	    wmesh_int_t 	rmacro_coo_ld 		= rmacro->m_coo_ld;
 	    wmesh_int_t 	rmacro_num_nodes 	= rmacro->m_num_nodes;
-	    
-	    
 	    if ((topodim==0)&&(l==0))
 	      {
 		//
@@ -1442,166 +1443,148 @@ extern "C"
 	  }
 
       }
-    
-    wmesh_int_t coo_dofs_n  	= self_->m_ndofs;
-    wmesh_int_t coo_dofs_m  	= coo_m;
-    wmesh_int_t coo_dofs_ld 	= coo_dofs_m;
-    double * 	coo_dofs 	= (double*)malloc(coo_dofs_m*sizeof(double)*self_->m_ndofs);
 
-    {
-      for (wmesh_int_t l=0;l<self_->m_c2d.m_size;++l)
-	{
-	  double * 	refeval = refevals[l];
-	  
-	  //
-	  // Local c2d.
-	  //	    
-	  // wmesh_int_t c2d_n	= self_->m_c2d.m_n[l];
-	  wmesh_int_t c2d_m 		= self_->m_c2d.m_m[l];
-	  wmesh_int_t c2d_ld 		= self_->m_c2d.m_ld[l];
-	  wmesh_int_p c2d_v 		= self_->m_c2d.m_data + self_->m_c2d.m_ptr[l];
-	  
-	  //
-	  // Local c2n.
-	  //
-	  wmesh_int_t c2n_n 		= self_->m_mesh->m_c2n.m_n[l];
-	  wmesh_int_t c2n_m 		= self_->m_mesh->m_c2n.m_m[l];
-	  wmesh_int_t c2n_ld		= self_->m_mesh->m_c2n.m_ld[l];
-	  wmesh_int_p c2n_v 		= self_->m_mesh->m_c2n.m_data + self_->m_mesh->m_c2n.m_ptr[l];
-	  
-	  for (wmesh_int_t j=0;j<c2n_n;++j)
-	    {
-	      
-	      //
-	      // Get the coordinates of the cell.
-	      //		
-	      for (wmesh_int_t i=0;i<c2n_m;++i)
-		{
-		  wmesh_int_t idx = c2n_v[c2n_ld * j + i] - 1;
-		  for (wmesh_int_t k=0;k<self_->m_mesh->m_coo_m;++k)
-		    {
-		      cell_xyz[cell_xyz_ld * i + k] = self_->m_mesh->m_coo[self_->m_mesh->m_coo_ld * idx + k];
-		    }
-		}
-	      
-	      
-	      //
-	      // Get the physical coordinates of the dofs.
-	      //
-	      //		std::cout << "c2d_m " << c2d_m << std::endl;
-	      if (coo_m ==3)
-		{
-		  for (wmesh_int_t i=0;i<c2d_m;++i)
-		    {
-		      double
-			x = 0.0,
-			y = 0.0,
-			z = 0.0;
-		      for (wmesh_int_t k=0;k<c2n_m;++k)
-			x += refeval[c2n_m * i + k] * cell_xyz[cell_xyz_ld * k + 0];		    
-		      for (wmesh_int_t k=0;k<c2n_m;++k)
-			y += refeval[c2n_m * i + k] * cell_xyz[cell_xyz_ld * k + 1];		    
-		      for (wmesh_int_t k=0;k<c2n_m;++k)
-			z += refeval[c2n_m * i + k] * cell_xyz[cell_xyz_ld * k + 2];		    
-		      
-		      wmesh_int_t idx = c2d_v[c2d_ld * j + i] - 1;
-		      // ::cout << "idx " << idx << std::endl;
-		      coo_dofs[coo_dofs_ld * idx + 0] = x;
-		      coo_dofs[coo_dofs_ld * idx + 1] = y;
-		      coo_dofs[coo_dofs_ld * idx + 2] = z;
-		    }
-		}
-	      else
-		{
-		  for (wmesh_int_t i=0;i<c2d_m;++i)
-		    {
-		      double
-			x = 0.0,
-			y = 0.0;
-		      for (wmesh_int_t k=0;k<c2n_m;++k)
-			x += refeval[c2n_m * i + k] * cell_xyz[cell_xyz_ld * k + 0];		    
-		      for (wmesh_int_t k=0;k<c2n_m;++k)
-			y += refeval[c2n_m * i + k] * cell_xyz[cell_xyz_ld * k + 1];		    
-		      
-		      wmesh_int_t idx = c2d_v[c2d_ld * j + i] - 1;
-		      // std::cout << "idx " << idx << std::endl;
-		      coo_dofs[coo_dofs_ld * idx + 0] = x;
-		      coo_dofs[coo_dofs_ld * idx + 1] = y;
-		    }
-		}
-	    }
-	}
-    }
-#if 0    
-    wmesh_int_p dofs_cod = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*self_->m_ndofs);      
-
-    //
-    // Nodes.
-    //
-    for (wmesh_int_t i=0;i<self_->m_mesh->m_num_nodes;++i)
+    wmesh_int_t rw_n = 0;
+    for (wmesh_int_t l=0;l<self_->m_c2d.m_size;++l)
       {
-	dofs_cod[i] = self_->m_mesh->m_n_c.v[i];
+	wmesh_int_t k = self_->m_c2d.m_m[l]*topodim;
+	rw_n = (rw_n < k) ? k : rw_n;
       }
-
+    
+    double * rw = (double*)malloc(sizeof(double)*rw_n);
+    
     for (wmesh_int_t l=0;l<self_->m_c2d.m_size;++l)
       {
 	double * 	refeval = refevals[l];
-
-	
-	//
-	// Loop over cells
-	//
-	for (wmesh_int_t j=0;j<self_->m_c2d.m_n[l];++j)
-	  {
-	    //
-	    // Loop over cells
-	    //
-	    for (wmesh_int_t j=0;j<self_->m_c2d.m_n[l];++j)
-	      {
-		
-	      }
-	  }
 	
 	//
 	// Local c2d.
 	//	    
+	// wmesh_int_t c2d_n	= self_->m_c2d.m_n[l];
 	wmesh_int_t c2d_m 		= self_->m_c2d.m_m[l];
 	wmesh_int_t c2d_ld 		= self_->m_c2d.m_ld[l];
 	wmesh_int_p c2d_v 		= self_->m_c2d.m_data + self_->m_c2d.m_ptr[l];
-	  
+	
 	//
 	// Local c2n.
 	//
-	wmesh_int_t c2n_n 		= self_->m_mesh->m_c2n.m_n[l];
-	wmesh_int_t c2n_m 		= self_->m_mesh->m_c2n.m_m[l];
-	wmesh_int_t c2n_ld		= self_->m_mesh->m_c2n.m_ld[l];
-	wmesh_int_p c2n_v 		= self_->m_mesh->m_c2n.m_data + self_->m_mesh->m_c2n.m_ptr[l];
+	wmesh_int_t c2n_n 		= mesh->m_c2n.m_n[l];
+	wmesh_int_t c2n_m 		= mesh->m_c2n.m_m[l];
+	wmesh_int_t c2n_ld		= mesh->m_c2n.m_ld[l];
+	wmesh_int_p c2n_v 		= mesh->m_c2n.m_data + mesh->m_c2n.m_ptr[l];
+	
+	for (wmesh_int_t j=0;j<c2n_n;++j)
+	  {
+	    
+	    //
+	    // Get the coordinates of the cell.
+	    //		
+	    for (wmesh_int_t i=0;i<c2n_m;++i)
+	      {
+		wmesh_int_t idx = c2n_v[c2n_ld * j + i] - 1;
+		for (wmesh_int_t k=0;k<self_->m_mesh->m_coo_m;++k)
+		  {
+		    cell_xyz[cell_xyz_ld * i + k] = self_->m_mesh->m_coo[self_->m_mesh->m_coo_ld * idx + k];
+		  }
+	      }
+	    
+	    dgemm("N",
+		  "N",
+		  &coo_m ,
+		  &c2d_m,
+		  &c2n_m ,
+		  &r1,
+		  cell_xyz,
+		  &cell_xyz_ld,
+		  refeval,
+		  &c2n_m,
+		  &r0,
+		  rw,
+		  &coo_m);
 
-	//
-	// 
-	//
-	dofs_cod[];
+	    //
+	    // Copy.
+	    //
+	    if (WMESH_STORAGE_INTERLEAVE == coo_storage_)
+	      {
+		for (wmesh_int_t i=0;i<c2d_m;++i)
+		  {
+		    wmesh_int_t idx = c2d_v[c2d_ld * j + i] - 1;
+		    for (wmesh_int_t k = 0;k<coo_m;++k)
+		      {
+			coo_[coo_ld_ * idx + k] = rw[coo_m * i + k];
+		      }
+		  }
+	      }
+	    else
+	      {
+		for (wmesh_int_t i=0;i<c2d_m;++i)
+		  {
+		    wmesh_int_t idx = c2d_v[c2d_ld * j + i] - 1;
+		    for (wmesh_int_t k = 0;k<coo_m;++k)
+		      {
+			coo_[coo_ld_ * k + idx] = rw[coo_m * i + k];
+		      }
+		  }
+	      }	    
+	  }
       }
-    
-    //
-    // Edges
-    //
-    for (wmesh_int_t i=self_->m_mesh->m_num_nodes;i<self_->m_ndofs;++i)
+    for (wmesh_int_t l=0;l<num_types;++l)
       {
-	dofs_cod[i] = 1001;
+	if (refevals[l])
+	  {
+	    free(refevals[l]);
+	  }
       }
-#endif    
-    //
-    // Faces
-    //
+    return WMESH_STATUS_SUCCESS;
+  };
 
-    //
-    // interiors
-    //
 
+
+
+
+
+
+
+
+
+  wmesh_status_t wmeshspace_sublinearmesh(wmeshspace_t * 	self_,
+					  wmesh_t ** 		mesh__)
+  {    
+    wmesh_status_t 	status;
+    wmesh_t * 		mesh 	= self_->m_mesh;
+    wmesh_int_t         topodim = mesh->m_topology_dimension;
+    wmesh_int_t 	coo_m  	= mesh->m_coo_m;
     
-    printf("generate sublinear connectivity.\n");
+    wmesh_int_t 	num_types;
+    wmesh_int_t 	elements[4];
+    double * 		refevals[4] {};
+    double 		cell_xyz[32];
+    wmesh_int_t 	cell_xyz_ld = coo_m;
+
+    status = bms_topodim2elements(topodim,
+				  &num_types,
+				  elements);
+    WMESH_STATUS_CHECK(status);    
+    
+    wmesh_int_t coo_dofs_m  	= coo_m;
+    wmesh_int_t coo_dofs_n  	= self_->m_ndofs;
+    wmesh_int_t coo_dofs_ld 	= coo_dofs_m;
+    double * 	coo_dofs 	= (double*)malloc(sizeof(double) * coo_dofs_n * coo_dofs_ld);
+    
+    status =  wmeshspace_generate_coodofs(self_,
+					  WMESH_STORAGE_INTERLEAVE,
+					  coo_dofs_m,
+					  coo_dofs_n,
+					  coo_dofs,
+					  coo_dofs_ld);
+    WMESH_STATUS_CHECK(status);
+
+    //
+    // GENERATE SUBLINEAR CONNECTIVITY
+    //
     {
+      
       wmesh_int_t c2n_size = num_types;
       wmesh_int_t c2n_ptr[5];
       wmesh_int_t c2n_m[4]{};
@@ -1693,7 +1676,9 @@ extern "C"
 	    }
 	}
       
-      printf("generate connectivity done.\n");
+      //
+      // Define the mesh.
+      //
       status =  wmesh_def(mesh__,
 			  self_->m_mesh->m_topology_dimension,				 
 			  c2n_size,
@@ -1706,7 +1691,11 @@ extern "C"
 			  coo_dofs_n,
 			  coo_dofs,
 			  coo_dofs_ld);
-      
+
+      //
+      // Copy the dof codes.
+      // It's a bit tricky, need to be changed.
+      //
       for (wmesh_int_t i=0;i<self_->m_ndofs;++i)
 	{
 	  mesh__[0]->m_n_c.v[i] = self_->m_dof_codes[i];
@@ -1716,7 +1705,7 @@ extern "C"
     }
     return WMESH_STATUS_SUCCESS;
   }
-  
+
 };
 
 
