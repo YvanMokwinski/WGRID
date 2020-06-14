@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <string.h>
 #include "wmesh-types.hpp"
@@ -9,7 +10,7 @@
 #include "wmesh-utils.hpp"
 #include "wmesh-blas.h"
 #include "bms_templates.hpp"
-
+#if 0
 template<typename T>
 static  std::ostream& operator<<(std::ostream&out_,
 				 const wmesh_mat_t<T>&that_)
@@ -2243,5 +2244,6 @@ wmesh_status_t wmeshspace_get_cooelm(const wmesh_t * __restrict__	self_,
   }
   
 };
+#endif
 #endif
 #endif

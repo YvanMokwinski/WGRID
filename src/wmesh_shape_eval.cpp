@@ -153,7 +153,7 @@ wmesh_status_t wmesh_shape_eval_def(wmesh_shape_eval_t<T>*__restrict__ 	self_,
 				    wmesh_int_t 			shape_degree_,				
 				    wmesh_int_t 			nodes_storage_,
 				    const wmesh_mat_t<T> * 		nodes_,
-				    const wmesh_mat_t<T> * 		weights_ = nullptr)
+				    const wmesh_mat_t<T> * 		weights_)
 {
   WMESH_CHECK_POINTER(self_);
   WMESH_CHECK_POINTER(nodes_);
