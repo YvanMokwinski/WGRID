@@ -264,6 +264,32 @@ static  inline void get_q2n(const_wmesh_int_p		c2n_,
     //    double* 		m_coo_dofs;
     //    wmesh_int_t		m_coo_dofs_ld;
   };
+  wmesh_status_t wmeshspace_generate_coodofs(wmeshspace_t * 	self_,
+					     wmesh_int_t 	coo_storage_,
+					     wmesh_int_t 	coo_m_,
+					     wmesh_int_t 	coo_n_,
+					     double * 		coo_,
+					     wmesh_int_t 	coo_ld_);
+
+  wmesh_status_t wmeshspacedg_advection(const wmesh_t*				self_,
+					const wmesh_shape_info_t* __restrict__	shape_f_,
+					const wmesh_shape_info_t* __restrict__	shape_u_,
+					const wmesh_shape_info_t* __restrict__	shape_test_,
+					
+					const wmeshspace_t *			velocity_space_,
+
+					wmesh_int_t 				velocity_storage_,
+					wmesh_int_t 				velocity_m_,
+					wmesh_int_t 				velocity_n_,
+					const double * 				velocity_,
+					wmesh_int_t 				velocity_ld_,
+					
+					wmesh_int_t				csr_size_,
+					const_wmesh_int_p			csr_ptr_,
+					const_wmesh_int_p			csr_ind_,
+					double * 				csr_val_,
+					
+					double * 				rhs_);
 
 #ifdef __cplusplus
 }

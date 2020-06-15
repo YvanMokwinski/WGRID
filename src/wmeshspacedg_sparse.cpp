@@ -4,7 +4,8 @@
 
 extern "C"
 {
-
+  
+  
   wmesh_status_t wmeshspacedg_sparse	(const wmesh_t*__restrict__ 	self_,
 					 wmesh_int_t 			degree_,
 					 wmesh_int_p 			csr_size_,

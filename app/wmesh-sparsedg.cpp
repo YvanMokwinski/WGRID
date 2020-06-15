@@ -1,11 +1,11 @@
 
-#include "wmesh.h"
+
 #include "cmdline.hpp"
 #include <iostream>
 #include "wmesh-blas.hpp"
 #include <algorithm>
 #include "bms.h"
-
+#include "wmesh.hpp"
 
 #if 0
 wmesh_status_t wmesh_csrjacobian(wmesh_int_t 		c2n_size_,
@@ -450,24 +450,41 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
   
   WMESH_STATUS_CHECK(status);
 
-  //
-  // Generate the finite element space for the velocity.
-  // 
-  const wmesh_int_t velocity_degree 		= 2;
-  const wmesh_int_t velocity_family 		= WMESH_SHAPE_FAMILY_LAGRANGE;
-  const wmesh_int_t velocity_nodes_family 	= WMESH_NODES_FAMILY_LAGRANGE;
+  wmesh_shape_info_t shape_info_element;
+  wmesh_shape_info_t shape_info_f;
+  wmesh_shape_info_t shape_info_u;
+  wmesh_shape_info_t shape_info_test;
+  
+  const wmesh_int_t u_degree 		= 2;
+  const wmesh_int_t u_family 		= WMESH_SHAPE_FAMILY_LAGRANGE;
+  const wmesh_int_t u_nodes_family 	= WMESH_NODES_FAMILY_LAGRANGE;
 
-  wmeshspace_t * velocity_space;
-  status = wmeshspace_def(&velocity_space,
-			  velocity_nodes_family,
-			  velocity_degree,
-			  mesh);
+  const wmesh_int_t f_degree 		= degree;
+  const wmesh_int_t f_family 		= WMESH_SHAPE_FAMILY_LAGRANGE;
+  //  const wmesh_int_t f_nodes_family 	= WMESH_NODES_FAMILY_LAGRANGE;
+  
+  status = wmesh_shape_info_def(&shape_info_element,WMESH_SHAPE_FAMILY_LAGRANGE, 1);
+  WMESH_STATUS_CHECK(status);
+  
+  status = wmesh_shape_info_def(&shape_info_u,u_family, u_degree);
+  WMESH_STATUS_CHECK(status);
+  
+  status = wmesh_shape_info_def(&shape_info_f,f_family, f_degree);
+  WMESH_STATUS_CHECK(status);
+  
+  status = wmesh_shape_info_def(&shape_info_test,f_family, f_degree);
   WMESH_STATUS_CHECK(status);
   
   //
+  // Generate the finite element space for the velocity.
   // 
-  //
-
+  wmeshspace_t * velocity_space;
+  status = wmeshspace_def(&velocity_space,
+			  u_nodes_family,
+			  u_degree,
+			  mesh);
+  WMESH_STATUS_CHECK(status);
+  
   wmesh_int_t csr_size 	= 0;
   wmesh_int_p csr_ptr 	= nullptr;
   wmesh_int_p csr_ind 	= nullptr;
@@ -476,6 +493,11 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
 		      &csr_size,
 		      &csr_ptr,
 		      &csr_ind);
+
+  double *		rhs 	= (double*) malloc(sizeof(double) * csr_size);
+  double *		csr_val = (double*) malloc(sizeof(double) * csr_ptr[csr_size]);
+  
+#if 0
   
   //
   // Spy the symbolic matrix.
@@ -494,26 +516,108 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
 	}
     }
   fclose(f);
+#endif
 
-
-
-  
-
-  
-  //
-  // Now we can discretize some equations.
-  //
-  std::cout << "hello " << std::endl;
-  exit(1);
+  const wmesh_int_t topodim = mesh->m_topology_dimension;
+  const wmesh_int_t 	velocity_storage 	= WMESH_STORAGE_INTERLEAVE;
+  const wmesh_int_t	velocity_m 		= topodim;
+  const wmesh_int_t	velocity_n 		= velocity_space->m_ndofs;
+  const wmesh_int_t	velocity_ld 		= velocity_m;  
+  double *		velocity 		= (double*)malloc(sizeof(double) * velocity_n * velocity_m);
 
   
   //
-  // Write the refined mesh.
+  // Interpolate the velocity.
   //
-  status = wmesh_write(mesh,
-		       ofilename);
+  {
+    wmesh_int_t coo_dofs_m  	= topodim;
+    wmesh_int_t coo_dofs_n  	= velocity_space->m_ndofs;
+    wmesh_int_t coo_dofs_ld 	= coo_dofs_m;
+    double * 	coo_dofs 	= (double*)malloc(sizeof(double) * coo_dofs_n * coo_dofs_m);    
+    status 			=  wmeshspace_generate_coodofs(velocity_space,
+							       WMESH_STORAGE_INTERLEAVE,
+							       coo_dofs_m,
+							       coo_dofs_n,
+							       coo_dofs,
+							       coo_dofs_ld);
+    WMESH_STATUS_CHECK(status);
+    double x[3];
+    double u[3];
+    for (wmesh_int_t j=0;j<coo_dofs_n;++j)
+      {
+	
+	for (wmesh_int_t i=0;i<coo_dofs_m;++i)
+	  {
+	    x[i] = coo_dofs[coo_dofs_ld*j+i];
+	  }
+
+	for (wmesh_int_t i=0;i<coo_dofs_m;++i)
+	  {	    
+	    u[i] = 0.0 * x[i];
+	  }	
+	u[0] = 1.0;
+
+	
+	if (velocity_storage == WMESH_STORAGE_INTERLEAVE)
+	  {
+	    for (wmesh_int_t i=0;i<coo_dofs_m;++i)
+	      {
+		velocity[velocity_ld * j + i] = u[i];
+	      }
+	  }
+	else 
+	  {
+	    for (wmesh_int_t i=0;i<coo_dofs_m;++i)
+	      {
+		velocity[velocity_ld * i + j] = u[i];
+	      }
+	  }	
+      }
+    
+    free(coo_dofs);    
+  }
+
+  
+  status = wmeshspacedg_advection(mesh,
+				  &shape_info_f,
+				  &shape_info_u,
+				  &shape_info_test,
+				  
+				  velocity_space,
+				  
+				  velocity_storage,
+				  velocity_m,
+				  velocity_n,
+				  velocity,
+				  velocity_ld,
+				  
+				  csr_size,
+				  csr_ptr,
+				  csr_ind,
+				  csr_val,				  
+				  rhs);
+
+
+  //
+  // Output.
+  //  
+  status =  bms_matrix_market_dense_dwrite(csr_size,
+					   1,
+					   rhs,
+					   csr_size,
+					   "%s_rhs.mtx",
+					   ofilename);
   WMESH_STATUS_CHECK(status);
-
+  
+  status =  bms_matrix_market_csr_dwrite(csr_size,
+					 csr_size,
+					 csr_ptr[csr_size],
+					 csr_ptr,
+					 csr_ind,
+					 csr_val,
+					 "%s.mtx",
+					 ofilename);
+  WMESH_STATUS_CHECK(status);
   
   return WMESH_STATUS_SUCCESS;
 }

@@ -4,6 +4,18 @@
 
 extern "C"
 {
+
+  wmesh_status_t wmesh_shape_info_def(wmesh_shape_info_t*__restrict__ 	self_,
+				      wmesh_int_t 			family_,
+				      wmesh_int_t 			degree_)
+  {
+    WMESH_CHECK_POINTER(self_);
+    memset(self_,0,sizeof(wmesh_shape_info_t));
+    self_->m_family 	= family_;
+    self_->m_degree 	= degree_;
+    return WMESH_STATUS_SUCCESS;
+  }
+
   wmesh_status_t wmesh_shape_def(wmesh_shape_t*__restrict__ self_,
 				 wmesh_int_t 		element_,
 				 wmesh_int_t 		family_,
