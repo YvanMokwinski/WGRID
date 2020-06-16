@@ -39,12 +39,25 @@ wmesh_status_t bms_mirrored_local_coordinates_edge(wmesh_int_t 			signed_rotatio
 	xcopy(&x_len,r,&c_inc,u,&x_inc);
 	return WMESH_STATUS_SUCCESS;
       }
+    case 2:
+      {
+	for (wmesh_int_t i=0;i<x_len;++i)
+	  {	    
+	    u[x_inc*i] = -r[c_inc*(x_len-1-i)];
+	  }
+	return WMESH_STATUS_SUCCESS;
+      }
     case -1:
       {
 	for (wmesh_int_t i=0;i<x_len;++i)
 	  {	    
 	    u[x_inc*i] = -r[c_inc*(x_len-1-i)];
 	  }
+	return WMESH_STATUS_SUCCESS;
+      }
+    case -2:
+      {
+	xcopy(&x_len,r,&c_inc,u,&x_inc);
 	return WMESH_STATUS_SUCCESS;
       }
     }

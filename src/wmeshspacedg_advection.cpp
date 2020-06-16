@@ -127,7 +127,6 @@ wmesh_status_t wmesh_shape_eval_boundary_def(wmesh_shape_eval_boundary_t<T>*__re
       
       const wmesh_int_t element_facet 	= facets[ifacet];
       const wmesh_int_t facet_num_nodes	= facets_num_nodes[ifacet];
-      
       for (wmesh_int_t 	signed_rotation = -facet_num_nodes;signed_rotation<=facet_num_nodes;++signed_rotation)
 	{
 	  if (signed_rotation != 0 && signed_rotation!=1)
@@ -135,7 +134,7 @@ wmesh_status_t wmesh_shape_eval_boundary_def(wmesh_shape_eval_boundary_t<T>*__re
 	      wmesh_int_t i,j,k;
 	      i = element_facet - ( (topodim_boundary==2) ? 2 : 1);
 	      j = (signed_rotation > 0) ? 0 : 1;
-	      k = (signed_rotation > 0) ? signed_rotation-1 : -signed_rotation-1;
+	      k = (signed_rotation > 0) ? signed_rotation - 1 : -signed_rotation-1;
 	      
 	      // for (wmesh_int_t signed_rotation=-
 	      status =  wmesh_cubature_def(&self_->m_cubature_facets[i][j][k],
@@ -853,7 +852,7 @@ wmesh_status_t wmeshspacedg_fem_advection_global_system_zone(const wmesh_t *				
 							     T * 					csr_val_,
 							     T * 					rhs_)
 {
-
+#if 0
   wmesh_status_t status;
   const wmesh_int_t topodim 			= self_->m_topology_dimension;
   const wmesh_int_t element 			= itype_ + (topodim==3)?4:(topodim==2)?2:1;
@@ -1369,7 +1368,7 @@ wmesh_status_t wmeshspacedg_fem_advection_global_system_zone(const wmesh_t *				
   free(rw);
 #endif
 
-  
+#endif  
   return WMESH_STATUS_SUCCESS;
 }
 
@@ -1443,6 +1442,7 @@ extern "C"
 					
 					double * 				rhs_)
   {
+    std::cout << "wmeshspacedg_advection ... " << std::endl;
     static constexpr double r0 = static_cast<double>(0);
     static constexpr  wmesh_int_t 	shape_element_family 	= WMESH_SHAPE_FAMILY_LAGRANGE;
     static constexpr  wmesh_int_t 	shape_element_degree 	= 1;    
@@ -1511,6 +1511,7 @@ extern "C"
 						      csr_val_,
 						      rhs_);
     WMESH_STATUS_CHECK(status);
+    std::cout << "wmeshspacedg_advection done. " << std::endl;
     
     return WMESH_STATUS_SUCCESS;
   }

@@ -1,8 +1,7 @@
 #include <limits>
 #include <iostream>
 #include <array>
-#include "wmesh.hpp"
-#include "GenericEncoding.hpp"
+
 #include "bms_c2c_x_template.hpp"
 
 extern "C"

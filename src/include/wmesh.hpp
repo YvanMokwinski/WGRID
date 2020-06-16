@@ -3,7 +3,7 @@
 #include "wmesh.h"
 #include "wmesh-types.hpp"
 
-#include <stdio.h>
+
 
 #ifdef __cplusplus
 extern "C"

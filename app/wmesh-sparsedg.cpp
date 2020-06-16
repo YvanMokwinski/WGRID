@@ -596,7 +596,7 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
 				  csr_ind,
 				  csr_val,				  
 				  rhs);
-
+  WMESH_STATUS_CHECK(status);
 
   //
   // Output.
