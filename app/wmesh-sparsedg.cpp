@@ -461,7 +461,7 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
 
   const wmesh_int_t f_degree 		= degree;
   const wmesh_int_t f_family 		= WMESH_SHAPE_FAMILY_LAGRANGE;
-  //  const wmesh_int_t f_nodes_family 	= WMESH_NODES_FAMILY_LAGRANGE;
+  const wmesh_int_t f_nodes_family 	= WMESH_NODES_FAMILY_LAGRANGE;
   
   status = wmesh_shape_info_def(&shape_info_element,WMESH_SHAPE_FAMILY_LAGRANGE, 1);
   WMESH_STATUS_CHECK(status);
@@ -578,7 +578,14 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
   }
 
   
-  status = wmeshspacedg_advection(mesh,
+  wmeshspacedg_t * spacedg;            
+  status = wmeshspacedg_def(&spacedg,
+			    f_nodes_family,
+			    f_degree,
+			    mesh);  
+  WMESH_STATUS_CHECK(status);
+
+  status = wmeshspacedg_advection(spacedg,
 				  &shape_info_f,
 				  &shape_info_u,
 				  &shape_info_test,

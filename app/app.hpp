@@ -42,6 +42,33 @@ inline  wmesh_status_t app_cubaturefamily2str(wmesh_int_t cubaturefamily_,
 //!
 //! @brief element names for applications.
 //!
+static const char * s_wmesh_shape_family_names[WMESH_SHAPE_FAMILY_ALL]
+= {"lagrange",
+   "legendre",
+   "orthogonal"};
+
+//!
+//! @brief Convert a string to an shapefamily.
+//!
+inline  wmesh_status_t app_str2shapefamily(wmesh_str_t shapefamily_name_,
+					   wmesh_int_p shapefamily_)
+{
+  WMESH_CHECK_POINTER(shapefamily_);
+  for (wmesh_int_t i=0;i<WMESH_SHAPE_FAMILY_ALL;++i)
+    {            
+      if (!strcmp(s_wmesh_shape_family_names[i],
+		  shapefamily_name_))
+	{
+	  shapefamily_[0] = i;
+	  return WMESH_STATUS_SUCCESS;  
+	}
+    }
+  return WMESH_STATUS_INVALID_ARGUMENT;  
+}
+
+//!
+//! @brief element names for applications.
+//!
 static const char * s_wmesh_nodes_family_names[WMESH_NODES_FAMILY_ALL]
 = {"lagrange",
    "gausslobatto"};

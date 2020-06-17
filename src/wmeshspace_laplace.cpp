@@ -409,49 +409,6 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *__re
 }
 
 
-template <typename T>
-wmesh_status_t wmeshspace_get_cooelm(const wmesh_t * __restrict__	self_,
-				     wmesh_int_t			itype_,
-				     wmesh_int_t			ielm_,
-				     wmesh_int_t			cooelm_storage_,
-				     wmesh_int_t			cooelm_m_,
-				     wmesh_int_t			cooelm_n_,
-				     T * __restrict__			cooelm_,
-				     wmesh_int_t			cooelm_ld_)
-{
-  WMESH_CHECK_POINTER(self_);
-  WMESH_CHECK_POINTER(cooelm_);
-  switch(cooelm_storage_)
-    {
-    case WMESH_STORAGE_INTERLEAVE:
-      {
-	for (wmesh_int_t j=0;j<cooelm_n_;++j)
-	  {
-	    for (wmesh_int_t i=0;i<cooelm_m_;++i)
-	      {
-		cooelm_[cooelm_ld_*j+i]
-		  = self_->m_coo[self_->m_coo_ld * ( self_->m_c2n.m_data[self_->m_c2n.m_ptr[itype_] + self_->m_c2n.m_ld[itype_] * ielm_ + j] - 1) + i];
-	      }
-	  }
-	return WMESH_STATUS_SUCCESS;  
-      }
-
-    case WMESH_STORAGE_BLOCK:
-      {
-	for (wmesh_int_t j=0;j<cooelm_n_;++j)
-	  {
-	    for (wmesh_int_t i=0;i<cooelm_m_;++i)
-	      {
-		cooelm_[cooelm_ld_*i+j]
-		  = self_->m_coo[self_->m_coo_ld * ( self_->m_c2n.m_data[self_->m_c2n.m_ptr[itype_] + self_->m_c2n.m_ld[itype_] * ielm_ + j] - 1) + i];
-	      }
-	  }
-	return WMESH_STATUS_SUCCESS;  
-      }
-
-    }
-  return WMESH_STATUS_INVALID_ENUM;  
-}
 
 template <typename T>
 wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		self_,
@@ -505,7 +462,7 @@ wmesh_status_t wmeshspace_fem_laplace_global_system_zone(const wmeshspace_t *		s
   for (wmesh_int_t ielm=0;ielm<num_elements;++ielm)
     {      
       
-      status = wmeshspace_get_cooelm(mesh,
+      status = wmesh_get_cooelm(mesh,
 				     itype_,
 				     ielm,
 				     cooelm_storage,

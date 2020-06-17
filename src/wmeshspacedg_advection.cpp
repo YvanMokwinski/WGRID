@@ -430,6 +430,7 @@ wmesh_status_t wmeshspacedg_fem_advection_diagonal_block(const wmeshspacedg_fem_
   //
   // Compute Jacobians and determinants.
   //
+  std::cout << "    compute jacobians  " << std::endl;
   T *__restrict__ jacobians 	= rw_;
   T *__restrict__ dets 		= rw_ + topodimXtopodim * q_n;
   rw_ += required_rw_n;
@@ -438,6 +439,8 @@ wmesh_status_t wmeshspacedg_fem_advection_diagonal_block(const wmeshspacedg_fem_
   
   for (wmesh_int_t idim=0;idim<topodim;++idim)
     {
+      //      std::cout << "? " << shape_eval_element->m_diff[idim].m << std::endl;
+      //      std::cout << "? " << shape_eval_element->m_diff[idim].ld << std::endl;
       BLAS_dgemm("N",
 		 "N",
 		 &topodim,
@@ -519,6 +522,7 @@ wmesh_status_t wmeshspacedg_fem_advection_diagonal_block(const wmeshspacedg_fem_
 	}
     }
 
+  std::cout << "    compute jacobians done.  " << std::endl;
 
   //
   // Reset the local matrix and the local rhs.
@@ -532,6 +536,7 @@ wmesh_status_t wmeshspacedg_fem_advection_diagonal_block(const wmeshspacedg_fem_
     }
 
 
+  //  std::cout << "    evaluate velocity ....  " << std::endl;
   
   //
   // Evaluate velocity.
@@ -551,6 +556,7 @@ wmesh_status_t wmeshspacedg_fem_advection_diagonal_block(const wmeshspacedg_fem_
 	ucubature,
 	&uelm_m_);
   
+  //  std::cout << "    evaluate velocity done.  " << std::endl;
   //
   // Compute the local matrix.
   //
@@ -559,6 +565,7 @@ wmesh_status_t wmeshspacedg_fem_advection_diagonal_block(const wmeshspacedg_fem_
   static constexpr wmesh_int_t n1 = static_cast<wmesh_int_t>(1);
   for (wmesh_int_t k=0;k<q_n;++k)
     {
+      //  std::cout << "    integration point  " << k << "/" << q_n << std::endl;
       T*jacobian = jacobians + topodimXtopodim * k;
       for (wmesh_int_t j=0;j<lmat_n_;++j)
 	{
@@ -583,7 +590,7 @@ wmesh_status_t wmeshspacedg_fem_advection_diagonal_block(const wmeshspacedg_fem_
 		     &r0,
 		     nabla_phi_j,
 		     &topodim);
-
+	  
 	  for (wmesh_int_t i=0;i<lmat_m_;++i)
 	    {
 	      //
@@ -593,13 +600,321 @@ wmesh_status_t wmeshspacedg_fem_advection_diagonal_block(const wmeshspacedg_fem_
 	      T dot = r0;
 	      for (wmesh_int_t idim=0;idim<topodim;++idim)
 		{
-		  dot += ucubature[k*topodim + idim]*nabla_phi_j[idim];
+		  dot += ucubature[k*topodim + idim] * nabla_phi_j[idim];
 		}
-	      lmat_[lmat_ld_*j+i] += ( dot  * shape_eval_test->m_f.v[shape_eval_test->m_f.ld * k + j] ) *  q_w[k]  *  dets[k];
+	      lmat_[lmat_ld_*j+i] += ( dot  * shape_eval_test->m_f.v[shape_eval_test->m_f.ld * k + i]  ) *  q_w[k]  *  dets[k];
 	    }
 	  
 	}      
     }
+
+
+  //
+  //
+  //
+  
+  
+
+  
+#if 0
+  for (wmesh_int_t i=0;i<lmat_m_;++i)
+    {
+      lrhs_[lrhs_inc_*i] = r0;	      
+    }
+
+  //
+  // Reset the local rhs.
+  //
+  for (wmesh_int_t i=0;i<lmat_m_;++i)
+    {
+      lrhs_[lrhs_inc_*i] = r0;	      
+    }
+
+  for (wmesh_int_t k=0;k<q_n;++k)
+    {
+      for (wmesh_int_t i=0;i<lmat_m_;++i)
+	{
+	  lrhs_[lrhs_inc_*i] += shape_eval_f->m_f.v[k*shape_eval_f->m_f.ld + i] * dets[k] * q_w[k];
+	}      
+    }
+  
+#endif
+  
+  //
+  // Calculate the jacobian.
+  //  
+  return WMESH_STATUS_SUCCESS;
+}
+
+
+
+
+template <typename T>
+wmesh_status_t wmeshspacedg_fem_advection_extra_diagonal_block(const wmeshspacedg_fem_advection_t<T> *__restrict__	self_,
+
+							       wmesh_int_t 						ielement_,
+							       wmesh_int_t 						itype_,
+							       wmesh_int_t 						ielm_,
+							       wmesh_int_t 						ifacet_,
+							       
+							       wmesh_int_t 						jelement_,
+							       wmesh_int_t 						jtype_,
+							       wmesh_int_t 						jelm_,
+							       wmesh_int_t 						jfacet_,
+							       
+							       wmesh_int_t 						cooelm_storage_,
+							       wmesh_int_t 						cooelm_m_,
+							       wmesh_int_t 						cooelm_n_,
+							       const T*__restrict__					cooelm_,
+							       wmesh_int_t 						cooelm_ld_,
+							       
+							       wmesh_int_t 						uelm_storage_,
+							       wmesh_int_t 						uelm_m_,
+							       wmesh_int_t 						uelm_n_,
+							       const T*__restrict__					uelm_,
+							       wmesh_int_t 						uelm_ld_,
+							       
+							       wmesh_int_t 						lmat_m_,
+							       wmesh_int_t 						lmat_n_,
+							       T*__restrict__						lmat_,
+							       wmesh_int_t 						lmat_ld_,
+							       
+							       wmesh_int_t 						rw_n_,
+							       T*__restrict__						rw_)
+{  
+  static constexpr T r0 = static_cast<T>(0);
+  static constexpr T r1 = static_cast<T>(1);
+
+  WMESH_CHECK_POINTER(self_);
+  
+  wmesh_status_t status;
+  wmesh_int_t required_rw_n,element_=ielement_;
+  status = wmeshspacedg_fem_advection_diagonal_block_buffer_size(self_,
+								 element_,
+								 &required_rw_n);
+  WMESH_STATUS_CHECK(status);
+  
+  if (rw_n_ < required_rw_n)
+    {
+      WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_WORKSPACE);       
+    }
+
+  const wmesh_shape_eval_boundary_t<T> * eval_boundary_element 	= &fem_->m_shape_eval_boundary_element[element];
+  const wmesh_shape_eval_boundary_t<T> * eval_boundary_test 	= &fem_->m_shape_eval_boundary_test[element];
+  const wmesh_shape_eval_boundary_t<T> * eval_boundary_f 	= &fem_->m_shape_eval_boundary_f[element];
+  const wmesh_shape_eval_boundary_t<T> * eval_boundary_f_nei 	= &fem_->m_shape_eval_boundary_f[nei_element];
+  const wmesh_shape_eval_boundary_t<T> * eval_boundary_u 	= &fem_->m_shape_eval_boundary_f[element];
+
+  const wmesh_cubature_t<T> * 	cubature_facet 			= &eval_boundary_element->m_cubature_facets[facet_type][0][signed_rotation];
+  const wmesh_shape_eval_t<T> * eval_facet 			= &eval_boundary_element->m_shape_eval_facets[facet_type][0][signed_rotation];
+  const wmesh_shape_eval_t<T> * eval_test			= &eval_boundary_test->m_shape_eval_facets[facet_type][0][signed_rotation];
+  const wmesh_shape_eval_t<T> * eval_f				= &eval_boundary_f->m_shape_eval_facets[facet_type][0][signed_rotation];
+  const wmesh_shape_eval_t<T> * eval_f_nei			= &eval_boundary_f->m_shape_eval_facets[nei_facet_type][1][nei_signed_rotation];
+
+
+  
+  
+  
+#if 0
+  const wmesh_shape_eval_t<T> * __restrict__ 	shape_eval_element 	= &self_->m_shape_eval_element[element_];
+  const wmesh_shape_eval_t<T> * __restrict__	shape_eval_f 		= &self_->m_shape_eval_f[element_];
+  const wmesh_shape_eval_t<T> * __restrict__	shape_eval_u 		= &self_->m_shape_eval_u[element_];
+  const wmesh_shape_eval_t<T> * __restrict__	shape_eval_test 	= &self_->m_shape_eval_test[element_];  
+  const wmesh_cubature_t<T>*__restrict__ 	cubature		= &self_->m_cubature[element_];
+#endif
+  //  const wmesh_int_t 				u_n 			= (uelm_storage_ == WMESH_STORAGE_INTERLEAVE) ? uelm_n_ : uelm_m_;
+  const wmesh_int_t 				q_n 			= cubature->m_w.n;
+  const T* __restrict__				q_w 			= cubature->m_w.v;  
+  const wmesh_int_t 	topodim  					= cooelm_m_;
+  const wmesh_int_t  	topodimXtopodim 				= topodim*topodim;;
+  
+  //
+  // Compute Jacobians and determinants.
+  //
+  std::cout << "    compute jacobians  " << std::endl;
+  T *__restrict__ jacobians 	= rw_;
+  T *__restrict__ dets 		= rw_ + topodimXtopodim * q_n;
+  rw_ += required_rw_n;
+  rw_n_ -= required_rw_n;
+
+  
+  for (wmesh_int_t idim=0;idim<topodim;++idim)
+    {
+      //      std::cout << "? " << shape_eval_element->m_diff[idim].m << std::endl;
+      //      std::cout << "? " << shape_eval_element->m_diff[idim].ld << std::endl;
+      BLAS_dgemm("N",
+		 "N",
+		 &topodim,
+		 &shape_eval_element->m_diff[idim].n,
+		 &shape_eval_element->m_diff[idim].m,
+		 &r1,
+		 cooelm_,
+		 &cooelm_ld_,
+		 shape_eval_element->m_diff[idim].v,
+		 &shape_eval_element->m_diff[idim].ld,
+		 &r0,
+		 jacobians + topodim*idim,
+		 &topodimXtopodim);
+    }
+  
+  T B[9];
+  for (wmesh_int_t j=0;j<q_n;++j)
+    {
+      T*jacobian = jacobians + topodimXtopodim * j;
+      T det;
+      if (topodim==2)
+	{
+	  det = determinant2x2(jacobian,
+			       topodim);
+	}
+      else if (topodim==3)
+	{
+	  det = determinant3x3(jacobian,
+			       topodim);
+	}
+      else
+	{
+	  det = determinant1x1(jacobian,
+			       topodim);
+	}
+          
+      if (det < 0.0)
+	det = -det;
+      dets[j] = det;
+      
+      //
+      // Reset identity
+      //
+      for (wmesh_int_t i=0;i<topodim*topodim;++i)
+	{
+	  B[i] = r0;
+	}
+      
+      for (wmesh_int_t i=0;i<topodim;++i)
+	{
+	  B[i*topodim+i] = r1;
+	}
+
+      //
+      // Inverse the jacobian.
+      //
+      
+      {	wmesh_int_t info_lapack,perm[3];
+	LAPACK_dgesv((wmesh_int_p)&topodim,
+		     (wmesh_int_p)&topodim,
+		     jacobian,
+		     (wmesh_int_p)&topodim,
+		     perm,
+		     B,
+		     (wmesh_int_p)&topodim,
+		     (wmesh_int_p)&info_lapack);
+	if (info_lapack)
+	  {
+	    fprintf(stderr,"error lapack\n");
+	    exit(1);
+	  } }
+
+      //
+      // Store the inverse.
+      //
+      for (wmesh_int_t i=0;i<topodimXtopodim;++i)
+	{
+	  jacobians[topodim*topodim * j + i] = B[i];
+	}
+    }
+
+  std::cout << "    compute jacobians done.  " << std::endl;
+
+  //
+  // Reset the local matrix and the local rhs.
+  //
+  for (wmesh_int_t j=0;j<lmat_n_;++j)
+    {
+      for (wmesh_int_t i=0;i<lmat_m_;++i)
+	{
+	  lmat_[lmat_ld_*j+i] = r0;	      
+	}
+    }
+
+
+  //  std::cout << "    evaluate velocity ....  " << std::endl;
+  
+  //
+  // Evaluate velocity.
+  //
+  T * ucubature = (T *)malloc(sizeof(T) *  uelm_m_ * q_n);
+  dgemm("N",
+	"N",
+	&uelm_m_,
+	&q_n,
+	&uelm_n_,
+	&r1,
+	uelm_,
+	&uelm_ld_,
+	shape_eval_u->m_f.v,
+	&shape_eval_u->m_f.ld,	
+	&r0,
+	ucubature,
+	&uelm_m_);
+  
+  //  std::cout << "    evaluate velocity done.  " << std::endl;
+  //
+  // Compute the local matrix.
+  //
+  T lnabla_phi_j[3];
+  T nabla_phi_j[3];
+  static constexpr wmesh_int_t n1 = static_cast<wmesh_int_t>(1);
+  for (wmesh_int_t k=0;k<q_n;++k)
+    {
+      //  std::cout << "    integration point  " << k << "/" << q_n << std::endl;
+      T*jacobian = jacobians + topodimXtopodim * k;
+      for (wmesh_int_t j=0;j<lmat_n_;++j)
+	{
+	  //
+	  // Compute the global gradient of shape function j at point k.
+	  //
+	  for (wmesh_int_t idim=0;idim<topodim;++idim)
+	    {
+	      lnabla_phi_j[idim] = shape_eval_f->m_diff[idim].v[shape_eval_f->m_diff[idim].ld * k + j];
+	    }
+	  
+	  BLAS_dgemm("T",
+		     "N",
+		     &topodim,
+		     &n1,
+		     &topodim,
+		     &r1,
+		     jacobian,
+		     &topodim,
+		     lnabla_phi_j,
+		     &topodim,
+		     &r0,
+		     nabla_phi_j,
+		     &topodim);
+	  
+	  for (wmesh_int_t i=0;i<lmat_m_;++i)
+	    {
+	      //
+	      // Compute dot product of the global gradient of shape function i
+	      // and the global gradient of shape function j.
+	      //
+	      T dot = r0;
+	      for (wmesh_int_t idim=0;idim<topodim;++idim)
+		{
+		  dot += ucubature[k*topodim + idim] * nabla_phi_j[idim];
+		}
+	      lmat_[lmat_ld_*j+i] += ( dot  * shape_eval_test->m_f.v[shape_eval_test->m_f.ld * k + i]  ) *  q_w[k]  *  dets[k];
+	    }
+	  
+	}      
+    }
+
+
+  //
+  //
+  //
+  
+  
 
   
 #if 0
@@ -837,7 +1152,7 @@ wmesh_status_t bms_dg_size_blocks(wmesh_int_t 			degree_,
 
 
 template <typename T>
-wmesh_status_t wmeshspacedg_fem_advection_global_system_zone(const wmesh_t *				self_,
+wmesh_status_t wmeshspacedg_fem_advection_global_system_zone(const wmeshspacedg_t *			self_,
 							     wmesh_int_t				itype_,
 							     const wmeshspacedg_fem_advection_t<T> *	fem_,
 							     const wmeshspace_t *			velocity_space_,
@@ -852,26 +1167,27 @@ wmesh_status_t wmeshspacedg_fem_advection_global_system_zone(const wmesh_t *				
 							     T * 					csr_val_,
 							     T * 					rhs_)
 {
-#if 0
+  const wmesh_t *				mesh = self_->m_mesh;
+
   wmesh_status_t status;
-  const wmesh_int_t topodim 			= self_->m_topology_dimension;
-  const wmesh_int_t element 			= itype_ + (topodim==3)?4:(topodim==2)?2:1;
+  const wmesh_int_t topodim 			= mesh->m_topology_dimension;
+  const wmesh_int_t element 			= itype_ + ( (topodim==3) ? 4 : ((topodim==2)?2:1) );
 
   const wmesh_int_t cooelm_storage 		= WMESH_STORAGE_INTERLEAVE;
   const wmesh_int_t cooelm_m 			= topodim;
-  const wmesh_int_t cooelm_n 			= self_->m_c2n.m_m[itype_];
+  const wmesh_int_t cooelm_n 			= mesh->m_c2n.m_m[itype_];
   const wmesh_int_t cooelm_ld 			= cooelm_m;
   T* cooelm = (T*)malloc(sizeof(T)* cooelm_m * cooelm_n );
 
   const wmesh_int_t nei_cooelm_storage 		= WMESH_STORAGE_INTERLEAVE;
   const wmesh_int_t nei_cooelm_m 			= topodim;
-  const wmesh_int_t nei_cooelm_n 			= self_->m_c2n.m_m[itype_];
+  const wmesh_int_t nei_cooelm_n 			= mesh->m_c2n.m_m[itype_];
   const wmesh_int_t nei_cooelm_ld 			= nei_cooelm_m;
   T* 	nei_cooelm = (T*)malloc(sizeof(T)* nei_cooelm_m * nei_cooelm_n );
 
   const wmesh_int_t uelm_storage 		= WMESH_STORAGE_INTERLEAVE;
   const wmesh_int_t uelm_m 			= topodim;
-  const wmesh_int_t uelm_n 			= self_->m_c2n.m_m[itype_];
+  const wmesh_int_t uelm_n 			= mesh->m_c2n.m_m[itype_];
   const wmesh_int_t uelm_ld 			= uelm_m;
   T* uelm = (T*)malloc(sizeof(T)*uelm_m*uelm_n );
   
@@ -884,7 +1200,7 @@ wmesh_status_t wmeshspacedg_fem_advection_global_system_zone(const wmesh_t *				
   
   wmesh_int_t max_size_block = 0;
   wmesh_int_t size_blocks[4];
-  wmesh_int_t num_types = self_->m_c2n.m_size;
+  wmesh_int_t num_types = mesh->m_c2n.m_size;
   for (wmesh_int_t i=0;i<num_types;++i)
     {
       wmesh_int_t element 	= ( (topodim==3) ? 4 : (topodim==2) ? 2 : 1 ) + i;
@@ -897,7 +1213,7 @@ wmesh_status_t wmeshspacedg_fem_advection_global_system_zone(const wmesh_t *				
   dofs_ptr[0] = 0;
   for (wmesh_int_t i=0;i<num_types;++i)
     {
-      dofs_ptr[i+1] = dofs_ptr[i] + size_blocks[i] * self_->m_c2n.m_n[i];
+      dofs_ptr[i+1] = dofs_ptr[i] + size_blocks[i] * mesh->m_c2n.m_n[i];
     }
 
   T * lmat = (T*)malloc(sizeof(T)*max_size_block*max_size_block);  
@@ -913,10 +1229,163 @@ wmesh_status_t wmeshspacedg_fem_advection_global_system_zone(const wmesh_t *				
   const wmesh_int_t lrhs_inc = 1;
   const wmesh_int_t lrhs_n = size_blocks[itype_];
   
-  const wmesh_int_t num_cells = self_->m_c2n.m_n[itype_];
+  const wmesh_int_t num_cells = mesh->m_c2n.m_n[itype_];
   wmesh_int_t c2nelm[8],c2nelm_inc=1;
   wmesh_int_t c2celm[6],c2celm_inc=1;
   wmesh_int_t c2celm_types[6],c2celm_types_inc=1;
+  std::cout << "loop  " << num_cells << std::endl;
+  for (wmesh_int_t ielm=0; ielm < num_cells;++ielm)
+    {
+      std::cout << "loop  " << ielm << std::endl;
+      std::cout << "    get_c2nelm  " << std::endl;
+      
+      //
+      // Get connectivity of element.
+      //
+      status = wmesh_get_c2nelm(mesh,
+				itype_,
+				ielm,
+				c2nelm,
+				c2nelm_inc);
+      WMESH_STATUS_CHECK(status);
+
+      std::cout << "    get_c2celm  " << std::endl;
+      
+      //
+      // Get neighbors information.
+      //
+      wmesh_int_t num_facets = 0;
+      status = wmesh_get_c2celm(mesh,
+				itype_,
+				ielm,
+				&num_facets,
+				c2celm,
+				c2celm_inc,
+				c2celm_types,
+				c2celm_types_inc);
+      WMESH_STATUS_CHECK(status);
+
+      std::cout << "    get_cooelm  " << std::endl;
+      
+      //
+      // Get coordinates of element.
+      //
+      status = wmesh_get_cooelm(mesh,
+				itype_,
+				ielm,
+				cooelm_storage,
+				cooelm_m,
+				cooelm_n,
+				cooelm,
+				cooelm_ld);
+      WMESH_STATUS_CHECK(status);
+
+      std::cout << "    get_velocity dofs  " << std::endl;
+
+      //
+      // Get velocity dofs.
+      //
+      status = wmeshspace_get_elmdofs(velocity_space_,
+				      itype_,
+				      ielm,
+				      velocity_storage_,
+				      velocity_m_,
+				      velocity_n_,
+				      velocity_,
+				      velocity_ld_,
+				      uelm_storage,
+				      uelm_m,
+				      uelm_n,
+				      uelm,
+				      uelm_ld);
+      WMESH_STATUS_CHECK(status);
+      std::cout << "    diagonal block  " << std::endl;
+      
+      //
+      // Only diagonal.
+      //
+      status = wmeshspacedg_fem_advection_diagonal_block(fem_,
+							 element,
+							 
+							 cooelm_storage,
+							 cooelm_m,
+							 cooelm_n,
+							 cooelm,
+							 cooelm_ld,
+						       
+							 uelm_storage,
+							 uelm_m,
+							 uelm_n,
+							 uelm,
+							 uelm_ld,
+						       
+							 lmat_m,
+							 lmat_n,
+							 lmat,
+							 lmat_ld,
+
+							 rw_n,
+							 rw);
+      WMESH_STATUS_CHECK(status);
+
+
+      wmeshspacedg_get_dofs(self_,itype_,ielm,idofs,1);
+#if 0
+      for (wmesh_int_t i=0;i<size_blocks[itype_];++i)
+	{
+	  std::cout << "--------- " << idofs[i] << std::endl;
+	}
+#endif
+      wmeshspacedg_get_dofs(self_,itype_,ielm,jdofs,1);
+      
+      //      std::cout << "assembly " << std::endl;
+      //
+      // Assembly.
+      //
+      for (wmesh_int_t i=0;i<size_blocks[itype_];++i)
+	{
+	  const wmesh_int_t idof = idofs[i];
+	  for (wmesh_int_t j=0;j<size_blocks[itype_];++j)
+	    {
+	      const wmesh_int_t jdof = jdofs[j];
+	      //	      std::cout << "(" << idof << "," << jdof << ")" << std::endl;
+	      //	      
+#if 1
+	      //
+	      // Search in the csr matrix.
+	      //
+	      bool found = false;
+	      //	      std::cout << "### " << csr_ptr_[idof] << " " << csr_ptr_[idof+1] << std::endl; 
+	      for (wmesh_int_t at = csr_ptr_[idof];at < csr_ptr_[idof+1];++at)
+		{
+		  if (csr_ind_[at]==0)
+		    {
+		      std::cerr << "pblm aaaaaaaassembly " << std::endl;
+		      exit(1);
+		      
+		    }
+		  //		  std::cout << "??? " <<  csr_ind_[at]-1 << std::endl;
+		  if (csr_ind_[at] - 1 == jdof)
+		    {
+		      csr_val_[at] += lmat[j*lmat_ld + i];
+		      found = true;
+		      break;
+		    }
+		}
+	      if (!found)
+		{
+		  std::cout << "------------- (" << idof << "," << jdof << ")" << std::endl;
+		  std::cout << "pblm assembly  " << std::endl;
+		  exit(1);
+		}
+#endif
+	    }
+
+	}
+      
+    }
+  
+#if 0
   
   for (wmesh_int_t ielm=0; ielm < num_cells;++ielm)
     {
@@ -1374,7 +1843,7 @@ wmesh_status_t wmeshspacedg_fem_advection_global_system_zone(const wmesh_t *				
 
 
 template <typename T>
-wmesh_status_t wmeshspacedg_fem_advection_global_system(const wmesh_t *				self_,							
+wmesh_status_t wmeshspacedg_fem_advection_global_system(const wmeshspacedg_t *				self_,							
 							const wmeshspace_t *			velocity_space_,
 							wmesh_int_t 				velocity_storage_,
 							wmesh_int_t 				velocity_m_,
@@ -1388,11 +1857,13 @@ wmesh_status_t wmeshspacedg_fem_advection_global_system(const wmesh_t *				self_
 							T * 					csr_val_,
 							T * 					rhs_)
 {
-  const wmesh_int_t ntypes = self_->m_c2d.m_size;
+    const wmesh_t *				mesh = self_->m_mesh;
+  
+  const wmesh_int_t ntypes = mesh->m_c2n.m_size;
   for (wmesh_int_t itype=0;itype<ntypes;++itype)
     {
-      const wmesh_int_t num_elements = self_->m_c2d.m_n[itype];
-      const wmesh_int_t num_dofs_per_element = self_->m_c2d.m_m[itype];
+      const wmesh_int_t num_elements = mesh->m_c2n.m_n[itype];
+      const wmesh_int_t num_dofs_per_element = mesh->m_c2n.m_m[itype];
       if (num_elements > 0)
 	{
 	  wmesh_status_t status = wmeshspacedg_fem_advection_global_system_zone(self_,
@@ -1422,7 +1893,7 @@ wmesh_status_t wmeshspacedg_fem_advection_global_system(const wmesh_t *				self_
 extern "C"
 {
   
-  wmesh_status_t wmeshspacedg_advection(const wmesh_t*				self_,
+  wmesh_status_t wmeshspacedg_advection(  const wmeshspacedg_t *			self_,
 					const wmesh_shape_info_t* __restrict__	shape_info_f_,
 					const wmesh_shape_info_t* __restrict__	shape_info_u_,
 					const wmesh_shape_info_t* __restrict__	shape_info_test_,
@@ -1442,6 +1913,7 @@ extern "C"
 					
 					double * 				rhs_)
   {
+    const wmesh_t *				mesh = self_->m_mesh;
     std::cout << "wmeshspacedg_advection ... " << std::endl;
     static constexpr double r0 = static_cast<double>(0);
     static constexpr  wmesh_int_t 	shape_element_family 	= WMESH_SHAPE_FAMILY_LAGRANGE;
@@ -1460,7 +1932,7 @@ extern "C"
       rhs_[i] = r0;
     
 
-    const wmesh_int_t topodim 	= self_->m_topology_dimension;
+    const wmesh_int_t topodim 	= mesh->m_topology_dimension;
     const wmesh_int_t 	cubature_degree 	= (shape_info_u_->m_degree + (shape_info_f_->m_degree-1) + shape_info_test_->m_degree) * 2;
     wmesh_int_t ntypes;
     wmesh_int_t elements[4];
@@ -1468,7 +1940,7 @@ extern "C"
 				   &ntypes,
 				   elements);
     WMESH_STATUS_CHECK(status);
-    WMESH_CHECK(ntypes == self_->m_c2n.m_size);
+    WMESH_CHECK(ntypes == mesh->m_c2n.m_size);
     
     //
     // Initialize data.
@@ -1479,7 +1951,7 @@ extern "C"
     
     for (wmesh_int_t itype=0;itype< ntypes;++itype)
       {
-	if (self_->m_c2n.m_n[itype] > 0)
+	if (mesh->m_c2n.m_n[itype] > 0)
 	  {
 	    status = wmeshspacedg_fem_advection_add(&fem,
 						    elements[itype],
@@ -1487,10 +1959,10 @@ extern "C"
 						    cubature_degree,
 						    shape_element_family,
 						    shape_element_degree,				   
-						    shape_info_f_->m_family,
-						    shape_info_f_->m_degree,
 						    shape_info_u_->m_family,
 						    shape_info_u_->m_degree,
+						    shape_info_f_->m_family,
+						    shape_info_f_->m_degree,
 						    shape_info_test_->m_family,
 						    shape_info_test_->m_degree);
 	    WMESH_STATUS_CHECK(status);

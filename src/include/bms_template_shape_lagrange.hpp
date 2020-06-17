@@ -47,7 +47,7 @@ struct bms_template_shape_lagrange
       rw_n_,					\
       rw_
 
-    std::cout << "sssssssssssssssssssssss  " <<  degree_ << std::endl;
+    //    std::cout << "sssssssssssssssssssssss  " <<  degree_ << std::endl;
     switch(degree_)
       {
       case 0:
@@ -63,7 +63,7 @@ struct bms_template_shape_lagrange
       default:
 	{
 
-    std::cout << "sssssssssssssssssssssss GRAAL  " <<  degree_ << std::endl;
+	  //    std::cout << "sssssssssssssssssssssss GRAAL  " <<  degree_ << std::endl;
 	  
 	  wmesh_int_t dim;
 	  wmesh_status_t status = bms_element2topodim(ELEMENT_,

@@ -12,6 +12,7 @@
 
 extern "C"
 {
+
   static wmesh_status_t wmesh_init_c2d(const wmesh_int_sparsemat_t*	c2n_,
 				       wmesh_int_sparsemat_t*		c2d_,
 				       const_wmesh_int_p		c2d_m_,

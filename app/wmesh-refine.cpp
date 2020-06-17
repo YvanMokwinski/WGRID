@@ -1,4 +1,4 @@
-#include "wmesh.h"
+#include "wmesh.hpp"
 #include "cmdline.hpp"
 #include "app.hpp"
 
@@ -18,6 +18,8 @@ int main(int argc, char ** argv)
   bool 				verbose 	= false;
   wmesh_int_t 			degree		= 0;
   wmesh_int_t nodes_family;
+  bool refine_dg;
+
   
   {
     WCOMMON::cmdline cmd(argc,
@@ -29,7 +31,11 @@ int main(int argc, char ** argv)
     if (verbose)
       {
 	cmd.disp_header(stdout);
-      }    
+      }
+
+
+    refine_dg = cmd.option("--dg");
+
     //
     // Get the number of partitions.
     //
@@ -90,36 +96,58 @@ int main(int argc, char ** argv)
   status = wmesh_read	(&mesh,
 			 ifilename);
   WMESH_STATUS_CHECK(status);
-
-  //
-  // Refine the mesh.
-  //
-  status = wmesh_analysis(mesh);
-
-
-
-  
-  wmeshspace_t * space;
-  status = wmeshspace_def(&space,
-			  nodes_family,
-			  degree,
-			  mesh);
-  
-  WMESH_STATUS_CHECK(status);
-
-  //
-  // Build the sublinear mesh.
-  //
-  status = wmeshspace_sublinearmesh	(space,
+  if (refine_dg)
+    {
+      wmeshspacedg_t * spacedg;            
+      status = wmeshspacedg_def(&spacedg,
+				nodes_family,
+				degree,
+				mesh);  
+      WMESH_STATUS_CHECK(status);
+      
+      //
+      // Be careful, for display only, otherwise it does not make any sense to discontinuous the mesh.
+      // 
+      status = wmeshspacedg_sublinearmesh	(spacedg,
+						 &refined_mesh);
+      WMESH_STATUS_CHECK(status);
+      
+      //
+      // Write the refined mesh.
+      //
+      status = wmesh_write			(refined_mesh,
+						 ofilename);
+      WMESH_STATUS_CHECK(status);
+    }
+  else
+    {
+      //
+      // Refine the mesh.
+      //
+      status = wmesh_analysis(mesh);
+      
+      wmeshspace_t * space;
+      status = wmeshspace_def(&space,
+			      nodes_family,
+			      degree,
+			      mesh);
+      
+      WMESH_STATUS_CHECK(status);
+      
+      //
+      // Build the sublinear mesh.
+      //
+      status = wmeshspace_sublinearmesh	(space,
 					 &refined_mesh);
-  WMESH_STATUS_CHECK(status);
+      WMESH_STATUS_CHECK(status);
   
-  //
-  // Write the refined mesh.
-  //
-  status = wmesh_write			(refined_mesh,
-					 ofilename);
-  WMESH_STATUS_CHECK(status);
+      //
+      // Write the refined mesh.
+      //
+      status = wmesh_write			(refined_mesh,
+						 ofilename);
+      WMESH_STATUS_CHECK(status);
+    }
   
   return WMESH_STATUS_SUCCESS;
 }

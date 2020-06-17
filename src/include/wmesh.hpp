@@ -147,27 +147,31 @@ extern "C"
     wmesh_int_t 		m_ndofs;
 #endif
 
+
   };
 
-
+  
+  
+  
+  
   inline double * wmesh_get_coo(wmesh_t*self_)
   {
     return self_->m_coo;
   }
-
   
-static  inline void get_c2e(wmesh_int_t 	m_,
-			    const_wmesh_int_p 	c2e_,
-			    wmesh_int_t 	c2e_ld_,
-			    wmesh_int_t 	cell_idx_,
-			    wmesh_int_p 	cnc_)
-{
-  for (wmesh_int_t i=0;i<m_;++i)
-    {
-      cnc_[i] = c2e_[cell_idx_*c2e_ld_+i];      
-    }
-};
-
+  
+  static  inline void get_c2e(wmesh_int_t 	m_,
+			      const_wmesh_int_p 	c2e_,
+			      wmesh_int_t 	c2e_ld_,
+			      wmesh_int_t 	cell_idx_,
+			      wmesh_int_p 	cnc_)
+  {
+    for (wmesh_int_t i=0;i<m_;++i)
+      {
+	cnc_[i] = c2e_[cell_idx_*c2e_ld_+i];      
+      }
+  };
+  
   static inline void get_c2n(wmesh_int_t 	numCellNodes_,
 			     const_wmesh_int_p 	c2n_,
 			     wmesh_int_t 	c2n_ld_,
@@ -180,8 +184,7 @@ static  inline void get_c2e(wmesh_int_t 	m_,
       }
   }
 
-
-static  inline void get_e2n(const_wmesh_int_p	c2n_,
+  static  inline void get_e2n(const_wmesh_int_p	c2n_,
 			    const wmesh_int_t 	e_idx_,
 			    wmesh_int_p		e2n_,
 			    wmesh_int_t 	s_e2n_m_,
@@ -264,6 +267,14 @@ static  inline void get_q2n(const_wmesh_int_p		c2n_,
     //    double* 		m_coo_dofs;
     //    wmesh_int_t		m_coo_dofs_ld;
   };
+
+  wmesh_status_t wmeshspace_get_dofs(const wmeshspace_t * 	self_,
+				     wmesh_int_t 		element_type_,
+				     wmesh_int_t 		element_idx_,
+				     wmesh_int_p 		dofs_,
+				     wmesh_int_t 		dofs_inc_);
+
+  
   wmesh_status_t wmeshspace_generate_coodofs(wmeshspace_t * 	self_,
 					     wmesh_int_t 	coo_storage_,
 					     wmesh_int_t 	coo_m_,
@@ -271,7 +282,33 @@ static  inline void get_q2n(const_wmesh_int_p		c2n_,
 					     double * 		coo_,
 					     wmesh_int_t 	coo_ld_);
 
-  wmesh_status_t wmeshspacedg_advection(const wmesh_t*				self_,
+
+
+
+  struct wmeshspacedg_t
+  {
+    wmesh_t * 			m_mesh;
+    wmesh_int_t 		m_nodes_family;
+    wmesh_int_t 		m_degree;
+    wmesh_t * 			m_patterns[4];
+    wmesh_int_t 		m_num_dofs;
+    wmesh_int_t 		m_dofs_ptr[4+1];
+    wmesh_int_t 		m_dofs_m[4];
+  };
+
+  
+  wmesh_status_t wmeshspacedg_def		(wmeshspacedg_t** 		self_,
+						 wmesh_int_t 			nodes_family_,
+						 wmesh_int_t 			degree_,
+						 wmesh_t*			mesh_);
+  
+  wmesh_status_t wmeshspacedg_get_dofs		(const wmeshspacedg_t * 	self_,
+						 wmesh_int_t 			element_type_,
+						 wmesh_int_t 			element_idx_,
+						 wmesh_int_p 			dofs_,
+						 wmesh_int_t 			dofs_inc_);
+
+  wmesh_status_t wmeshspacedg_advection(const wmeshspacedg_t*				self_,
 					const wmesh_shape_info_t* __restrict__	shape_f_,
 					const wmesh_shape_info_t* __restrict__	shape_u_,
 					const wmesh_shape_info_t* __restrict__	shape_test_,
@@ -290,7 +327,18 @@ static  inline void get_q2n(const_wmesh_int_p		c2n_,
 					double * 				csr_val_,
 					
 					double * 				rhs_);
-
+  
 #ifdef __cplusplus
 }
 #endif
+
+
+  template <typename T>
+  wmesh_status_t wmesh_get_cooelm(const wmesh_t * __restrict__	self_,
+				  wmesh_int_t			itype_,
+				  wmesh_int_t			ielm_,
+				  wmesh_int_t			cooelm_storage_,
+				  wmesh_int_t			cooelm_m_,
+				  wmesh_int_t			cooelm_n_,
+				  T * __restrict__			cooelm_,
+				  wmesh_int_t			cooelm_ld_);

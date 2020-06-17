@@ -4,6 +4,69 @@
 #include <string.h>
 
 
+template <typename T>
+wmesh_status_t wmesh_get_cooelm(const wmesh_t * __restrict__	self_,
+				wmesh_int_t			itype_,
+				wmesh_int_t			ielm_,
+				wmesh_int_t			cooelm_storage_,
+				wmesh_int_t			cooelm_m_,
+				wmesh_int_t			cooelm_n_,
+				T * __restrict__			cooelm_,
+				wmesh_int_t			cooelm_ld_)
+{
+  WMESH_CHECK_POINTER(self_);
+  WMESH_CHECK_POINTER(cooelm_);
+  switch(cooelm_storage_)
+    {
+    case WMESH_STORAGE_INTERLEAVE:
+      {
+	for (wmesh_int_t j=0;j<cooelm_n_;++j)
+	  {
+	    for (wmesh_int_t i=0;i<cooelm_m_;++i)
+	      {
+		cooelm_[cooelm_ld_*j+i]
+		  = self_->m_coo[self_->m_coo_ld * ( self_->m_c2n.m_data[self_->m_c2n.m_ptr[itype_] + self_->m_c2n.m_ld[itype_] * ielm_ + j] - 1) + i];
+	      }
+	  }
+	return WMESH_STATUS_SUCCESS;  
+      }
+
+    case WMESH_STORAGE_BLOCK:
+      {
+	for (wmesh_int_t j=0;j<cooelm_n_;++j)
+	  {
+	    for (wmesh_int_t i=0;i<cooelm_m_;++i)
+	      {
+		cooelm_[cooelm_ld_*i+j]
+		  = self_->m_coo[self_->m_coo_ld * ( self_->m_c2n.m_data[self_->m_c2n.m_ptr[itype_] + self_->m_c2n.m_ld[itype_] * ielm_ + j] - 1) + i];
+	      }
+	  }
+	return WMESH_STATUS_SUCCESS;  
+      }
+
+    }
+  return WMESH_STATUS_INVALID_ENUM;  
+}
+
+template
+wmesh_status_t wmesh_get_cooelm<float>(const wmesh_t * __restrict__	self_,
+				wmesh_int_t			itype_,
+				wmesh_int_t			ielm_,
+				wmesh_int_t			cooelm_storage_,
+				wmesh_int_t			cooelm_m_,
+				wmesh_int_t			cooelm_n_,
+				float * __restrict__			cooelm_,
+				wmesh_int_t			cooelm_ld_);
+template
+wmesh_status_t wmesh_get_cooelm<double>(const wmesh_t * __restrict__	self_,
+				wmesh_int_t			itype_,
+				wmesh_int_t			ielm_,
+				wmesh_int_t			cooelm_storage_,
+				wmesh_int_t			cooelm_m_,
+				wmesh_int_t			cooelm_n_,
+				double * __restrict__			cooelm_,
+				wmesh_int_t			cooelm_ld_);
+
 extern "C"
 {
  
@@ -71,6 +134,7 @@ extern "C"
     self_->m_coo_ld 	= coo_ld_;
     
     wmesh_status_t status;
+
     
     status = wmesh_int_sparsemat_new(&self_->m_c2n,
 				     c2n_size_,

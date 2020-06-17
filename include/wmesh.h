@@ -13,8 +13,14 @@ extern "C"
 
   struct wmesh_t;
   struct wmeshspace_t;
+  struct wmeshspacedg_t;
   struct wmesh_bspline_t;
-
+  
+  
+  
+  
+  wmesh_status_t 	wmeshspacedg_sublinearmesh	(wmeshspacedg_t * 			self_,
+							 wmesh_t ** 				mesh__);
   
   wmesh_status_t wmeshspacedg_sparse	(const wmesh_t*__restrict__ 	self_,
 					 wmesh_int_t 			degree_,
