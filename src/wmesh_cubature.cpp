@@ -68,7 +68,7 @@ wmesh_status_t wmesh_cubature_def(wmesh_cubature_t<T>*__restrict__ self_,
     {
       WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
     }
-  
+
   status = bms_template_cubature(element_,
 				 family_,
 				 num_nodes1d,

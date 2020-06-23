@@ -31,7 +31,6 @@ wmesh_status_t bms_mirrored_local_coordinates_edge(wmesh_int_t 			signed_rotatio
   
   const T * __restrict__ r 	= c_v_;
   const wmesh_int_t c_inc 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_ld_ : 1;
-  
   switch(signed_rotation_)
     {
     case 1:
@@ -43,7 +42,7 @@ wmesh_status_t bms_mirrored_local_coordinates_edge(wmesh_int_t 			signed_rotatio
       {
 	for (wmesh_int_t i=0;i<x_len;++i)
 	  {	    
-	    u[x_inc*i] = -r[c_inc*(x_len-1-i)];
+	    u[x_inc*i] = r[c_inc*(x_len-1-i)];
 	  }
 	return WMESH_STATUS_SUCCESS;
       }
@@ -51,7 +50,7 @@ wmesh_status_t bms_mirrored_local_coordinates_edge(wmesh_int_t 			signed_rotatio
       {
 	for (wmesh_int_t i=0;i<x_len;++i)
 	  {	    
-	    u[x_inc*i] = -r[c_inc*(x_len-1-i)];
+	    u[x_inc*i] = r[c_inc*(x_len-1-i)];
 	  }
 	return WMESH_STATUS_SUCCESS;
       }
@@ -61,7 +60,7 @@ wmesh_status_t bms_mirrored_local_coordinates_edge(wmesh_int_t 			signed_rotatio
 	return WMESH_STATUS_SUCCESS;
       }
     }
-return WMESH_STATUS_INVALID_ARGUMENT;
+  WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
 };
 
 

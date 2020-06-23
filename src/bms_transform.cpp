@@ -24,7 +24,7 @@ bms_transform_pyramid(wmesh_int_t 		r_n_,
 		      wmesh_int_t		c_storage_,
 		      wmesh_int_t		c_m_,
 		      wmesh_int_t		c_n_,
-		      T*__restrict__ 	c_v_,
+		      T*__restrict__ 		c_v_,
 		      wmesh_int_t		c_ld_,
 
 		      const_wmesh_int_p		p_v_,

@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include "wmesh-status.h"
+#include <stdlib.h>
 
 template<typename T>
 struct wmesh_mat_t
@@ -13,7 +14,11 @@ struct wmesh_mat_t
   T * __restrict__ 	v;
 
   
-  static void define(wmesh_mat_t*self_,wmesh_int_t m_,wmesh_int_t n_,T*__restrict__ v_,wmesh_int_t ld_)
+  static void define(wmesh_mat_t*self_,
+		     wmesh_int_t m_,
+		     wmesh_int_t n_,
+		     T*__restrict__ v_,
+		     wmesh_int_t ld_)
   {
     self_->m = m_;
     self_->n = n_;
@@ -21,7 +26,23 @@ struct wmesh_mat_t
     self_->ld = ld_;
   };
 
+  static void alloc(wmesh_mat_t*self_,
+		     wmesh_int_t m_,
+		     wmesh_int_t n_)
+  {
+    self_->m = m_;
+    self_->n = n_;
+    self_->v = (T*)malloc(sizeof(T)*m_*n_);
+    self_->ld = m_;
+  };
+
 };
+
+#define WMESH_MAT_FORWARD(_f)					\
+  (_f).m,							\
+    (_f).n,							\
+    (_f).v,							\
+    (_f).ld
 
 
 
@@ -36,21 +57,28 @@ struct wmesh_cubature_t
   wmesh_mat_t<T> 	m_w;
 };
 
-
 template<typename T>
 wmesh_status_t wmesh_cubature_def(wmesh_cubature_t<T>*__restrict__ self_,
 				  wmesh_int_t 		element_,
 				  wmesh_int_t 		family_,
 				  wmesh_int_t 		degree_);
 
+template<typename T>
+struct wmesh_cubature_boundary_t
+{
+  wmesh_int_t 		m_cubature_family;
+  wmesh_int_t 		m_cubature_degree;
+  wmesh_int_t 		m_element;
+  wmesh_int_t           m_num_facets;
+  wmesh_int_t 		m_facets[6];
+  wmesh_cubature_t<T>	m_facets_cubature[6][8];
+};
 
-
-
-
-
-
-
-
+template<typename T>
+wmesh_status_t wmesh_cubature_boundary_def(wmesh_cubature_boundary_t<T>*__restrict__ 	self_,
+					   wmesh_int_t 				element_,
+					   wmesh_int_t 				cubature_family_,
+					   wmesh_int_t 				cubature_degree_);
 
 extern "C"
 {

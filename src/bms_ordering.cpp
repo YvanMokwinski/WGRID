@@ -2,6 +2,96 @@
 #include "wmesh-status.h"
 #include "wmesh-enums.h"
 #include "bms_templates.hpp"
+#include <string.h>
+
+template<typename T>
+wmesh_status_t bms_ordering_vertices(wmesh_int_t 	element_,
+				     T*__restrict__ 	c_)
+{
+  switch(element_)
+    {      
+    case WMESH_ELEMENT_NODE:
+      {
+	static constexpr T ref[1] = {0};
+	memcpy(c_,ref,sizeof(T)*1);
+	return WMESH_STATUS_SUCCESS;
+      }
+    case WMESH_ELEMENT_EDGE:
+      {
+	static constexpr T ref[2] = {0,1};
+	memcpy(c_,ref,sizeof(T)*2);
+	return WMESH_STATUS_SUCCESS;
+      }
+    case WMESH_ELEMENT_TRIANGLE:
+      {
+	static constexpr T ref[6] = {0,0,1,0,0,1};
+	memcpy(c_,ref,sizeof(T)*6);
+	return WMESH_STATUS_SUCCESS;
+      }
+    case WMESH_ELEMENT_QUADRILATERAL:
+      {
+	static constexpr T ref[8] = {0,0,1,0,1,1,0,1};
+	memcpy(c_,ref,sizeof(T)*8);
+	return WMESH_STATUS_SUCCESS;
+      }
+    case WMESH_ELEMENT_TETRAHEDRON:
+      {
+	static constexpr T ref[12] = {0,0,0,
+				      1,0,0,
+				      0,1,0,
+				      0,0,1};
+	memcpy(c_,ref,sizeof(T)*12);
+	return WMESH_STATUS_SUCCESS;
+      }
+    case WMESH_ELEMENT_PYRAMID:
+      {
+	static constexpr T ref[15] = {0,0,0,1,0,0,1,1,0,0,1,0,0,0,1};
+	memcpy(c_,ref,sizeof(T)*15);
+	return WMESH_STATUS_SUCCESS;
+      }
+    case WMESH_ELEMENT_WEDGE:
+      {
+	static constexpr T ref[18] = {0,0,0,
+				      1,0,0,
+				      0,1,0,
+				      0,0,1,
+				      1,0,1,
+				      0,1,1};	  
+	memcpy(c_,ref,sizeof(T)*18);
+	return WMESH_STATUS_SUCCESS;
+      }
+    case WMESH_ELEMENT_HEXAHEDRON:
+      {
+	static constexpr     T ref[24] = {0,0,0,
+					  1,0,0,
+					  1,1,0,
+					  0,1,0,
+					  0,0,1,
+					  1,0,1,
+					  1,1,1,
+					  0,1,1};
+	
+	memcpy(c_,ref,sizeof(T)*24);
+	return WMESH_STATUS_SUCCESS;
+      }
+
+
+    }
+  return WMESH_STATUS_INVALID_ENUM;
+    
+}
+
+
+template
+wmesh_status_t bms_ordering_vertices<wmesh_int_t>(wmesh_int_t 	element_,
+						  wmesh_int_t*__restrict__ 	c_);
+template
+wmesh_status_t bms_ordering_vertices<float>	(wmesh_int_t 	element_,
+						 float*__restrict__ 	c_);
+template
+wmesh_status_t bms_ordering_vertices<double>	(wmesh_int_t 	element_,
+					     double*__restrict__ 	c_);
+
 
 extern "C"
 {
@@ -50,6 +140,10 @@ extern "C"
     return WMESH_STATUS_SUCCESS;
   }
 
+
+
+
+  
   wmesh_status_t bms_ordering_triangle(wmesh_int_t 	degree_,
 				       wmesh_int_t 	c_storage_,
 				       wmesh_int_t 	c_m_,
@@ -58,9 +152,18 @@ extern "C"
 				       wmesh_int_t 	c_ld_,
 				       wmesh_int_t 	shift_)
   {
+    wmesh_int_t ref_icoo[6];
+    {
+      wmesh_status_t status = bms_ordering_vertices(WMESH_ELEMENT_TRIANGLE,
+						    ref_icoo);
+      WMESH_STATUS_CHECK(status);
+    }
+      
+#if 0
     static constexpr   wmesh_int_t ref_icoo[] 	= {0,0,
 						   1,0,
 						   0,1};
+#endif
     
     static constexpr   wmesh_int_t ref_icoo_n 	= 3;
     static constexpr   wmesh_int_t ref_icoo_ld 	= 2;
@@ -139,10 +242,19 @@ extern "C"
 					    wmesh_int_t 	c_ld_,
 					    wmesh_int_t 	shift_)
   {
+#if 0
     static constexpr wmesh_int_t ref_icoo[] = {0,0,
 					       1,0,
 					       1,1,
 					       0,1};
+#endif
+    wmesh_int_t ref_icoo[8];
+    {
+      wmesh_status_t status = bms_ordering_vertices(WMESH_ELEMENT_QUADRILATERAL,
+						    ref_icoo);
+      WMESH_STATUS_CHECK(status);
+    }
+
     static constexpr wmesh_int_t ref_icoo_n = 4;
     static constexpr wmesh_int_t ref_icoo_ld = 2;
     wmesh_status_t status;
@@ -1235,6 +1347,111 @@ extern "C"
     WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ENUM);
   };	  
 
+#if 0  
+  wmesh_status_t bms_ordering_sub(wmesh_int_t		element_,
+				  wmesh_int_t 		sub_element_,
+				  wmesh_int_t 		sub_idx_,
+				  wmesh_int_t		degree_,
+				  wmesh_int_t		c_storage_,
+				  wmesh_int_t		c_m_,
+				  wmesh_int_t		c_n_,
+				  const_wmesh_int_p	c_v_,
+				  wmesh_int_t		c_ld_,
+				  wmesh_int_t		sub_c_storage_,
+				  wmesh_int_t		sub_c_m_,
+				  wmesh_int_t		sub_c_n_,
+				  const_wmesh_int_p	sub_c_v_,
+				  wmesh_int_t		sub_c_ld_,
+				  wmesh_int_t 		s_x2n_m_,
+				  wmesh_int_t 		s_x2n_n_,
+				  const_wmesh_int_p	s_x2n_v_,
+				  wmesh_int_t 		s_x2n_ld_,
+				  wmesh_int_p		sub_c2n_,
+				  wmesh_int_t		sub_c2n_inc_) 
+  {
+
+    wmesh_int_t ref[32];
+    {
+      wmesh_status_t status = bms_ordering_vertices(element_,
+						    ref);
+      WMESH_STATUS_CHECK(status);
+    }
+
+    wmesh_int_t topodim 	= c_m_;
+    wmesh_int_t sub_topodim 	= sub_c_m_;
+    wmesh_int_t s_cnc[4];
+ 	  
+    wmesh_int_t bez[3];
+    wmesh_int_t sub_bez[3];
+    
+    //
+    // Get local connectivity.
+    // 
+    for (wmesh_int_t i=0;i<s_x2n_m_;++i)
+      {
+	s_cnc[i] = s_x2n_v_[s_x2n_ld_*sub_idx+i];
+      }
+    
+    wmesh_int_t sub_nodes[12];
+    for (wmesh_int_t i=0;i<s_x2n_m_;++i)
+      {
+	for (wmesh_int_t k=0;k<topodim;++k)
+	  {
+	    sub_nodes[i * topodim + k] = ref[s_cnc[i] * topodim + k];
+	  }
+      }
+    
+    //
+    // Get the reference coordinates.
+    //
+	  	  
+    // ref[topodim * + i];
+    //
+    // Traverse. (1,0) * ( degree_ -  r) + r*  (0,1) 
+    //
+    wmesh_int_t lagr[4];
+    for (wmesh_int_t j=0;j<sub_c_n_;++j)
+      {
+	for (wmesh_int_t i=0;i<sub_topodim;++i)
+	  {
+	    sub_bez[i] = sub_c_v_[sub_c_ld_*j+i];
+	  }
+	
+	if (s_x2n_m_ == 2)
+	  {
+	    lagr[0] = (degree_ - sub_bez[0]);
+	    lagr[1] = sub_bez[0];
+	  }
+	else if (s_x2n_m_ == 3)
+	  {
+	    lagr[0] = (degree_ - sub_bez[0]-sub_bez[1]);
+	    lagr[1] = sub_bez[0];
+	    lagr[2] = sub_bez[1];
+	  }
+	else if (s_x2n_m_ == 4)
+	  {
+	    lagr[0] = (degree_ - sub_bez[0])*(degree_ - sub_bez[1]);
+	    lagr[1] = sub_bez[0] * (degree_ - sub_bez[1]);
+	    lagr[2] = sub_bez[0] * sub_bez[1];
+	    lagr[3] = (degree_ - sub_bez[0]) * sub_bez[1];
+	  }
+	
+	//
+	// Interpolate.
+	//
+	for (wmesh_int_t i=0;i<topodim;++i)
+	  {
+	    bez[i] = 0;
+	    for (wmesh_int_t k = 0;k<s_x2n_m_;++k)
+	      {
+		bez[i] += sub_nodes[topodim * k + i] * lagr[k];
+	      }
+	  }
+      }	      
+
+    WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ENUM);
+  };	  
+#endif
 
   
   wmesh_status_t bms_ordering_topoid(wmesh_int_t		element_,

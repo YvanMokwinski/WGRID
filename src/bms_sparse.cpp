@@ -4,6 +4,105 @@
 #include <iostream>
 #include <algorithm>
 
+
+template<typename T>
+wmesh_status_t bms_sparse_add(wmesh_int_t 		idofs_n_,
+			      const_wmesh_int_p 	idofs_,
+			      wmesh_int_t 		idofs_inc_,
+
+			      wmesh_int_t 		jdofs_n_,
+			      const_wmesh_int_p 	jdofs_,
+			      wmesh_int_t 		jdofs_inc_,
+
+			      const T * __restrict__ 	lmat_,
+			      wmesh_int_t 		lmat_ld_,
+			      
+			      wmesh_int_t 		csr_size_,
+			      const_wmesh_int_p 	csr_ptr_,
+			      const_wmesh_int_p 	csr_ind_,
+			      T * __restrict__		csr_val_)
+{
+  WMESH_CHECK_POINTER(idofs_);
+  WMESH_CHECK_POINTER(jdofs_);
+  WMESH_CHECK_POINTER(lmat_);
+  WMESH_CHECK_POINTER(lmat_ld_ >= idofs_n_);
+  WMESH_CHECK_POINTER(csr_ptr_);
+  WMESH_CHECK_POINTER(csr_ind_);
+  WMESH_CHECK_POINTER(csr_val_);
+  //
+  // Assembly.
+  //
+  for (wmesh_int_t i=0;i<idofs_n_;++i)
+    {
+      const wmesh_int_t idof = idofs_[i * idofs_inc_];
+      for (wmesh_int_t j=0;j<jdofs_n_;++j)
+	{
+	  const wmesh_int_t jdof = jdofs_[j * jdofs_inc_];
+	  bool found = false;
+	  const wmesh_int_t bound = csr_ptr_[idof+1];
+	  for (wmesh_int_t at = csr_ptr_[idof];at < bound;++at)
+	    {
+#ifndef NDEBUG
+	      if (csr_ind_[at]==0)
+		{
+		  std::cerr << "pblm aaaaaaaassembly " << std::endl;
+		  exit(1);
+		  
+		}
+#endif
+	      if (csr_ind_[at] - 1 == jdof)
+		{
+		  csr_val_[at] += lmat_[j*lmat_ld_ + i];
+		  found = true;
+		  break;
+		}
+	    }
+	  if (!found)
+	    {
+	      std::cout << "Problem assembly (" << idof << "," << jdof << ")" << std::endl;
+	      WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_CONFIG);
+	    }
+	}	  
+    }
+  return WMESH_STATUS_SUCCESS;
+}
+
+template
+wmesh_status_t bms_sparse_add(wmesh_int_t 		idofs_n_,
+			      const_wmesh_int_p 	idofs_,
+			      wmesh_int_t 		idofs_inc_,
+
+			      wmesh_int_t 		jdofs_n_,
+			      const_wmesh_int_p 	jdofs_,
+			      wmesh_int_t 		jdofs_inc_,
+
+			      const float * __restrict__ 	lmat_,
+			      wmesh_int_t 		lmat_ld_,
+			      
+			      wmesh_int_t 		csr_size_,
+			      const_wmesh_int_p 	csr_ptr_,
+			      const_wmesh_int_p 	csr_ind_,
+			      float * __restrict__		csr_val_);
+
+template
+wmesh_status_t bms_sparse_add(wmesh_int_t 		idofs_n_,
+			      const_wmesh_int_p 	idofs_,
+			      wmesh_int_t 		idofs_inc_,
+
+			      wmesh_int_t 		jdofs_n_,
+			      const_wmesh_int_p 	jdofs_,
+			      wmesh_int_t 		jdofs_inc_,
+
+			      const double * __restrict__ 	lmat_,
+			      wmesh_int_t 		lmat_ld_,
+			      
+			      wmesh_int_t 		csr_size_,
+			      const_wmesh_int_p 	csr_ptr_,
+			      const_wmesh_int_p 	csr_ind_,
+			      double * __restrict__		csr_val_);
+
+
+
 static inline void insert(wmesh_int_t 	jdof_,
 			  wmesh_int_t& 	select_n_,
 			  wmesh_int_p 	select_,
@@ -478,4 +577,7 @@ extern "C"
 
 }
 #endif
+
+
+
 };

@@ -3,6 +3,18 @@
 #include "wmesh-blas.hpp"
 #include "wmesh-math.hpp"
 #include <iostream>
+
+
+template<typename T>
+wmesh_status_t bms_ordering_normals(wmesh_int_t 	element_,
+				    wmesh_int_t 	storage_,
+				    wmesh_int_t 	normals_m_,
+				    wmesh_int_t 	normals_n_,
+				    T*__restrict__	normals_,
+				    wmesh_int_t 	normals_ld_);
+
+
+
 template <typename T> constexpr T Factorial(wmesh_int_t i)
 {
   return (i==0) ? T(1.0) : T(i)*Factorial<T>(i-1);
@@ -17,6 +29,10 @@ template <typename T> constexpr T Pow2(wmesh_int_t i)
 {
   return (i==0) ? T(1.0) : T(2.0) * Pow2<T>(i-1);
 };
+
+
+
+
 
 #if 0
 template <typename T>

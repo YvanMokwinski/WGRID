@@ -2,6 +2,20 @@
 #include "wmesh-blas.h"
 
 template <typename T>
+inline void xger(const_wmesh_int_p m,const_wmesh_int_p n,const T* alpha,const T* x,const_wmesh_int_p xinc,const T *y,const_wmesh_int_p yinc,T *a,const_wmesh_int_p lda);
+
+template <>
+inline void xger<float>(const_wmesh_int_p m,const_wmesh_int_p n,const float* alpha,const float* x,const_wmesh_int_p xinc,const float *y,const_wmesh_int_p yinc,float *a,const_wmesh_int_p lda)
+{
+  sger(m,n,alpha,x,xinc,y,yinc,a,lda);
+}
+template <>
+inline void xger<double>(const_wmesh_int_p m,const_wmesh_int_p n,const double* alpha,const double* x,const_wmesh_int_p xinc,const double *y,const_wmesh_int_p yinc,double *a,const_wmesh_int_p lda)
+{
+  dger(m,n,alpha,x,xinc,y,yinc,a,lda);
+}
+
+template <typename T>
 inline void xcopy(const_wmesh_int_p n,const T* x,const_wmesh_int_p xinc,T *y,const_wmesh_int_p yinc);
 template <>
 inline void xcopy<double>(const_wmesh_int_p n,const double *x,const_wmesh_int_p xinc,double *y,const_wmesh_int_p yinc)

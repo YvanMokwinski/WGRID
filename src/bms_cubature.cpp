@@ -380,14 +380,13 @@ T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
 	  {
 	    for (wmesh_int_t i=0;i<q_r_n_;++i)
 	      {
-		r[ ( j * q_r_n_ + i ) * inc] 	= ( s_one + q_r_v_[i*q_r_inc_] ) * 0.5;
-		s[ ( j * q_r_n_ + i ) * inc] 	= ( s_one - q_r_v_[i*q_r_inc_] ) * ( s_one - q_r_v_[j*q_r_inc_] ) * 0.25;		
-		w_v_[ ( j * q_r_n_ + i ) * w_inc_] 	= ( s_one - q_r_v_[i*q_r_inc_] ) * q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * 0.125;
+		r[ ( j * q_r_n_ + i ) * inc] 	= ( s_one + q_r_v_[i*q_r_inc_] )  / static_cast<T>(2);
+		s[ ( j * q_r_n_ + i ) * inc] 	= ( s_one - q_r_v_[i*q_r_inc_] ) * ( s_one - q_r_v_[j*q_r_inc_] ) / static_cast<T>(4);		
+		w_v_[ ( j * q_r_n_ + i ) * w_inc_] 	= ( s_one - q_r_v_[i*q_r_inc_] ) * q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] / static_cast<T>(8);
 		sum += w_v_[ ( j * q_r_n_ + i ) * w_inc_];
 	      }
 
 	  }
-		    std::cout << "sum " << sum << std::endl;
 	return WMESH_STATUS_SUCCESS;
       }
 
@@ -412,23 +411,32 @@ T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
 
     case WMESH_ELEMENT_TETRAHEDRON:
       {
+	T sum = 0;
 	for (wmesh_int_t k=0;k<q_r_n_;++k)
 	  {
+	    T w  = q_r_v_[k];
 	    for (wmesh_int_t j=0;j<q_r_n_;++j)
 	      {
+		T v  = q_r_v_[j];
 		for (wmesh_int_t i=0;i<q_r_n_;++i)
 		  {
-		    T u  = ( s_one + q_r_v_[i] ) / s_two;
-		    T v  = ( s_one + q_r_v_[j] ) / s_two;
-		    T w  = ( s_one + q_r_v_[k] ) / s_two;
+		    T u  = q_r_v_[i];
 		    
+		    r[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= (s_one + u) / s_two;
+		    s[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= (s_one - u) / s_two * (s_one + v) / s_two;
+		    t[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= (s_one - u) / s_two* (s_one - v) / s_two * (s_one + w) / s_two;
+		    w_v_[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * w_inc_] 	= (q_w_v_[i*q_w_inc_] *q_w_v_[j*q_w_inc_] * q_w_v_[k*q_w_inc_] * (1.0-u)*(1.0-u)*(1.0-v) )/64.0;
+#if 0
 		    r[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= u * v * w;
 		    s[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= u * v * (s_one - w);
 		    t[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * inc] 	= u * (s_one - u);
 		    w_v_[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * w_inc_] 	= (q_w_v_[i*q_w_inc_] *q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * s_three) / s_four;
+#endif
+		    sum += w_v_[ ( k * q_r_n_ * q_r_n_ + j * q_r_n_ + i ) * w_inc_];
 		  }
 	      }
 	  }		
+	std::cout << "sum " << sum << std::endl;
 	return WMESH_STATUS_SUCCESS;
       }
       
@@ -462,7 +470,7 @@ T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
 		    r[ ( k * q_r_n_* q_r_n_+j * q_r_n_ + i ) * inc] 	= ( s_one + q_r_v_[i*q_r_inc_] ) / s_two;
 		    s[ ( k * q_r_n_* q_r_n_+j * q_r_n_ + i ) * inc] 	= ( s_one - q_r_v_[i*q_r_inc_] ) * ( s_one - q_r_v_[j*q_r_inc_] ) / s_four;
 		    t[ ( k * q_r_n_* q_r_n_+j * q_r_n_ + i ) * inc] 	= ( s_one + q_r_v_[k*q_r_inc_] ) / s_two;		
-		    w_v_[ ( k * q_r_n_* q_r_n_ + j * q_r_n_ + i ) * w_inc_] = ( s_one - q_r_v_[i*q_r_inc_] ) * q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * 0.125 * q_w_v_[k *q_w_inc_];
+		    w_v_[ ( k * q_r_n_* q_r_n_ + j * q_r_n_ + i ) * w_inc_] = ( ( s_one - q_r_v_[i*q_r_inc_] ) * q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] / static_cast<T>(16) ) * q_w_v_[k *q_w_inc_];
 		  }
 	      }	    
 	  }
@@ -472,7 +480,7 @@ T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
 
     case WMESH_ELEMENT_PYRAMID:
       {
-
+#if 0
 	for (wmesh_int_t k=0;k<q_r_n_;++k)
 	  {
 	    T ww = q_r_v_[k*q_w_inc_];
@@ -497,6 +505,33 @@ T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
 		  }
 	      }	    
 	  }
+#endif
+
+	for (wmesh_int_t k=0;k<q_r_n_;++k)
+	  {
+	    T ww = q_r_v_[k*q_w_inc_];
+	    T tt = (ww + s_one) / s_two;
+	    
+	    wmesh_int_t shiftk = k * q_r_n_* q_r_n_;	    
+	    T scal = s_one - tt;
+	    for (wmesh_int_t j=0;j<q_r_n_;++j)
+	      {
+		T vv = q_r_v_[j*q_w_inc_];
+	    	wmesh_int_t shiftj = shiftk + j * q_r_n_;
+		for (wmesh_int_t i=0;i<q_r_n_;++i)
+		  {
+		    T uu = q_r_v_[i*q_w_inc_];
+		    wmesh_int_t at = shiftj + i;
+		    
+		    r[ at * inc] = uu * scal;
+		    s[ at * inc] = vv * scal;
+		    t[ at * inc] = tt;
+		    
+		    w_v_[ at * w_inc_] 	= q_w_v_[i*q_w_inc_] * q_w_v_[j*q_w_inc_] * q_w_v_[k *q_w_inc_]  * (scal * scal / static_cast<T>(2) );
+		  }
+	      }	    
+	  }
+
 	return WMESH_STATUS_SUCCESS;
       }
       
@@ -555,6 +590,7 @@ bms_template_cubature(wmesh_int_t	element_,
       WMESH_CHECK_POINTER(rwork_);
     }
   
+
   switch(family_)
     {
     case WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE:

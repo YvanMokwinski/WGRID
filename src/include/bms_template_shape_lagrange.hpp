@@ -141,6 +141,9 @@ struct bms_template_shape_lagrange
 	  WMESH_STATUS_CHECK( status );
 
 
+	  //
+	  // Re-transform the nodes from the bnodes 
+	  //
 	  if (ELEMENT_==WMESH_ELEMENT_QUADRILATERAL || ELEMENT_==WMESH_ELEMENT_HEXAHEDRON)
 	    {
 	      for (wmesh_int_t i=0;i<dof_n*dof_m;++i)
@@ -152,6 +155,7 @@ struct bms_template_shape_lagrange
 	    {
 
 	    }
+	  
 	  //
 	  // Compute basis over dofs coordinates.
 	  //
