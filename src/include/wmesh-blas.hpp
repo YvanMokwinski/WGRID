@@ -1,6 +1,51 @@
 #pragma once
 #include "wmesh-blas.h"
 
+
+
+template <typename T>
+inline void xgemm(const char*transa,const char*transb,const_wmesh_int_p m,const_wmesh_int_p n,const_wmesh_int_p k,const T* alpha, const T* a,const_wmesh_int_p lda,const T *b,const_wmesh_int_p ldb, const T* beta,  T *c,const_wmesh_int_p ldc);
+
+template <>
+inline void xgemm<float>(const char*transa,
+			 const char*transb,
+			 const_wmesh_int_p m,
+			 const_wmesh_int_p n,
+			 const_wmesh_int_p k,
+			 const float* alpha,
+			 const float* a,
+			 const_wmesh_int_p lda,
+			 const float *b,
+			 const_wmesh_int_p ldb,
+			 const float* beta,
+			 float *c,
+			 const_wmesh_int_p ldc)
+{
+  sgemm(transa,transb,m,n,k,alpha,a,lda,b,ldb,beta,c,ldc);
+}
+
+
+template <>
+inline void xgemm<double>(const char*transa,
+			 const char*transb,
+			 const_wmesh_int_p m,
+			 const_wmesh_int_p n,
+			 const_wmesh_int_p k,
+			 const double* alpha,
+			 const double* a,
+			 const_wmesh_int_p lda,
+			 const double *b,
+			 const_wmesh_int_p ldb,
+			 const double* beta,
+			 double *c,
+			 const_wmesh_int_p ldc)
+{
+  dgemm(transa,transb,m,n,k,alpha,a,lda,b,ldb,beta,c,ldc);
+}
+
+
+
+
 template <typename T>
 inline void xger(const_wmesh_int_p m,const_wmesh_int_p n,const T* alpha,const T* x,const_wmesh_int_p xinc,const T *y,const_wmesh_int_p yinc,T *a,const_wmesh_int_p lda);
 

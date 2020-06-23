@@ -2,6 +2,7 @@
 
 #include "cmdline.hpp"
 #include <iostream>
+#include <math.h>
 #include "wmesh-blas.hpp"
 #include <algorithm>
 #include "bms.h"

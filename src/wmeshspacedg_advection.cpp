@@ -1,4 +1,3 @@
-/*
 #include <stdlib.h>
 #include <string.h>
 #include "wmesh-types.hpp"
@@ -13,7 +12,6 @@
 #include "wmesh-blas.hpp"
 #include "bms.hpp"
 
-#if 0
 template<typename T>
 static  std::ostream& operator<<(std::ostream&out_,
 				 const wmesh_mat_t<T>&that_)
@@ -28,7 +26,6 @@ static  std::ostream& operator<<(std::ostream&out_,
     }
   return out_;
 };
-
 
 
 template<typename T>
@@ -55,12 +52,12 @@ inline void wmesh_mat_gemm(T 				alpha_,
 
 template<typename T>
 inline wmesh_status_t wmesh_mat_gemm(const char * 		transa_,
-			   const char * 		transb_,
-			   T 				alpha_,
-			   const wmesh_mat_t<T>&	a_,
-			   const wmesh_mat_t<T>&	b_,
-			   T 				beta_,
-			   wmesh_mat_t<T>&		c_)
+				     const char * 		transb_,
+				     T 				alpha_,
+				     const wmesh_mat_t<T>&	a_,
+				     const wmesh_mat_t<T>&	b_,
+				     T 				beta_,
+				     wmesh_mat_t<T>&		c_)
 {
 #ifndef NDEBUG
   wmesh_int_t am = (transa_[0] == 'N') ? &a_.m : &a_.n;
@@ -73,7 +70,6 @@ inline wmesh_status_t wmesh_mat_gemm(const char * 		transa_,
   WMESH_CHECK(am == cm);
   WMESH_CHECK(bn == cn);
 #endif
-  
   xgemm(transa_,
 	transb_,
 	&c_.m,
@@ -102,7 +98,6 @@ wmesh_status_t bms_element_jacobians(wmesh_int_t 					element_,
 {
   static constexpr T r0 = static_cast<T>(0);
   static constexpr T r1 = static_cast<T>(1);
-  
   wmesh_status_t 	status;
   const wmesh_int_t 	topodim 	= (cooelm_storage_ == WMESH_STORAGE_INTERLEAVE) ? cooelm_.m : cooelm_.n;
   const wmesh_int_t  	topodimXtopodim	= topodim*topodim;
@@ -190,6 +185,12 @@ wmesh_status_t bms_element_jacobians(wmesh_int_t 					element_,
     }
   return WMESH_STATUS_SUCCESS;
 }
+
+
+
+/*
+
+#if 0
 
 
 #if 0
