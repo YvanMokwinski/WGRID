@@ -3,6 +3,9 @@
 #include "bms.h"
 
 template<typename T>
+wmesh_status_t bms_element_geometry(wmesh_int_t 	element_,
+				    T*__restrict__ 	c_);
+template<typename T>
 wmesh_status_t bms_ordering_vertices(wmesh_int_t 	element_,
 				     T*__restrict__ 	c_);
 

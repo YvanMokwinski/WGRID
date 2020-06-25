@@ -1,7 +1,51 @@
 #pragma once
 #include "wmesh-blas.h"
 
+template <typename T>
+inline void xgemv(const char*transa,
+			 const_wmesh_int_p m,
+			 const_wmesh_int_p n,
+			 const T* alpha,
+			 const T* a,
+			 const_wmesh_int_p lda,
+			 const T *b,
+			 const_wmesh_int_p incb,
+			 const T* beta,
+			 T *c,
+			  const_wmesh_int_p incc);
 
+
+template <>
+inline void xgemv<float>(const char*transa,
+			 const_wmesh_int_p m,
+			 const_wmesh_int_p n,
+			 const float* alpha,
+			 const float* a,
+			 const_wmesh_int_p lda,
+			 const float *b,
+			 const_wmesh_int_p incb,
+			 const float* beta,
+			 float *c,
+			 const_wmesh_int_p incc)
+{
+  sgemv(transa,m,n,alpha,a,lda,b,incb,beta,c,incc);
+}
+
+template <>
+inline void xgemv<double>(const char*transa,
+			 const_wmesh_int_p m,
+			 const_wmesh_int_p n,
+			 const double* alpha,
+			 const double* a,
+			 const_wmesh_int_p lda,
+			 const double *b,
+			 const_wmesh_int_p incb,
+			 const double* beta,
+			 double *c,
+			 const_wmesh_int_p incc)
+{
+  dgemv(transa,m,n,alpha,a,lda,b,incb,beta,c,incc);
+}
 
 template <typename T>
 inline void xgemm(const char*transa,const char*transb,const_wmesh_int_p m,const_wmesh_int_p n,const_wmesh_int_p k,const T* alpha, const T* a,const_wmesh_int_p lda,const T *b,const_wmesh_int_p ldb, const T* beta,  T *c,const_wmesh_int_p ldc);
@@ -123,3 +167,72 @@ inline void xgesv<double>(const_wmesh_int_p n,const_wmesh_int_p nrhs,double* a,c
 	info_lapack);
 
 }
+
+
+
+
+
+
+
+
+template<typename T>
+inline void wmesh_mat_gemm(T 				alpha_,
+			   const wmesh_mat_t<T>&	a_,
+			   const wmesh_mat_t<T>&	b_,
+			   T 				beta_,
+			   wmesh_mat_t<T>&		c_)
+{
+  xgemm("N",
+	"N",
+	&c_.m,
+	&c_.n,
+	&a_.n,
+	&alpha_,
+	a_.v,
+	&a_.ld,
+	b_.v,
+	&b_.ld,
+	&beta_,
+	c_.v,
+	&c_.ld);  
+}
+
+template<typename T>
+inline wmesh_status_t wmesh_mat_gemm(const char * 		transa_,
+				     const char * 		transb_,
+				     T 				alpha_,
+				     const wmesh_mat_t<T>&	a_,
+				     const wmesh_mat_t<T>&	b_,
+				     T 				beta_,
+				     wmesh_mat_t<T>&		c_)
+{
+#ifndef NDEBUG
+  wmesh_int_t am = (transa_[0] == 'N') ? a_.m : a_.n;
+  wmesh_int_t an = (transa_[0] == 'N') ? a_.n : a_.m;
+  wmesh_int_t bm = (transb_[0] == 'N') ? b_.m : b_.n;
+  wmesh_int_t bn = (transb_[0] == 'N') ? b_.n : b_.m;
+  wmesh_int_t cm = c_.m;
+  wmesh_int_t cn = c_.n;
+  WMESH_CHECK(an == bm);
+  WMESH_CHECK(am == cm);
+  WMESH_CHECK(bn == cn);
+#endif
+  xgemm(transa_,
+	transb_,
+	&c_.m,
+	&c_.n,
+	(transa_[0] == 'N') ? &a_.n : &a_.m,
+	&alpha_,
+	a_.v,
+	&a_.ld,
+	b_.v,
+	&b_.ld,
+	&beta_,
+	c_.v,
+	&c_.ld);
+  return WMESH_STATUS_SUCCESS;
+}
+
+
+
+

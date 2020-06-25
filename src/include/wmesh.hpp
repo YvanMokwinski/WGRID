@@ -309,8 +309,9 @@ static  inline void get_q2n(const_wmesh_int_p		c2n_,
 						 wmesh_int_t 			dofs_inc_);
 
   wmesh_status_t wmeshspacedg_advection(const wmeshspacedg_t*				self_,
-					const wmesh_shape_info_t* __restrict__	shape_f_,
+					const wmesh_shape_info_t* __restrict__	shape_element_,
 					const wmesh_shape_info_t* __restrict__	shape_u_,
+					const wmesh_shape_info_t* __restrict__	shape_f_,
 					const wmesh_shape_info_t* __restrict__	shape_test_,
 					
 					const wmeshspace_t *			velocity_space_,
@@ -332,6 +333,12 @@ static  inline void get_q2n(const_wmesh_int_p		c2n_,
 }
 #endif
 
+
+template<typename T>
+wmesh_status_t wmesh_shape_calculate_eval(const wmesh_shape_t& 		shape_,
+					  wmesh_int_t 			nodes_storage_,
+					  const wmesh_mat_t<T>& 	nodes_,
+					  wmesh_mat_t<T>& 		eval_);
 
   template <typename T>
   wmesh_status_t wmesh_get_cooelm(const wmesh_t * __restrict__	self_,

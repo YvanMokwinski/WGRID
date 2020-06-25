@@ -10,6 +10,7 @@
 #include "wmesh-blas.h"
 #include "bms_templates.hpp"
 #include "bms.hpp"
+
 template<typename T>
 static  std::ostream& operator<<(std::ostream&out_,
 				 const wmesh_mat_t<T>&that_)
@@ -24,94 +25,6 @@ static  std::ostream& operator<<(std::ostream&out_,
     }
   return out_;
 };
-
-
-
-
-template<typename T>
-wmesh_status_t bms_element_geometry(wmesh_int_t 	element_,
-				     T*__restrict__ 	c_)
-{
-  switch(element_)
-    {      
-    case WMESH_ELEMENT_NODE:
-      {
-	static constexpr T ref[1] = {0};
-	memcpy(c_,ref,sizeof(T)*1);
-	return WMESH_STATUS_SUCCESS;
-      }
-    case WMESH_ELEMENT_EDGE:
-      {
-	static constexpr T ref[2] = {-1,1};
-	memcpy(c_,ref,sizeof(T)*2);
-	return WMESH_STATUS_SUCCESS;
-      }
-    case WMESH_ELEMENT_TRIANGLE:
-      {
-	static constexpr T ref[6] = {0,0,1,0,0,1};
-	memcpy(c_,ref,sizeof(T)*6);
-	return WMESH_STATUS_SUCCESS;
-      }
-    case WMESH_ELEMENT_QUADRILATERAL:
-      {
-	static constexpr T ref[8] = {-1,-1,1,-1,1,1,-1,1};
-	memcpy(c_,ref,sizeof(T)*8);
-	return WMESH_STATUS_SUCCESS;
-      }
-    case WMESH_ELEMENT_TETRAHEDRON:
-      {
-	static constexpr T ref[12] = {0,0,0,
-				      1,0,0,
-				      0,1,0,
-				      0,0,1};
-	memcpy(c_,ref,sizeof(T)*12);
-	return WMESH_STATUS_SUCCESS;
-      }
-    case WMESH_ELEMENT_PYRAMID:
-      {
-	static constexpr T ref[15] = {-1,-1,-1,1,-1,-1,1,1,-1,-1,1,-1,0,0,1};
-	memcpy(c_,ref,sizeof(T)*15);
-	return WMESH_STATUS_SUCCESS;
-      }
-    case WMESH_ELEMENT_WEDGE:
-      {
-	static constexpr T ref[18] = {0,0,0,
-				      1,0,0,
-				      0,1,0,
-				      0,0,1,
-				      1,0,1,
-				      0,1,1};	  
-	memcpy(c_,ref,sizeof(T)*18);
-	return WMESH_STATUS_SUCCESS;
-      }
-    case WMESH_ELEMENT_HEXAHEDRON:
-      {
-	static constexpr     T ref[24] = {-1,-1,-1,
-					  1,-1,-1,
-					  1,1,-1,
-					  -1,1,-1,
-					  -1,-1,1,
-					  1,-1,1,
-					  1,1,1,
-					  -1,1,1};
-	
-	memcpy(c_,ref,sizeof(T)*24);
-	return WMESH_STATUS_SUCCESS;
-      }
-
-
-    }
-  return WMESH_STATUS_INVALID_ENUM;
-    
-}
-
-template
-wmesh_status_t bms_element_geometry<float>	(wmesh_int_t 	element_,
-						 float*__restrict__ 	c_);
-template
-wmesh_status_t bms_element_geometry<double>	(wmesh_int_t 	element_,
-						 double*__restrict__ 	c_);
-
 
 
 template<typename T>

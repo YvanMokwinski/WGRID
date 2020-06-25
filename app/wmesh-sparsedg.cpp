@@ -400,10 +400,11 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
 
   int main(int argc, char ** argv)
   {
-
+#if 0
 #if 0
 #endif
 
+    std::cout << "####### " << "####" << std::endl;    
     for (wmesh_int_t element = WMESH_ELEMENT_EDGE;element < WMESH_ELEMENT_ALL;++element)
       {
 	wmesh_cubature_t<double> cubature;
@@ -420,11 +421,7 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
 	std::cout << "sum weights " << fd << std::endl;
       }
     
-    wmesh_t* 		mesh 		= nullptr;
-    wmesh_status_t 	status;
-
-
-  
+    
     { 
       wmesh_cubature_boundary_t<double> cubature_boundary;
       const wmesh_int_t num_facets = 3,elm = WMESH_ELEMENT_TRIANGLE;
@@ -516,7 +513,9 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
   
 
   exit(1);
-
+#endif
+    wmesh_t* 		mesh 		= nullptr;
+    wmesh_status_t 	status;
   
   //
   // Parameters.
@@ -715,9 +714,11 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
 			    mesh);  
   WMESH_STATUS_CHECK(status);
 
+  
   status = wmeshspacedg_advection(spacedg,
-				  &shape_info_f,
+				  &shape_info_element,
 				  &shape_info_u,
+				  &shape_info_f,
 				  &shape_info_test,
 				  
 				  velocity_space,

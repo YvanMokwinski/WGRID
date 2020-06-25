@@ -47,6 +47,14 @@ static const char * s_wmesh_shape_family_names[WMESH_SHAPE_FAMILY_ALL]
    "legendre",
    "orthogonal"};
 
+
+inline  wmesh_status_t app_shapefamily2str(wmesh_int_t shapefamily_,
+					   wmesh_str_t shapefamily_name_)
+{
+  strcpy(shapefamily_name_,s_wmesh_shape_family_names[shapefamily_]);
+  return WMESH_STATUS_SUCCESS;  
+}
+
 //!
 //! @brief Convert a string to an shapefamily.
 //!
