@@ -1,5 +1,6 @@
 #pragma once
 #include "wmesh-blas.h"
+#include "wmesh-types.hpp"
 
 template <typename T>
 inline void xgemv(const char*transa,
