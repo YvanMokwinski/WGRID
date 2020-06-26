@@ -9,6 +9,21 @@ template<typename T>
 wmesh_status_t bms_ordering_vertices(wmesh_int_t 	element_,
 				     T*__restrict__ 	c_);
 
+
+template<typename T>
+wmesh_status_t bms_ordering_linear_shape(wmesh_int_t 			element_,
+					 wmesh_int_t 			c_storage_,
+					 wmesh_int_t 			c_m_,
+					 wmesh_int_t 			c_n_,
+					 const T * __restrict__ 	c_v_,
+					 wmesh_int_t 			c_ld_,
+					 wmesh_int_t 			ev_storage_,
+					 wmesh_int_t 			ev_m_,
+					 wmesh_int_t 			ev_n_,
+					  T * __restrict__ 	ev_v_,
+					 wmesh_int_t 			ev_ld_);
+
+
 template<typename T>
 wmesh_status_t bms_transform(wmesh_int_t 		element_,
 			     wmesh_int_t 		r_n_,					 

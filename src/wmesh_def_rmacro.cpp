@@ -207,9 +207,6 @@ extern "C"
 		       c_n,
 		       c_v,
 		       c_ld);
-
-
-
     
     //
     // Set some topological code for fun.

@@ -1517,6 +1517,308 @@ extern "C"
     WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ENUM);
   };	  
 
+}
 
-  
-};
+
+
+
+
+
+  template<typename T>
+  wmesh_status_t bms_ordering_linear_shape(wmesh_int_t 			element_,
+					   wmesh_int_t 			c_storage_,
+					   wmesh_int_t 			c_m_,
+					   wmesh_int_t 			c_n_,
+					   const T * __restrict__ 	c_v_,
+					   wmesh_int_t 			c_ld_,
+					   wmesh_int_t 			ev_storage_,
+					   wmesh_int_t 			ev_m_,
+					   wmesh_int_t 			ev_n_,
+					   T * __restrict__ 	ev_v_,
+					   wmesh_int_t 			ev_ld_)
+  {
+    static constexpr T one =  static_cast<T>(1);
+    static constexpr T zero =  static_cast<T>(0);
+    const wmesh_int_t num_nodes = (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_n_ : c_m_;
+    const wmesh_int_t r_inc = (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_ld_ : 1;
+    const wmesh_int_t s_inc = (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_ld_ : 1;
+    const wmesh_int_t t_inc = (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_ld_ : 1;
+
+    const T * __restrict__ r = c_v_;
+    const T * __restrict__ s = (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_v_+1 : c_v_+c_ld_*1;
+    const T * __restrict__ t = (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_v_+2 : c_v_+c_ld_*2;
+
+
+    switch(element_)
+      {
+      case WMESH_ELEMENT_EDGE:
+	{
+	  const wmesh_int_t l_inc = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_ld_ : 1;
+	  T * __restrict__ l0 = ev_v_;
+	  T * __restrict__ l1 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+1 : ev_v_+ev_ld_*1;
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l0[l_inc*i] = one - r[r_inc*i];		
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l1[l_inc*i] = r[r_inc*i];    		
+	    }
+	  
+	  return WMESH_STATUS_SUCCESS;
+	}
+
+      case WMESH_ELEMENT_TRIANGLE:
+	{
+	  const wmesh_int_t l_inc = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_ld_ : 1;
+	  T * __restrict__ l0 = ev_v_;
+	  T * __restrict__ l1 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+1 : ev_v_+ev_ld_*1;
+	  T * __restrict__ l2 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+2 : ev_v_+ev_ld_*2;
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l0[l_inc*i] = one - (r[r_inc*i]+s[s_inc*i]);		
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l1[l_inc*i] = r[r_inc*i];    		
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l2[l_inc*i] = s[s_inc*i];    		
+	    }
+
+	  return WMESH_STATUS_SUCCESS;
+	}
+
+      case WMESH_ELEMENT_QUADRILATERAL:
+	{
+	  const wmesh_int_t l_inc = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_ld_ : 1;
+	  T * __restrict__ l0 = ev_v_;
+	  T * __restrict__ l1 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+1 : ev_v_+ev_ld_*1;
+	  T * __restrict__ l2 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+2 : ev_v_+ev_ld_*2;
+	  T * __restrict__ l3 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+3 : ev_v_+ev_ld_*3;
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l0[l_inc*i] = (one - r[r_inc*i])*(one - s[s_inc*i]);	
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l1[l_inc*i] = r[r_inc*i]*(one - s[s_inc*i]);	
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l2[l_inc*i] = r[r_inc*i]*s[s_inc*i];	
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l3[l_inc*i] = (one - r[r_inc*i])*s[s_inc*i];	
+	    }
+	  
+	  return WMESH_STATUS_SUCCESS;
+	}
+
+      case WMESH_ELEMENT_TETRAHEDRON:
+	{
+	  const wmesh_int_t l_inc = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_ld_ : 1;
+	  T * __restrict__ l0 = ev_v_;
+	  T * __restrict__ l1 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+1 : ev_v_+ev_ld_*1;
+	  T * __restrict__ l2 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+2 : ev_v_+ev_ld_*2;
+	  T * __restrict__ l3 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+3 : ev_v_+ev_ld_*3;
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l0[l_inc*i] = one - (r[r_inc*i] + s[s_inc*i] + t[t_inc*i] );	
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l1[l_inc*i] = r[r_inc*i];	
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l2[l_inc*i] = s[s_inc*i];	
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l3[l_inc*i] = t[t_inc*i];	
+	    }
+	  
+	  return WMESH_STATUS_SUCCESS;
+	}
+	  
+      case WMESH_ELEMENT_PYRAMID:
+	{
+	  const wmesh_int_t l_inc = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_ld_ : 1;
+	  T * __restrict__ l0 = ev_v_;
+	  T * __restrict__ l1 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+1 : ev_v_+ev_ld_*1;
+	  T * __restrict__ l2 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+2 : ev_v_+ev_ld_*2;
+	  T * __restrict__ l3 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+3 : ev_v_+ev_ld_*3;
+	  T * __restrict__ l4 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+4 : ev_v_+ev_ld_*4;
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l0[l_inc*i] = (t[t_inc*i] < one) ?  (one - (t[t_inc*i]+r[r_inc*i]) ) * (one - (t[t_inc*i] + s[s_inc*i]) ) / (one - t[t_inc*i]) : zero;
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l1[l_inc*i] = (t[t_inc*i] < one) ?  (r[r_inc*i] * (one-t[t_inc*i]-s[s_inc*i])) / (one - t[t_inc*i]) : zero;
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l2[l_inc*i] = (t[t_inc*i] < one) ?  (r[r_inc*i] * s[s_inc*i]) / (one - t[t_inc*i]) : zero;
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l3[l_inc*i] = (t[t_inc*i] < one) ?  ( (one - (t[t_inc*i] + r[r_inc*i]) ) * s[s_inc*i] ) / (one - t[t_inc*i]) : zero;
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l4[l_inc*i] = t[t_inc*i];	
+	    }
+	  
+	  return WMESH_STATUS_SUCCESS;
+	}
+
+	case WMESH_ELEMENT_WEDGE:
+	{
+	  const wmesh_int_t l_inc = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_ld_ : 1;
+	  T * __restrict__ l0 = ev_v_;
+	  T * __restrict__ l1 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+1 : ev_v_+ev_ld_*1;
+	  T * __restrict__ l2 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+2 : ev_v_+ev_ld_*2;
+	  T * __restrict__ l3 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+3 : ev_v_+ev_ld_*3;
+	  T * __restrict__ l4 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+4 : ev_v_+ev_ld_*4;
+	  T * __restrict__ l5 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+5 : ev_v_+ev_ld_*5;
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l0[l_inc*i] = ( one - (r[r_inc*i] + s[s_inc*i]) ) * ( one - t[t_inc*i] );
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l1[l_inc*i] = r[r_inc*i] * ( one - t[t_inc*i] );
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l2[l_inc*i] = s[s_inc*i] * ( one - t[t_inc*i] );	
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l3[l_inc*i] = ( one - (r[r_inc*i] + s[s_inc*i])) * t[t_inc*i] ;
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l4[l_inc*i] = r[r_inc*i] * t[t_inc*i] ;
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l5[l_inc*i] = s[s_inc*i] *  t[t_inc*i];
+	    }
+
+	  return WMESH_STATUS_SUCCESS;
+	}
+
+	case WMESH_ELEMENT_HEXAHEDRON:
+	{
+	  const wmesh_int_t l_inc = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_ld_ : 1;
+	  T * __restrict__ l0 = ev_v_;
+	  T * __restrict__ l1 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+1 : ev_v_+ev_ld_*1;
+	  T * __restrict__ l2 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+2 : ev_v_+ev_ld_*2;
+	  T * __restrict__ l3 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+3 : ev_v_+ev_ld_*3;
+	  T * __restrict__ l4 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+4 : ev_v_+ev_ld_*4;
+	  T * __restrict__ l5 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+5 : ev_v_+ev_ld_*5;
+	  T * __restrict__ l6 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+6 : ev_v_+ev_ld_*6;
+	  T * __restrict__ l7 = (ev_storage_ == WMESH_STORAGE_INTERLEAVE) ? ev_v_+7 : ev_v_+ev_ld_*7;
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l0[l_inc*i] = ( one - r[r_inc*i] )* ( one - s[s_inc*i] ) * ( one - t[t_inc*i] );
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l1[l_inc*i] = ( ( r[r_inc*i] )* ( one - s[s_inc*i] ) * ( one - t[t_inc*i] ) );
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {
+	      l2[l_inc*i] = ( ( r[r_inc*i] )* ( s[s_inc*i] ) * ( one - t[t_inc*i] ) );
+	    }
+	  
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l3[l_inc*i] = ( one - r[r_inc*i] )* ( s[s_inc*i] ) * ( one - t[t_inc*i] );
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l4[l_inc*i] = ( one - r[r_inc*i] )* ( one - s[s_inc*i] ) * ( t[t_inc*i] );
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l5[l_inc*i] = ( ( r[r_inc*i] )* ( one - s[s_inc*i] ) * ( t[t_inc*i] ) );
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l6[l_inc*i] = ( ( r[r_inc*i] )* ( s[s_inc*i] ) * ( t[t_inc*i] ) );
+	    }
+
+	  for (wmesh_int_t i=0;i<num_nodes;++i)
+	    {	      
+	      l7[l_inc*i] = ( one - r[r_inc*i] )* ( s[s_inc*i] ) * ( t[t_inc*i] );
+	    }
+
+	  return WMESH_STATUS_SUCCESS;
+	}
+
+      }
+    return WMESH_STATUS_INVALID_ENUM;
+  }
+
+
+
+template
+wmesh_status_t bms_ordering_linear_shape<float>(wmesh_int_t 			element_,
+						wmesh_int_t 			c_storage_,
+						wmesh_int_t 			c_m_,
+						wmesh_int_t 			c_n_,
+						const float * __restrict__ 	c_v_,
+						wmesh_int_t 			c_ld_,
+						wmesh_int_t 			ev_storage_,
+						wmesh_int_t 			ev_m_,
+						wmesh_int_t 			ev_n_,
+						 float * __restrict__ 	ev_v_,
+						wmesh_int_t 			ev_ld_);
+
+template
+wmesh_status_t bms_ordering_linear_shape<double>(wmesh_int_t 			element_,
+						 wmesh_int_t 			c_storage_,
+						 wmesh_int_t 			c_m_,
+						 wmesh_int_t 			c_n_,
+						 const double * __restrict__ 	c_v_,
+						 wmesh_int_t 			c_ld_,
+						 wmesh_int_t 			ev_storage_,
+						 wmesh_int_t 			ev_m_,
+						 wmesh_int_t 			ev_n_,
+						 double * __restrict__ 	ev_v_,
+						 wmesh_int_t 			ev_ld_);

@@ -46,6 +46,25 @@ struct wmesh_mat_t
 
 
 
+
+
+template<typename T>
+struct wmesh_nodes_t
+{
+  wmesh_int_t 		m_element;
+  wmesh_int_t 		m_family;
+  wmesh_int_t 		m_degree;
+  wmesh_int_t 		m_c_storage;
+  wmesh_mat_t<T> 	m_c;
+};
+
+template<typename T>
+wmesh_status_t wmesh_nodes_def(wmesh_nodes_t<T>*__restrict__ 	self_,
+			       wmesh_int_t 			element_,
+			       wmesh_int_t 			family_,
+			       wmesh_int_t 			degree_);
+
+
 template<typename T>
 struct wmesh_cubature_t
 {
@@ -56,6 +75,8 @@ struct wmesh_cubature_t
   wmesh_mat_t<T> 	m_c;
   wmesh_mat_t<T> 	m_w;
 };
+
+
 
 template<typename T>
 wmesh_status_t wmesh_cubature_def(wmesh_cubature_t<T>*__restrict__ self_,
@@ -83,6 +104,7 @@ wmesh_status_t wmesh_cubature_boundary_def(wmesh_cubature_boundary_t<T>*__restri
 extern "C"
 {
   
+  
   struct wmesh_shape_info_t
   {
     wmesh_int_t		m_family;
@@ -90,6 +112,15 @@ extern "C"
   };
   
   wmesh_status_t wmesh_shape_info_def(wmesh_shape_info_t*__restrict__ 	self_,
+				      wmesh_int_t 			family_,
+				      wmesh_int_t 			degree_);
+  struct wmesh_nodes_info_t
+  {
+    wmesh_int_t		m_family;
+    wmesh_int_t 	m_degree;
+  };
+  
+  wmesh_status_t wmesh_nodes_info_def(wmesh_nodes_info_t*__restrict__ 	self_,
 				      wmesh_int_t 			family_,
 				      wmesh_int_t 			degree_);
 
@@ -110,7 +141,7 @@ extern "C"
 				 wmesh_int_t 			element_,
 				 wmesh_int_t 			family_,
 				 wmesh_int_t 			degree_);
-
+#if 0
 #define WMESH_NODES_FAMILY_LAGRANGE 		0
 #define WMESH_NODES_FAMILY_GAUSSLOBATTO 	1
 #define WMESH_NODES_FAMILY_ALL 			2
@@ -119,9 +150,10 @@ extern "C"
 #define WMESH_SHAPE_FAMILY_LEGENDRE 		1
 #define WMESH_SHAPE_FAMILY_ORTHOGONAL 		2
 #define WMESH_SHAPE_FAMILY_ALL 			3
-
+#endif
   
 };
+
 
 //
 // Definition of the shape cell basis restriction over facets.

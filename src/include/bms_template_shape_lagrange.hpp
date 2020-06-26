@@ -91,6 +91,7 @@ struct bms_template_shape_lagrange
 	  wmesh_int_t o_n 	= ndofs;
 	  wmesh_int_t o_ld 	= dim;
 	  wmesh_int_p o_v    	= (wmesh_int_p)malloc(sizeof(wmesh_int_t) * o_n * o_ld);  
+
 	  status = bms_ordering(ELEMENT_,
 				degree_,
 				o_storage,
@@ -140,91 +141,75 @@ struct bms_template_shape_lagrange
 	  
 	  WMESH_STATUS_CHECK( status );
 
-
-	  //
-	  // Re-transform the nodes from the bnodes 
-	  //
-	  if (ELEMENT_==WMESH_ELEMENT_QUADRILATERAL || ELEMENT_==WMESH_ELEMENT_HEXAHEDRON)
-	    {
-	      for (wmesh_int_t i=0;i<dof_n*dof_m;++i)
-		{
-		  dof[i] = 2.0*dof[i]-1.0;
-		}
-	    }
-	  else
-	    {
-
-	    }
-	  
 	  //
 	  // Compute basis over dofs coordinates.
 	  //
 	  wmesh_int_t diff_vandermonde[3] = {0,0,0};
 	  //	   std::cout << "yo0 " << std::endl;	  
-	   status =  bms_template_shape_jacobi<ELEMENT_,T>::eval(degree_,
-								 diff_vandermonde,
-								 dof_storage,
-								 dof_m,
-								 dof_n,
-								 dof,
-								 dof_ld,
-								 v_storage,
-								 v_m,
-								 v_n,
-								 v,
-								 v_ld,							     
-								 iw_n_,
-								 iw_,
-								 rw_n_,
-								 rw_);
-	   WMESH_STATUS_CHECK( status );
-	   //	   std::cout << "yo1 " << std::endl;	   
-	   wmesh_int_t info_lapack;
+	  status =  bms_template_shape_jacobi<ELEMENT_,T>::eval(degree_,
+								diff_vandermonde,
+								dof_storage,
+								dof_m,
+								dof_n,
+								dof,
+								dof_ld,
+								v_storage,
+								v_m,
+								v_n,
+								v,
+								v_ld,							     
+								iw_n_,
+								iw_,
+								rw_n_,
+								rw_);
+	  WMESH_STATUS_CHECK( status );
+	  //	   std::cout << "yo1 " << std::endl;	   
+	  wmesh_int_t info_lapack;
 #if 0
-	   
-	   for (wmesh_int_t i=0;i<c_m_;++i)
-	     {
-	       for (wmesh_int_t j=0;j<c_n_;++j)
-		 {
-		   fprintf(stdout," %e",c_[c_ld_*j+i]);
-		 }
-	       fprintf(stdout,"\n");	       
-	     }
-	   
-	   fprintf(stdout,"------------------\n");	       
-
-	   for (wmesh_int_t i=0;i<dof_m;++i)
-	     {
-	       for (wmesh_int_t j=0;j<dof_n;++j)
-		 {
-		   fprintf(stdout," %e",dof[dof_ld*j+i]);
-		 }
-	       fprintf(stdout,"\n");	       
-	     }
-	   
-	   fprintf(stdout,"------------------\n");	       
-	   
-
-	   for (wmesh_int_t i=0;i<v_m;++i)
-	     {
-	       for (wmesh_int_t j=0;j<v_n;++j)
-		 {
-		   fprintf(stdout," %e",v[v_ld*j+i]);
-		 }
-	       fprintf(stdout,"\n");	       
-	     }
-
-	   fprintf(stdout,"------------------\n");	       
-	   for (wmesh_int_t i=0;i<dof_m;++i)
-	     {
-	       for (wmesh_int_t j=0;j<dof_n;++j)
-		 {
-		   fprintf(stdout," %e",dof[dof_ld*j+i]);
-		 }
-	       fprintf(stdout,"\n");	       
-	     }
-	   
-	   fprintf(stdout,"------------------\n");	       
+	  
+	  for (wmesh_int_t i=0;i<c_m_;++i)
+	    {
+	      for (wmesh_int_t j=0;j<c_n_;++j)
+		{
+		  fprintf(stdout," %e",c_[c_ld_*j+i]);
+		}
+	      fprintf(stdout,"\n");	       
+	    }
+	  
+	  fprintf(stdout,"------------------\n");	       
+	  
+	  for (wmesh_int_t i=0;i<dof_m;++i)
+	    {
+	      for (wmesh_int_t j=0;j<dof_n;++j)
+		{
+		  fprintf(stdout," %e",dof[dof_ld*j+i]);
+		}
+	      fprintf(stdout,"\n");	       
+	    }
+	  
+	  fprintf(stdout,"------------------\n");	       
+	  
+	  
+	  for (wmesh_int_t i=0;i<v_m;++i)
+	    {
+	      for (wmesh_int_t j=0;j<v_n;++j)
+		{
+		  fprintf(stdout," %e",v[v_ld*j+i]);
+		}
+	      fprintf(stdout,"\n");	       
+	    }
+	  
+	  fprintf(stdout,"------------------\n");	       
+	  for (wmesh_int_t i=0;i<dof_m;++i)
+	    {
+	      for (wmesh_int_t j=0;j<dof_n;++j)
+		{
+		  fprintf(stdout," %e",dof[dof_ld*j+i]);
+		}
+	      fprintf(stdout,"\n");	       
+	    }
+	  
+	  fprintf(stdout,"------------------\n");	       
 #endif
 	   
 	   

@@ -1,6 +1,7 @@
 #include "bms.hpp"
 #include "wmesh-math.hpp"
-#include "wmesh-blas.h"
+#include "wmesh-blas.hpp"
+#include "wmesh-types.hpp"
 
 #ifndef NDEBUG
 #include <iostream>
@@ -16,19 +17,19 @@ void solve<double>(solve_params(double))
   static constexpr const char trV[1] = {'V'};
   wmesh_int_t ldvl=1,info;
   LAPACK_dgeev(trN,
-	trV,
-	n,
-	jacM,
-	n, 
-	wr, 
-	wi, 
-	vl, 
-	&ldvl, 
-	vr, 
-	n, 
-	work, 
-	work_n_,
-	&info);
+	       trV,
+	       n,
+	       jacM,
+	       n, 
+	       wr, 
+	       wi, 
+	       vl, 
+	       &ldvl, 
+	       vr, 
+	       n, 
+	       work, 
+	       work_n_,
+	       &info);
 }
 
 template<>
@@ -38,19 +39,19 @@ void solve<float>(solve_params(float))
   static constexpr const char trV[1] = {'V'};
   wmesh_int_t ldvl=1,info;
   LAPACK_sgeev(trN,
-	trV,
-	n,
-	jacM,
-	n, 
-	wr, 
-	wi, 
-	vl, 
-	&ldvl, 
-	vr, 
-	n, 
-	work, 
-	work_n_,
-	&info);
+	       trV,
+	       n,
+	       jacM,
+	       n, 
+	       wr, 
+	       wi, 
+	       vl, 
+	       &ldvl, 
+	       vr, 
+	       n, 
+	       work, 
+	       work_n_,
+	       &info);
 }
 
 
@@ -310,6 +311,30 @@ bms_nodes(wmesh_int_t 		element_,
       WMESH_CHECK_POINTER(iwork_);
     }
   
+  wmesh_int_t num_nodes_P1;
+  status = bms_elements_num_nodes(1,&element_,&num_nodes_P1);
+  WMESH_STATUS_CHECK(status);
+  wmesh_int_t num_nodes_Pk;
+  status = bms_ndofs(element_,degree_,&num_nodes_Pk);
+  WMESH_STATUS_CHECK(status);
+
+  const wmesh_int_t topodim = (b_storage_ == WMESH_STORAGE_INTERLEAVE)  ? b_m_ : b_n_;
+  const wmesh_int_t		c_storage = c_storage_;
+  wmesh_mat_t<T> c;
+  wmesh_mat_t<T>::define(&c,c_m_,c_n_,c_v_,c_ld_);
+  
+  
+  const wmesh_int_t eval_storage 	= WMESH_STORAGE_INTERLEAVE;
+  wmesh_mat_t<T> eval;
+  wmesh_mat_t<T>::alloc(&eval,
+			num_nodes_P1,
+			num_nodes_Pk);
+  
+  const wmesh_int_t ref_c_storage 	= WMESH_STORAGE_INTERLEAVE;
+  wmesh_mat_t<T> ref_c;
+  wmesh_mat_t<T>::alloc(&ref_c,
+			topodim,
+			num_nodes_P1);
   switch(family_)
     {
     case WMESH_NODES_FAMILY_LAGRANGE:
@@ -323,6 +348,30 @@ bms_nodes(wmesh_int_t 		element_,
 		    c_v_[c_ld_*j+i] = ((T)b_v_[b_ld_*j+i]) / ((T)degree_);
 		  }
 	      }
+
+	    //
+	    // The ordering reference geometry is in the first nodes of c.
+	    //
+
+	    
+	    //
+	    // Compute the ordering linear shapes over the ordering reference cells.
+	    //	    	   
+	    status = bms_ordering_linear_shape(element_,
+					       c_storage,
+					       WMESH_MAT_FORWARD(c),
+					       eval_storage,
+					       WMESH_MAT_FORWARD(eval));
+	    WMESH_STATUS_CHECK(status);
+	    
+	    //
+	    // Get element geometry.
+	    //
+	    status = bms_element_geometry(element_,
+					  ref_c.v);
+	    WMESH_STATUS_CHECK(status);
+	    
+	    wmesh_mat_gemm(static_cast<T>(1),ref_c,eval,static_cast<T>(0),c);
 	  }
 	else
 	  {
@@ -339,18 +388,20 @@ bms_nodes(wmesh_int_t 		element_,
 	    {
 	      WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
 	    }
+	    
 	  case WMESH_ELEMENT_EDGE:
 	    {
-	      c_v_[0]  = -1;
+	      c_v_[0]  = static_cast<T>(-1);
+	      c_v_[c_ld_*1]  = static_cast<T>(1);
 	      status =  bms_nodes_legendre(degree_-1,
 					   c_storage_,
-					   c_v_ + 1 * c_ld_,
+					   c_v_ + 2 * c_ld_,
 					   c_ld_, 
 					   (T*__restrict__)nullptr,
 					   1,
 					   rwork_n_,
 					   rwork_);
-	      c_v_[degree_*c_ld_]  = 1;	    
+	      
 	      WMESH_STATUS_CHECK(status);
 	      return WMESH_STATUS_SUCCESS;
 	    }
@@ -362,7 +413,6 @@ bms_nodes(wmesh_int_t 		element_,
 	  case WMESH_ELEMENT_WEDGE:
 	  case WMESH_ELEMENT_HEXAHEDRON:
 	    {
-
 	      //
 	      // Flat the ordering.
 	      //
@@ -376,7 +426,7 @@ bms_nodes(wmesh_int_t 		element_,
 					  perm,
 					  1);	      
 	      WMESH_STATUS_CHECK(status);
-
+	      
 	      //
 	      // Gauss-lobatto 1d.
 	      //
@@ -384,7 +434,10 @@ bms_nodes(wmesh_int_t 		element_,
 	      T * p1d 		=  rwork_;
 	      rwork_n_ 	       -= n1d;	      
 	      rwork_ 	       += n1d;
-	      
+
+	      //
+	      // Be careful, this order -1 ... 1 is not the finite element order but we need it in this way for the transformation.
+	      //
 	      status =  bms_nodes_legendre(degree_-1,
 					   WMESH_STORAGE_INTERLEAVE,
 					   p1d + 1,
@@ -398,7 +451,7 @@ bms_nodes(wmesh_int_t 		element_,
 	      p1d[degree_]  	= 1;	    
 	      
 	      //
-	      //
+	      // The transformation is done on the ordering reference element.
 	      //
 	      status = bms_transform(element_,
 				     n1d,
@@ -410,11 +463,30 @@ bms_nodes(wmesh_int_t 		element_,
 				     c_n_,
 				     c_v_,					 
 				     c_ld_,
-					 
+				     
 				     perm,
 				     1);
 	      WMESH_STATUS_CHECK(status);
 
+	      //
+	      // Compute the ordering linear shapes over the ordering reference cells.
+	      //	    	   
+	      status = bms_ordering_linear_shape(element_,
+						 c_storage,
+						 WMESH_MAT_FORWARD(c),
+						 eval_storage,
+						 WMESH_MAT_FORWARD(eval));
+	      WMESH_STATUS_CHECK(status);
+	      
+	      //
+	      // Get element geometry.
+	      //
+	      status = bms_element_geometry(element_,
+					    ref_c.v);
+	      WMESH_STATUS_CHECK(status);
+	      
+	      wmesh_mat_gemm(static_cast<T>(1),ref_c,eval,static_cast<T>(0),c);
+	      
 	      return WMESH_STATUS_SUCCESS;  
 	    }
 	    

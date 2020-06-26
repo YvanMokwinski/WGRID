@@ -1155,22 +1155,46 @@ extern "C"
     
     wmesh_int_t 	num_types;
     wmesh_int_t 	elements[4];
-    double * 		refevals[4] {};
+    //    double * 		refevals[4] {};
     double 		cell_xyz[32];
     wmesh_int_t 	cell_xyz_ld = coo_m;
+    wmesh_mat_t<double> eval_basis[4];
 
     status = bms_topodim2elements(topodim,
 				  &num_types,
 				  elements);
     WMESH_STATUS_CHECK(status);        
+    
     for (wmesh_int_t l=0;l<num_types;++l)
       {
 	if (mesh->m_c2n.m_n[l]>0)
 	  {
+	    wmesh_int_t element = (topodim==3) ? (4+l) : ((topodim==2)? (2+l) : 1+l);
+	    wmesh_int_t element_num_nodes;
+
+	    status = bms_elements_num_nodes(1,&element,&element_num_nodes);
+	    WMESH_STATUS_CHECK(status);        
+	    
 	    wmesh_t* 		rmacro			= self_->m_patterns[l];
-	    const double * 	rmacro_coo 		= wmesh_get_coo(rmacro);
+	     double * 	rmacro_coo 		= wmesh_get_coo(rmacro);
 	    wmesh_int_t 	rmacro_coo_ld 		= rmacro->m_coo_ld;
 	    wmesh_int_t 	rmacro_num_nodes 	= rmacro->m_num_nodes;
+
+	    const wmesh_int_t  	mat_rmacro_coo_storage = WMESH_STORAGE_INTERLEAVE;
+	    wmesh_mat_t<double> mat_rmacro_coo;
+	    wmesh_mat_t<double>::define(&mat_rmacro_coo,topodim,rmacro_num_nodes,rmacro_coo,rmacro_coo_ld);
+
+	    const wmesh_int_t  	eval_basis_storage = WMESH_STORAGE_INTERLEAVE;
+	    wmesh_mat_t<double>::alloc(&eval_basis[l], element_num_nodes, rmacro_num_nodes);
+	    wmesh_shape_t shape_element;
+	    wmesh_shape_def(&shape_element,element,WMESH_SHAPE_FAMILY_LAGRANGE,1);
+	    
+	    wmesh_shape_calculate_eval(shape_element,
+				       mat_rmacro_coo_storage,
+				       mat_rmacro_coo,
+				       eval_basis[l]);
+
+#if 0
 	    if ((topodim==0)&&(l==0))
 	      {
 		//
@@ -1181,8 +1205,8 @@ extern "C"
 		  {
 		    double r = rmacro_coo[rmacro_coo_ld*k+0];
 		    double s = rmacro_coo[rmacro_coo_ld*k+1];
-		    double lr = ((double)1.0)-r;
-		    double ls = ((double)1.0)-s;
+		    double lr = ( ((double)1.0)-r );
+		    double ls = ( ((double)1.0)-s );
 		    b[k*4+0] = lr* ls;
 		    b[k*4+1] = r * ls;
 		    b[k*4+2] = r *  s;
@@ -1190,6 +1214,7 @@ extern "C"
 		  }		  
 		refevals[l] = b;		  
 	      }
+	    
 	    if ((topodim==2)&&(l==0))
 	      {
 		//
@@ -1439,7 +1464,7 @@ extern "C"
 
 		refevals[l] = b;		  
 	      }
-	      
+#endif	      
 	  }
 
       }
@@ -1455,7 +1480,7 @@ extern "C"
     
     for (wmesh_int_t l=0;l<self_->m_c2d.m_size;++l)
       {
-	double * 	refeval = refevals[l];
+	//	double * 	refeval = refevals[l];
 	
 	//
 	// Local c2d.
@@ -1487,17 +1512,33 @@ extern "C"
 		    cell_xyz[cell_xyz_ld * i + k] = self_->m_mesh->m_coo[self_->m_mesh->m_coo_ld * idx + k];
 		  }
 	      }
+
+#if 0
+	    //
+	    // Now 
+	    //
+	    if (mat_rmacro_coo_storage == WMESH_STORAGE_INTERLEAVE)
+	      {
+		wmesh_mat_gemm(static_cast<T>(1),ref_c,eval_basis,static_cast<T>(0),mat_rmacro_coo);
+	      }
+	    else
+	      {
+		
+	      }
+#endif
+
+	    //	    wmesh_mat_gemm(static_cast<T>(1),cell_xyz,eval_basis[l],static_cast<T>(0),physical_coordinates);
 	    
 	    dgemm("N",
-		  "N",
-		  &coo_m ,
-		  &c2d_m,
-		  &c2n_m ,
-		  &r1,
-		  cell_xyz,
-		  &cell_xyz_ld,
-		  refeval,
-		  &c2n_m,
+	      "N",
+	      &coo_m ,
+	      &c2d_m,
+	      &c2n_m ,
+	      &r1,
+	      cell_xyz,
+	      &cell_xyz_ld,
+	      eval_basis[l].v,
+	      &eval_basis[l].ld,
 		  &r0,
 		  rw,
 		  &coo_m);
@@ -1527,13 +1568,6 @@ extern "C"
 		      }
 		  }
 	      }	    
-	  }
-      }
-    for (wmesh_int_t l=0;l<num_types;++l)
-      {
-	if (refevals[l])
-	  {
-	    free(refevals[l]);
 	  }
       }
     return WMESH_STATUS_SUCCESS;

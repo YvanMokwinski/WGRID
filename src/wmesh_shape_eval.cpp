@@ -145,7 +145,10 @@ static wmesh_status_t wmesh_shape_eval_def_init(wmesh_shape_eval_t<T>*__restrict
   
   return WMESH_STATUS_SUCCESS;  
 }
+
 #endif
+
+
 template<typename T>
 static wmesh_status_t wmesh_shape_eval_def_init(wmesh_shape_eval_t<T>*__restrict__ 	self_,
 					 wmesh_int_t 				nodes_storage_,

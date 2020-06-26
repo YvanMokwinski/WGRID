@@ -56,112 +56,95 @@ static void PrintBits(size_t const size, void const * const ptr)
     puts("");
   };
 
-
-
-
-#include <map>
-
-
-
-
-template<typename T>
-class wmesh_cubature_factory_t
-{
-private:  
-
-  static   void uniqueid_encod(wmesh_int_t& 	val_,
-			       wmesh_int_t 	element_,
-			       wmesh_int_t 	family_,
-			       wmesh_int_t 	degree_)
-  {    
-    val_ = element_ + (family_ << 3) + (degree_ << 6);
-  }
-  
-  static   void uniqueid_decod(wmesh_int_t 	val_,
-			       wmesh_int_t& 	element_,
-			       wmesh_int_t& 	family_,
-			       wmesh_int_t& 	degree_)
-  {
-    const wmesh_int_t s_mask_element = ~( ~((wmesh_int_t)0) << 3);
-    const wmesh_int_t s_mask_family = ~( ~((wmesh_int_t)0) << 3) << 3;
-    const wmesh_int_t s_mask_degree = ( ~((wmesh_int_t)0) << 6);
-    element_ = val_ & s_mask_element;
-    family_ = (val_ & s_mask_family) >> 3;
-    degree_ = (val_ & s_mask_degree) >> 6;
-  }
-
-public:
-  static wmesh_cubature_factory_t& instance()
-  {
-    static wmesh_cubature_factory_t s_instance;
-    return s_instance;
-  }
-  
-  static const wmesh_cubature_t<T>* cubature_instance(wmesh_int_t cubature_element_,
-						      wmesh_int_t cubature_family_,
-						      wmesh_int_t cubature_degree_)
-  {    
-    wmesh_int_t cubature_uniqueid;
-    uniqueid_encod(cubature_uniqueid,
-		   cubature_element_,
-		   cubature_family_,
-		   cubature_degree_);
-
-    auto ret = instance().s_map.find(cubature_uniqueid);
-    wmesh_cubature_t<T>*cubature = nullptr;
-    if (ret == instance().s_map.end())
-      {
-	cubature = (wmesh_cubature_t<T>*)malloc(sizeof(wmesh_cubature_t<T>));
-	wmesh_status_t status = wmesh_cubature_def(cubature,
-				    cubature_element_,
-				    cubature_family_,
-				    cubature_degree_);
-	if (status != WMESH_STATUS_SUCCESS)
-	  {
-	    std::cerr << "wmesh_cubature_def error" << std::endl;
-	    exit(1);
-	  }
-	auto ret_insert = instance().s_map.insert(std::pair<wmesh_int_t,wmesh_cubature_t<T>*>(cubature_uniqueid, cubature));
-	if (ret_insert.second == false)
-	  {
-	    std::cerr << "not found but already registered" << std::endl;
-	    exit(1);
-	  }
-      }
-    else
-      {
-	std::cerr << "already registered" << std::endl;
-	cubature = ret->second;
-      }
-    return cubature;
-  }
-  
-private:
-  wmesh_cubature_factory_t(){};
-  ~wmesh_cubature_factory_t(){};
-  wmesh_cubature_factory_t(const wmesh_cubature_factory_t&)= delete;
-  wmesh_cubature_factory_t& operator=(const wmesh_cubature_factory_t&)= delete;
-  
-private:
-  static std::map<wmesh_int_t,wmesh_cubature_t<T>*> s_map;
-};
-
-template<typename T>
-std::map<wmesh_int_t,wmesh_cubature_t<T>*> wmesh_cubature_factory_t<T>::s_map;
-
+#include "wmesh_cubature_factory_t.hpp"
+#include "wmesh_nodes_factory_t.hpp"
+#include "wmesh_shape_eval_factory_t.hpp"
 
 int main(int argc, char ** argv)
 {
-  auto cubature2 = wmesh_cubature_factory_t<double>::cubature_instance(WMESH_ELEMENT_TRIANGLE,
-								       WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE,
-								       4);
+ 
+  wmesh_shape_info_t shape_info;
+  wmesh_shape_info_def(&shape_info, WMESH_SHAPE_FAMILY_LAGRANGE, 1);
   
-  std::cout << cubature2->m_c << std::endl;
+  wmesh_nodes_info_t nodes_info;
+  wmesh_nodes_info_def(&nodes_info, WMESH_NODES_FAMILY_GAUSSLOBATTO, 3);
+  
+  {
+    const wmesh_int_t element = WMESH_ELEMENT_TETRAHEDRON;
+    auto nodes = wmesh_nodes_factory_t<double>::nodes_instance(element,							       
+							       nodes_info);
+    
+    auto shape_eval_nodes = wmesh_shape_eval_factory_t<double>::shape_eval_instance(element,
+										    shape_info,
+										    nodes);
+    std::cout << shape_eval_nodes->m_f << std::endl;
+    std::cout << shape_eval_nodes->m_diff[0] << std::endl;
+    std::cout << shape_eval_nodes->m_diff[1] << std::endl;
+    shape_eval_nodes = wmesh_shape_eval_factory_t<double>::shape_eval_instance(element,
+									       shape_info,
+									       nodes);
+    std::cout << shape_eval_nodes->m_f << std::endl;
+    std::cout << shape_eval_nodes->m_diff[0] << std::endl;
+    std::cout << shape_eval_nodes->m_diff[1] << std::endl;
 
+    auto cubature = wmesh_cubature_factory_t<double>::cubature_instance(element,
+									WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE,
+									2);
+    
+    shape_eval_nodes = wmesh_shape_eval_factory_t<double>::shape_eval_instance(element,
+									       shape_info,
+									       cubature);
+    std::cout << shape_eval_nodes->m_f << std::endl;
+    shape_eval_nodes = wmesh_shape_eval_factory_t<double>::shape_eval_instance(element,
+									       shape_info,
+									       cubature);
+    std::cout << shape_eval_nodes->m_f << std::endl;
+    shape_eval_nodes = wmesh_shape_eval_factory_t<double>::shape_eval_instance(element,
+									       shape_info,
+									       cubature);
+    std::cout << shape_eval_nodes->m_f << std::endl;
+    shape_eval_nodes = wmesh_shape_eval_factory_t<double>::shape_eval_instance(element,
+									       shape_info,
+									       cubature);
+    std::cout << shape_eval_nodes->m_f << std::endl;
+    
+  }
+  
+  exit(1);
+ 
+  for (wmesh_int_t i=WMESH_ELEMENT_EDGE;i<WMESH_ELEMENT_ALL;++i)
+    {
+      auto nodes = wmesh_nodes_factory_t<double>::nodes_instance(i,
+								 WMESH_NODES_FAMILY_GAUSSLOBATTO,
+								 3);
+      std::cout << "nodes first order" << std::endl;
+      std::cout << nodes->m_c << std::endl;
+    }
+  
+#if 0
+  for (wmesh_int_t i=WMESH_ELEMENT_EDGE;i<WMESH_ELEMENT_ALL;++i)
+    {
+      auto nodes = wmesh_nodes_factory_t<double>::nodes_instance(i,
+								 WMESH_NODES_FAMILY_LAGRANGE,
+								 2);
+      std::cout << "nodes first order" << std::endl;
+      std::cout << nodes->m_c << std::endl;
+    }
+  
+  for (wmesh_int_t i=WMESH_ELEMENT_EDGE;i<WMESH_ELEMENT_ALL;++i)
+    {
+  
+      auto cubature2 = wmesh_cubature_factory_t<double>::cubature_instance(i,
+									   WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE,
+									   2);
+      
+      std::cout << cubature2->m_c << std::endl;
+    }
+  
   auto cubature3 = wmesh_cubature_factory_t<double>::cubature_instance(WMESH_ELEMENT_TETRAHEDRON,
 								       WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE,
 								       17);
-  
+#endif  
   exit(1);
 #if 0  
   
