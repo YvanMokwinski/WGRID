@@ -13,8 +13,8 @@
 #include "bms_templates.hpp"
 #include "bms.hpp"
 template<typename T>
-static  std::ostream& operator<<(std::ostream&out_,
-				 const wmesh_mat_t<T>&that_)
+static std::ostream& operator<<(std::ostream&out_,
+				const wmesh_mat_t<T>&that_)
 {
   for (wmesh_int_t i=0;i<that_.m;++i)
     {
@@ -98,7 +98,6 @@ wmesh_status_t wmesh_shape_restrict_def(wmesh_shape_restrict_t<T>*__restrict__ 	
 			 &self_->m_facets_num_nodes[ifacet]);
       WMESH_STATUS_CHECK(status);
     }
-
   
   for (wmesh_int_t ifacet=0;ifacet < num_facets;++ifacet)
     {
@@ -109,7 +108,6 @@ wmesh_status_t wmesh_shape_restrict_def(wmesh_shape_restrict_t<T>*__restrict__ 	
 				self_->m_facets_num_dofs[ifacet]);
 	}
     }
-
 
   //
   // Get the reference geometry of the cell.
