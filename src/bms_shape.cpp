@@ -8,6 +8,8 @@
 #endif
 
 
+
+
 template<typename T,typename F>  
 static inline  wmesh_status_t bms_template_shape_eval(const_wmesh_int_p	diff_,
 						      wmesh_int_t 	c_storage_,

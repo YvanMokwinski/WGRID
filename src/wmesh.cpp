@@ -2,6 +2,65 @@
 #include "wmesh_utils.hpp"
 #include <iostream>
 #include <string.h>
+#include "wmesh-blas.hpp"
+
+
+template<typename T>
+wmesh_status_t wmesh_mat_gemm(wmesh_int_t 		storage_a_,
+			      wmesh_int_t 		storage_b_,
+			      wmesh_int_t 		storage_c_,
+			      T 			alpha_,
+			      const wmesh_mat_t<T>&	a_,
+			      const wmesh_mat_t<T>&	b_,
+			      T 			beta_,
+			      wmesh_mat_t<T>&		c_)
+{
+
+  if (WMESH_STORAGE_INTERLEAVE == storage_c_)
+    {
+      wmesh_mat_gemm((WMESH_STORAGE_INTERLEAVE == storage_b_) ? "N" : "T",
+		     (WMESH_STORAGE_INTERLEAVE == storage_a_) ? "N" : "T",
+		     alpha_,
+		     b_,
+		     a_,
+		     beta_,
+		     c_);
+    }
+  else
+    {
+      wmesh_mat_gemm((WMESH_STORAGE_INTERLEAVE == storage_a_) ? "T" : "N",
+		     (WMESH_STORAGE_INTERLEAVE == storage_b_) ? "T" : "N",
+		     alpha_,
+		     a_,
+		     b_,
+		     beta_,
+		     c_);      
+    }
+
+  return WMESH_STATUS_SUCCESS;
+
+}
+
+template
+wmesh_status_t wmesh_mat_gemm<float>(wmesh_int_t 			storage_a_,
+				     wmesh_int_t 			storage_b_,
+				     wmesh_int_t 			storage_c_,
+				     float 				alpha_,
+				     const wmesh_mat_t<float>&		a_,
+				     const wmesh_mat_t<float>&		b_,
+				     float 				beta_,
+				     wmesh_mat_t<float>&		c_);
+
+
+template
+wmesh_status_t wmesh_mat_gemm<double>(wmesh_int_t 			storage_a_,
+				     wmesh_int_t 			storage_b_,
+				     wmesh_int_t 			storage_c_,
+				     double 				alpha_,
+				     const wmesh_mat_t<double>&		a_,
+				     const wmesh_mat_t<double>&		b_,
+				     double 				beta_,
+				     wmesh_mat_t<double>&		c_);
 
 
 template <typename T>

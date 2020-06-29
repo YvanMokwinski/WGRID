@@ -2,6 +2,8 @@
 
 #include "wmesh.h"
 #include "wmesh-types.hpp"
+#include "wmesh_shape_info_t.hpp"
+#include "wmesh_shape_t.hpp"
 
 
 

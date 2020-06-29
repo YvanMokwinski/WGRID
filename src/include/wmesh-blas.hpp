@@ -198,6 +198,7 @@ inline void wmesh_mat_gemm(T 				alpha_,
 	&c_.ld);  
 }
 
+
 template<typename T>
 inline wmesh_status_t wmesh_mat_gemm(const char * 		transa_,
 				     const char * 		transb_,
@@ -233,6 +234,18 @@ inline wmesh_status_t wmesh_mat_gemm(const char * 		transa_,
 	&c_.ld);
   return WMESH_STATUS_SUCCESS;
 }
+
+
+template<typename T>
+ wmesh_status_t wmesh_mat_gemm(wmesh_int_t 		storage_a_,
+				     wmesh_int_t 		storage_b_,
+				     wmesh_int_t 		storage_c_,
+				     T 				alpha_,
+				     const wmesh_mat_t<T>&	a_,
+				     const wmesh_mat_t<T>&	b_,
+				     T 				beta_,
+				     wmesh_mat_t<T>&		c_);
+
 
 
 

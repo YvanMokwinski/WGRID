@@ -9,7 +9,8 @@
 #include "wmesh-utils.hpp"
 #include "wmesh-blas.h"
 #include "bms_templates.hpp"
-
+#include "wmesh_nodes_info_t.hpp"
+#include "wmesh_nodes_t.hpp"
 extern "C"
 {
   wmesh_status_t wmesh_nodes_info_def(wmesh_nodes_info_t*__restrict__ 	self_,

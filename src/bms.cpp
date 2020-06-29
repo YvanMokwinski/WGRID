@@ -6,6 +6,157 @@
 #include "bms_templates.hpp"
 #include <string.h>
 
+template<typename T>
+static inline T determinant1x1(const T * __restrict__ 	jacobian_,
+			       wmesh_int_t 		jacobian_ld_)
+{
+  return jacobian_[jacobian_ld_*0+0];
+}
+
+template<typename T>
+static inline T determinant2x2(const T * __restrict__ 	jacobian_,
+			       wmesh_int_t 		jacobian_ld_)
+{
+  return jacobian_[jacobian_ld_*0+0] * jacobian_[jacobian_ld_*1+1] - jacobian_[jacobian_ld_*0+1] *jacobian_[jacobian_ld_*1+0];
+}
+
+template<typename T>
+static inline T determinant3x3(const T * __restrict__ 	jacobian_,
+			       wmesh_int_t 		jacobian_ld_)
+{
+  const T a00 = jacobian_[jacobian_ld_ * 0 + 0];
+  const T a10 = jacobian_[jacobian_ld_ * 0 + 1];
+  const T a20 = jacobian_[jacobian_ld_ * 0 + 2];
+  const T a01 = jacobian_[jacobian_ld_ * 1 + 0];
+  const T a11 = jacobian_[jacobian_ld_ * 1 + 1];
+  const T a21 = jacobian_[jacobian_ld_ * 1 + 2];
+  const T a02 = jacobian_[jacobian_ld_ * 2 + 0];
+  const T a12 = jacobian_[jacobian_ld_ * 2 + 1];
+  const T a22 = jacobian_[jacobian_ld_ * 2 + 2];
+  const T det0 = a11 * a22 - a12 * a21;
+  const T det1 = a01 * a22 - a02 * a21;
+  const T det2 = a01 * a12 - a02 * a11;
+  return a00 * det0 - a10 * det1 + a20 * det2;
+}
+
+
+
+template <typename T>
+wmesh_status_t bms_element_jacobians(wmesh_int_t 					element_,
+				     wmesh_int_t 					cooelm_storage_,
+				     const wmesh_mat_t<T>&				cooelm_,
+				     wmesh_int_t 					element_shape_eval_diff_storage_,
+				     const wmesh_mat_t<T>*				element_shape_eval_diff_,
+				     wmesh_mat_t<T>&					jacobians_,
+				     wmesh_mat_t<T>&					jacobians_det_)
+{
+  static constexpr T r0 = static_cast<T>(0);
+  static constexpr T r1 = static_cast<T>(1);
+  wmesh_status_t 	status;
+  const wmesh_int_t 	topodim 	= (cooelm_storage_ == WMESH_STORAGE_INTERLEAVE) ? cooelm_.m : cooelm_.n;
+  const wmesh_int_t  	topodimXtopodim	= topodim*topodim;
+  const wmesh_int_t	num_eval_nodes  = (element_shape_eval_diff_storage_ == WMESH_STORAGE_INTERLEAVE) ? element_shape_eval_diff_[0].n : element_shape_eval_diff_[0].m;
+  wmesh_mat_t<T> 	dim_jacobians;
+  T B[9];
+  for (wmesh_int_t idim=0;idim<topodim;++idim)
+    {
+      wmesh_mat_t<T>::define(&dim_jacobians,
+			     topodim,
+			     num_eval_nodes,
+			     jacobians_.v + topodim*idim,
+			     topodimXtopodim);
+      
+      wmesh_mat_gemm((cooelm_storage_ == WMESH_STORAGE_INTERLEAVE) ? "N" : "T",
+		     (element_shape_eval_diff_storage_ == WMESH_STORAGE_INTERLEAVE) ? "N" : "T",
+		     r1,		     
+		     cooelm_,
+		     element_shape_eval_diff_[idim],
+		     r0,
+		     dim_jacobians);      
+    }
+  
+  for (wmesh_int_t j=0;j<num_eval_nodes;++j)
+    {
+      T*jacobian = jacobians_.v + jacobians_.ld * j;
+      T det;
+      if (topodim==2)
+	{
+	  det = determinant2x2(jacobian,
+			       topodim);
+	}
+      else if (topodim==3)
+	{
+	  det = determinant3x3(jacobian,
+			       topodim);
+	}
+      else
+	{
+	  det = determinant1x1(jacobian,
+			       topodim);
+	}
+      
+      if (det < 0.0)
+	{
+	  std::cout << "// WARNING " << "NEGATIVE DETERMINANT" << std::endl;
+	  det = -det;
+	}
+      
+      jacobians_det_.v[jacobians_det_.ld * j + 0] = det;
+      
+      //
+      // Reset identity
+      //
+      for (wmesh_int_t i=0;i<topodimXtopodim;++i)
+	{
+	  B[i] = r0;
+	}
+      
+      for (wmesh_int_t i=0;i<topodim;++i)
+	{
+	  B[i*topodim+i] = r1;
+	}
+      
+      //
+      // Inverse the jacobian.
+      //
+      {
+	wmesh_int_t info_lapack, perm[3];
+	LAPACK_dgesv((wmesh_int_p)&topodim,
+		     (wmesh_int_p)&topodim,
+		     jacobian,
+		     (wmesh_int_p)&topodim,
+		     perm,
+		     B,
+		     (wmesh_int_p)&topodim,
+		     (wmesh_int_p)&info_lapack);
+	WMESH_CHECK(info_lapack == 0);
+      }
+      
+      for (wmesh_int_t i=0;i<topodimXtopodim;++i)
+	{
+	  jacobians_.v[jacobians_.ld * j + i] = B[i];
+	}
+    }
+  return WMESH_STATUS_SUCCESS;
+}
+
+
+template
+wmesh_status_t bms_element_jacobians<float>(wmesh_int_t 					element_,
+				     wmesh_int_t 					cooelm_storage_,
+				     const wmesh_mat_t<float>&				cooelm_,
+				     wmesh_int_t 					element_shape_eval_diff_storage_,
+				     const wmesh_mat_t<float>*				element_shape_eval_diff_,
+				     wmesh_mat_t<float>&					jacobians_,
+				     wmesh_mat_t<float>&					jacobians_det_);
+template
+wmesh_status_t bms_element_jacobians<double>(wmesh_int_t 					element_,
+				     wmesh_int_t 					cooelm_storage_,
+				     const wmesh_mat_t<double>&				cooelm_,
+				     wmesh_int_t 					element_shape_eval_diff_storage_,
+				     const wmesh_mat_t<double>*				element_shape_eval_diff_,
+				     wmesh_mat_t<double>&					jacobians_,
+				     wmesh_mat_t<double>&					jacobians_det_);
 
 
 template<typename T>

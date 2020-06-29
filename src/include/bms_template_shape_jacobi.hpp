@@ -2,183 +2,30 @@
 #include "bms.h"
 #include "bms_templates.hpp"
 
-#if 0
-template <wmesh_int_t  ALPHA_,wmesh_int_t BETA_,wmesh_int_t N_, typename T>
-struct bms_template_jacobi_t
-{
-  static wmesh_status_t eval(double 				scal_,
-			     wmesh_int_t 			x_n_,
-			     const T * __restrict__  		x_,
-			     wmesh_int_t  			x_inc_,
-			     T *  __restrict__ 			y_,
-			     wmesh_int_t  			y_inc_,
-			     wmesh_int_t 			work_n_,			   
-			     T *  __restrict__ 			work_)
-  {
-    T * __restrict__ y1 	= work_;
-    T * __restrict__ y2 	= work_ + x_n_;
-    T * __restrict__ tmp 	= work_ + x_n_ * 2;
-    work_ 			= work_ + x_n_ * 3;
-    work_n_ 			-= x_n_ * 3;
-
-    static constexpr wmesh_int_t c	= ( 2*N_*(N_ + ALPHA_ + BETA_)*(2*N_ + ALPHA_ + BETA_ - 2) );
-    static constexpr wmesh_int_t c10 	= ( 2 * N_ + ALPHA_ + BETA_ - 1);
-    static constexpr wmesh_int_t c11	= ( 2 * N_ + ALPHA_ + BETA_)*( 2 * N_ + ALPHA_ + BETA_ - 2);
-    static constexpr wmesh_int_t c12 	= ( ALPHA_*ALPHA_-BETA_*BETA_);
-    static constexpr wmesh_int_t c2     = 2 * (N_ + ALPHA_ - 1)*(N_ + BETA_ - 1)*(2*N_ + ALPHA_ + BETA_);
-
-    static constexpr wmesh_int_t scal0  = c2 / c;
-    static constexpr wmesh_int_t scal1  = (c10 * c11) / c;
-    static constexpr wmesh_int_t scal2  = (c10 * c12) / c;
-    static constexpr wmesh_int_t n1     = 1;
-
-    for (wmesh_int_t i=0;i<x_n_;++i)
-      {
-	tmp[i] = scal2;
-      }
-    
-    T sc = scal1;
-    daxpy(&sc,x_,&x_inc_,work_,&n1);
-
-    bms_template_jacobi_t<ALPHA_,BETA_,0,T>::eval(x_n_,
-						x_,
-						x_inc_,
-						y0,
-						1,
-						work_n_,
-						work_);
-
-    bms_template_jacobi_t<ALPHA_,BETA_,1,T>::eval(x_n_,
-						x_,
-						x_inc_,
-						y1,
-						1,
-						work_n_,
-						work_);
-    
-    for (wmesh_int_t k = 2;k <= N_;++k)
-      {
-	
-	for (wmesh_int_t i = 0;i < x_n_;++i)
-	  {
-	    y_[y_inc_* i] = (a1 * ( a2 * tmp[i] + a3) * y1[i] + a4 * y0[i]) / a0;
-	  }
-        
-	BLAS_dcopy(&x_n_,y1,&n1,y0,&n1);
-	BLAS_dcopy(&x_n_,y_,&n1,y1,&n1);
-      }
-
-    bms_template_jacobi_t<ALPHA_,BETA_,N_-1,T>::eval(x_n_,
-						   x_,
-						   x_inc_,
-						   y_,
-						   y_inc_,
-						   work_n_,
-						   work_);
-    
-    dscal(&x_n_,&scal0,y0,&n1);
-    
-    WMESH_CHECK_POSITIVE(x_n_);
-    WMESH_CHECK_POINTER(x_);
-    WMESH_CHECK_POINTER(y_);
-    
-    static constexpr T
-      r1 = static_cast<T>(1);
-    
-    for (wmesh_int_t i=0;i<x_n_;++i)
-      {
-	y_[i * y_ld_] = r1;
-      }
-    return WMESH_STATUS_SUCCESS;
-  }
-
-  
-};
-
-template <wmesh_int_t  ALPHA_,wmesh_int_t BETA_,typename T>
-struct bms_template_jacobi_t<ALPHA_,BETA_,0,T>
-{
-  wmesh_status_t eval(double 				scal_,
-		      wmesh_int_t 			x_n_,
-		      const double * __restrict__  	x_,
-		      wmesh_int_t  			x_ld_,
-		      double *  __restrict__ 		y_,
-		      wmesh_int_t  			y_ld_,
-		      wmesh_int_t 			work_n_,			   
-		      double *  __restrict__ 		work_)
-  {
-    
-    WMESH_CHECK_POSITIVE(x_n_);
-    WMESH_CHECK_POINTER(x_);
-    WMESH_CHECK_POINTER(y_);
-    
-    for (wmesh_int_t i=0;i<x_n_;++i)
-      {
-	y_[i * y_ld_] = scal_;
-      }
-    return WMESH_STATUS_SUCCESS;
-  }
-
-};
-
-
-template <wmesh_int_t  ALPHA_,wmesh_int_t BETA_,typename T>
-struct bms_template_jacobi_t<ALPHA_,BETA_,1, T>
-{
-  static wmesh_status_t eval(double 				scal_,
-			     wmesh_int_t 			x_n_,
-			     const double * __restrict__  	x_,
-			     wmesh_int_t  			x_inc_,
-			     double *  __restrict__ 		y_,
-			     wmesh_int_t  			y_inc_,
-			     wmesh_int_t 			work_n_,			   
-			     double *  __restrict__ 		work_)
-  {
-    
-    WMESH_CHECK_POSITIVE(x_n_);
-    WMESH_CHECK_POINTER(x_);
-    WMESH_CHECK_POINTER(y_);
-    
-    static constexpr T
-      r1 = T(1.0);
-    static constexpr T
-      r2 = T(2.0);
-
-    for (wmesh_int_t i=0;i<x_n_;++i)
-      {
-	y_[y_inc_ * i] = scal_ * ( (ALPHA_+1) + (ALPHA_+BETA_+2) * (x_[xinc_ * i] - r1 ) / r2 );
-      }
-    
-    return WMESH_STATUS_SUCCESS;
-  }
-};
-
-
-#endif
 
 template<wmesh_int_t 	ELEMENT_,
 	 typename 	T>
 struct bms_template_shape_jacobi
 {  
   static wmesh_status_t eval(wmesh_int_t 	degree_,
-				     const_wmesh_int_p	diff_,				     
-				     wmesh_int_t 	c_storage_,					  
-				     wmesh_int_t 	c_m_,
-				     wmesh_int_t 	c_n_,
-				     const T * 	c_,
-				     wmesh_int_t 	c_ld_,
+			     const_wmesh_int_p	diff_,				     
+			     wmesh_int_t 	c_storage_,					  
+			     wmesh_int_t 	c_m_,
+			     wmesh_int_t 	c_n_,
+			     const T * 		c_,
+			     wmesh_int_t 	c_ld_,
 		      
-				     wmesh_int_t 	b_storage_,
-				     wmesh_int_t 	b_m_,
-				     wmesh_int_t 	b_n_,
-				     T* 		b_,
-				     wmesh_int_t 	b_ld_,
-
+			     wmesh_int_t 	b_storage_,
+			     wmesh_int_t 	b_m_,
+			     wmesh_int_t 	b_n_,
+			     T* 		b_,
+			     wmesh_int_t 	b_ld_,
 			     
-				     wmesh_int_t   	iw_n_,
-				     wmesh_int_p   	iw_,
-				     wmesh_int_t   	rw_n_,
-				     T* 		rw_);
+			     
+			     wmesh_int_t   	iw_n_,
+			     wmesh_int_p   	iw_,
+			     wmesh_int_t   	rw_n_,
+			     T* 		rw_);
 };
 
 template<typename 	T>
@@ -206,116 +53,47 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_EDGE,T>
     wmesh_status_t status;
     const wmesh_int_t n 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_n_ : c_m_;
     const wmesh_int_t c_inc 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_ld_ : 1;
-    if (diff_[0] > 0)
+    const wmesh_int_t b_inc 	= (b_storage_ == WMESH_STORAGE_INTERLEAVE) ? b_ld_ : 1;
+    wmesh_int_t degree_shift;
+    wmesh_int_t alpha;
+    wmesh_int_t beta;
+    if (diff_[0] == 1)
       {
-	if (b_storage_ == WMESH_STORAGE_INTERLEAVE)
-	  {
-	    for (wmesh_int_t i=0;i<=degree_;++i)
-	      {
-		if (i>0)
-		  {
-		    status = bms_jacobip(1,
-					  1,
-					  i-1,		
-					  n,
-					  c_,
-					  c_inc,
-					  b_+i,
-					  b_ld_,
-					  rw_n_,
-					  rw_);
-		    WMESH_STATUS_CHECK(status);
-#if 0
-		    for (wmesh_int_t l=0;l<n;++l)
-		      {
-			b_[l*b_ld_ + i] *= static_cast<T>(i+1);
-		      }
-#endif
-		  }
-		else
-		  {
-		    for (wmesh_int_t l=0;l<n;++l)
-		      {
-			b_[l*b_ld_ + 0] = static_cast<T>(0);
-		      }
-		  }
-	      }
-	  }
-	else
-	  {
-	    for (wmesh_int_t i=0;i<=degree_;++i)
-	      {
-		if (i>0)
-		  {
-		    status = bms_jacobip(1,
-					  1,
-					  i-1,		
-					  n,
-					  c_,
-					  c_inc,
-					  b_+b_ld_*i,
-					  1,
-					  rw_n_,
-					  rw_);
-		    WMESH_STATUS_CHECK(status);
-#if 0
-		    for (wmesh_int_t l=0;l<n;++l)
-		      {
-			b_[i*b_ld_ + l] *= static_cast<T>(i+1);
-		      }
-#endif
-		  }
-		else
-		  {
-		    for (wmesh_int_t l=0;l<n;++l)
-		      {
-			b_[0*b_ld_ + l] = static_cast<T>(0);
-		      }
-		  }
-	      }
-	  }
+	degree_shift = -1;
+	alpha = 1;
+	beta  = 1;
+      }
+    else if (diff_[0] == 0)
+      {
+	degree_shift = 0;
+	alpha = 0;
+	beta  = 0;	
       }
     else
       {
-	if (b_storage_ == WMESH_STORAGE_INTERLEAVE)
-	  {
-	    for (wmesh_int_t i=0;i<=degree_;++i)
-	      {
-		status = bms_jacobip(0,
-				      0,
-				      i,		
-				      n,
-				      c_,
-				      c_inc,
-				      b_+i,
-				      b_ld_,
-				      rw_n_,
-				      rw_);
-		WMESH_STATUS_CHECK(status);
-	      }
-	  }
-	else
-	  {
-	    for (wmesh_int_t i=0;i<=degree_;++i)
-	      {
-		status = bms_jacobip(0,
-				      0,
-				      i,		
-				      n,
-				      c_,
-				      c_inc,
-				      b_ + b_ld_ * i,
-				      1,
-				      rw_n_,
-				      rw_);
-		WMESH_STATUS_CHECK(status);
-	      }
-	  }
+	WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_ARGUMENT);
+      }
+    
+    for (wmesh_int_t i=0;i<=degree_;++i)
+      {
+	T * b = b_ + i * ( (b_storage_ == WMESH_STORAGE_INTERLEAVE) ? 1 : b_ld_);
+	status = bms_jacobip(alpha,
+			     beta,
+			     i + degree_shift,		
+			     n,
+			     c_,
+			     c_inc,
+			     b,
+			     b_inc,
+			     rw_n_,
+			     rw_);
+	WMESH_STATUS_CHECK(status);
       }
     
     return WMESH_STATUS_SUCCESS;    
   }
 };
+
 
 
 
@@ -329,7 +107,7 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_QUADRILATERAL,T>
 				     wmesh_int_t 	c_storage_,					  
 				     wmesh_int_t 	c_m_,
 				     wmesh_int_t 	c_n_,
-				     const T * 	c_,
+				     const T * 		c_,
 				     wmesh_int_t 	c_ld_,
 		      
 				     wmesh_int_t 	b_storage_,
@@ -356,62 +134,6 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_QUADRILATERAL,T>
     rw_ += n*2;
     rw_n_ -= n*2;
     std::cout << "rw_n_ " << rw_n_ << std::endl;
-#if 0
-    {
-      wmesh_int_t N = 100;
-      T ax[101];
-      T ay[101];
-      FILE * f = fopen("info.0.txt","w");
-      for (wmesh_int_t i=0;i<=N;++i)
-	{
-	  ax[i]=-1.0 + static_cast<T>(2 * i) / static_cast<T>(N);
-
-	}
-
-      status = bms_jacobip(1,
-			   1,
-			   2,		
-			   N+1,
-			   ax,
-			   1,
-			   ay,
-			   1,
-			   rw_n_,
-			   rw_);
-      
-      for (wmesh_int_t i=0;i<=N;++i)
-	{
-	  fprintf(f,"%e %e\n",ax[i],ay[i]);
-	}
-      fclose(f);
-
-
-
-      f = fopen("info.1.txt","w");
-      for (wmesh_int_t i=0;i<=N;++i)
-	{
-	  ax[i]=-1.0 + static_cast<T>(2*i)/static_cast<T>(N);
-	}
-      status = bms_jacobip(2,
-			   2,
-			   1,		
-			   N+1,
-			   ax,
-			   1,
-			   ay,
-			   1,
-			   rw_n_,
-			   rw_);
-      for (wmesh_int_t i=0;i<=N;++i)
-	{
-	 
-	  fprintf(f,"%e %e\n",ax[i],ay[i]);
-	}
-      fclose(f);
-
-      //      exit(1);
-    }
-#endif
     if (diff_[0] == 0 && diff_[1] == 0)
       {
 	//	fprintf(stdout,"EVSL F\n");
@@ -470,7 +192,7 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_QUADRILATERAL,T>
 	      }
 	  }
       }
-    else if (diff_[0] == 1)
+    else if (diff_[0] == 1 && diff_[1] == 0)
       {
 	//	fprintf(stdout,"EVSL DR\n");
 	wmesh_int_t idx = 0;
@@ -540,7 +262,7 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_QUADRILATERAL,T>
 
 
       }
-    else if (diff_[1] == 1)
+    else if (diff_[0] == 0 && diff_[1] == 1)
       {
 	// fprintf(stdout,"EVSL S\n");
 	wmesh_int_t idx = 0;
@@ -558,35 +280,23 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_QUADRILATERAL,T>
 				 rw_n_,
 				 rw_);
 	    WMESH_STATUS_CHECK(status);
-	  
 	    
 	    for (wmesh_int_t j=0;j<=degree_;++j)
 	      {
-		if (j>0)
+		status = bms_jacobip(1,
+				     1,
+				     j-1,		
+				     n,
+				     cs,
+				     c_inc,
+				     tmpj,
+				     1,
+				     rw_n_,
+				     rw_);
+		
+		for (wmesh_int_t l =0;l<n;++l)
 		  {
-		    status = bms_jacobip(1,
-					 1,
-					 j-1,		
-					 n,
-					 cs,
-					 c_inc,
-					 tmpj,
-					 1,
-					 rw_n_,
-					 rw_);
-#if 1
-		    for (wmesh_int_t l =0;l<n;++l)
-		      {
-			tmpj[l]  *= static_cast<T>(j+1) / static_cast<T>(2);
-		      }
-#endif
-		  }
-		else
-		  {
-		    for (wmesh_int_t l =0;l<n;++l)
-		      {
-			tmpj[l]  = static_cast<T>(0);
-		      }		    
+		    tmpj[l]  *= static_cast<T>(j+1) / static_cast<T>(2);
 		  }
 		
 		if (b_storage_ == WMESH_STORAGE_INTERLEAVE)
@@ -619,6 +329,379 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_QUADRILATERAL,T>
 
 
 
+
+
+#if 0
+
+template<typename 	T>
+struct bms_template_shape_jacobi<WMESH_ELEMENT_EDGE,T>
+{  
+  static inline  wmesh_status_t eval(wmesh_int_t 	degree_,
+				     const_wmesh_int_p	diff_,				     
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 		c_,
+				     wmesh_int_t 	c_ld_,
+		      
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
+		      
+				     wmesh_int_t   	iw_n_,
+				     wmesh_int_p   	iw_,
+				     wmesh_int_t   	rw_n_,
+				     T* 		rw_)
+  {
+    wmesh_status_t status;
+    const wmesh_int_t n 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_n_ : c_m_;
+    const wmesh_int_t c_inc 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_ld_ : 1;
+    if (diff_[0] > 0)
+      {
+	if (b_storage_ == WMESH_STORAGE_INTERLEAVE)
+	  {
+	    for (wmesh_int_t i=0;i<=degree_;++i)
+	      {
+		if (i>0)
+		  {
+		    status = bms_jacobip(1,
+					 1,
+					 i-1,		
+					 n,
+					 c_,
+					 c_inc,
+					 b_+i,
+					 b_ld_,
+					 rw_n_,
+					 rw_);
+		    WMESH_STATUS_CHECK(status);
+#if 0
+		    for (wmesh_int_t l=0;l<n;++l)
+		      {
+			b_[l*b_ld_ + i] *= static_cast<T>(i+1);
+		      }
+#endif
+		  }
+		else
+		  {
+		    for (wmesh_int_t l=0;l<n;++l)
+		      {
+			b_[l*b_ld_ + 0] = static_cast<T>(0);
+		      }
+		  }
+	      }
+	  }
+	else
+	  {
+	    for (wmesh_int_t i=0;i<=degree_;++i)
+	      {
+		if (i>0)
+		  {
+		    status = bms_jacobip(1,
+					 1,
+					 i-1,		
+					 n,
+					 c_,
+					 c_inc,
+					 b_+b_ld_*i,
+					 1,
+					 rw_n_,
+					 rw_);
+		    WMESH_STATUS_CHECK(status);
+#if 0
+		    for (wmesh_int_t l=0;l<n;++l)
+		      {
+			b_[i*b_ld_ + l] *= static_cast<T>(i+1);
+		      }
+#endif
+		  }
+		else
+		  {
+		    for (wmesh_int_t l=0;l<n;++l)
+		      {
+			b_[0*b_ld_ + l] = static_cast<T>(0);
+		      }
+		  }
+	      }
+	  }
+      }
+    else
+      {
+	if (b_storage_ == WMESH_STORAGE_INTERLEAVE)
+	  {
+	    for (wmesh_int_t i=0;i<=degree_;++i)
+	      {
+		status = bms_jacobip(0,
+				     0,
+				     i,		
+				     n,
+				     c_,
+				     c_inc,
+				     b_+i,
+				     b_ld_,
+				     rw_n_,
+				     rw_);
+		WMESH_STATUS_CHECK(status);
+	      }
+	  }
+	else
+	  {
+	    for (wmesh_int_t i=0;i<=degree_;++i)
+	      {
+		status = bms_jacobip(0,
+				     0,
+				     i,		
+				     n,
+				     c_,
+				     c_inc,
+				     b_ + b_ld_ * i,
+				     1,
+				     rw_n_,
+				     rw_);
+		WMESH_STATUS_CHECK(status);
+	      }
+	  }
+      }
+    
+    return WMESH_STATUS_SUCCESS;    
+  }
+};
+
+
+
+
+template<typename 	T>
+struct bms_template_shape_jacobi<WMESH_ELEMENT_QUADRILATERAL,T>
+{  
+  static inline  wmesh_status_t eval(wmesh_int_t 	degree_,
+				     const_wmesh_int_p	diff_,				     
+				     wmesh_int_t 	c_storage_,					  
+				     wmesh_int_t 	c_m_,
+				     wmesh_int_t 	c_n_,
+				     const T * 		c_,
+				     wmesh_int_t 	c_ld_,
+		      
+				     wmesh_int_t 	b_storage_,
+				     wmesh_int_t 	b_m_,
+				     wmesh_int_t 	b_n_,
+				     T* 		b_,
+				     wmesh_int_t 	b_ld_,
+		      
+				     wmesh_int_t   	iw_n_,
+				     wmesh_int_p   	iw_,
+				     wmesh_int_t   	rw_n_,
+				     T* 		rw_)
+  {
+    wmesh_status_t status;
+    const wmesh_int_t n 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_n_ : c_m_;
+    const wmesh_int_t c_inc 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_ld_ : 1;
+    const T * cr 		= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? (c_ + 0) : (c_ + c_ld_ * 0);
+    const T * cs 		= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? (c_ + 1) : (c_ + c_ld_ * 1);
+    // phi(r,s) = p(r) q(s)
+    // dr = p'(r) q(s)
+    // ds = p(s) q'(s)
+    T * tmpi = rw_;
+    T * tmpj = rw_+n;
+    rw_ += n*2;
+    rw_n_ -= n*2;
+    std::cout << "rw_n_ " << rw_n_ << std::endl;
+    if (diff_[0] == 0 && diff_[1] == 0)
+      {
+	//	fprintf(stdout,"EVSL F\n");
+	wmesh_int_t idx = 0;
+	for (wmesh_int_t i=0;i<=degree_;++i)
+	  {
+	    status = bms_jacobip(0,
+				 0,
+				 i,		
+				 n,
+				 cr,
+				 c_inc,
+				 tmpi,
+				 1,
+				 rw_n_,
+				 rw_);
+	    WMESH_STATUS_CHECK(status);
+	    
+	    for (wmesh_int_t j=0;j<=degree_;++j)
+	      {
+		status = bms_jacobip(0,
+				     0,
+				     j,		
+				     n,
+				     cs,
+				     c_inc,
+				     tmpj,
+				     1,
+				     rw_n_,
+				     rw_);
+		WMESH_STATUS_CHECK(status);
+		
+		if (b_storage_ == WMESH_STORAGE_INTERLEAVE)
+		  {
+#if 0
+		    for (wmesh_int_t l =0;l<n;++l)
+		      {
+			fprintf(stdout,"%8.15e %8.15e %8.15e %8.15e\n",cr[c_inc*l],cs[c_inc*l],tmpi[l],tmpj[l]);
+		      }
+		    fprintf(stdout,"yyyyyyyyyyyyyy\n");
+#endif
+		    for (wmesh_int_t l =0;l<n;++l)
+		      {
+			b_[ b_ld_*l + idx] = tmpi[l] * tmpj[l];
+		      }
+		  }
+		else
+		  {
+		    for (wmesh_int_t l =0;l<n;++l)
+		      {
+			b_[ b_ld_*idx + l] = tmpi[l] * tmpj[l];
+		      }
+		  }
+		
+		++idx;
+	      }
+	  }
+      }
+    else if (diff_[0] == 1 && diff_[1] == 0)
+      {
+	//	fprintf(stdout,"EVSL DR\n");
+	wmesh_int_t idx = 0;
+	for (wmesh_int_t i=0;i<=degree_;++i)
+	  {
+	    if (i>0)
+	      {
+		status = bms_jacobip(1,
+				     1,
+				     i-1,		
+				     n,
+				     cr,
+				     c_inc,
+				     tmpi,
+				     1,
+				     rw_n_,
+				     rw_);
+#if 1
+		for (wmesh_int_t l =0;l<n;++l)
+		  {
+		    tmpi[l]  *= static_cast<T>(i+1) / static_cast<T>(2);
+		  }
+#endif
+		WMESH_STATUS_CHECK(status);
+	      }
+	    else
+	      {
+		for (wmesh_int_t l =0;l<n;++l)
+		  {
+		    tmpi[l]  = static_cast<T>(0);
+		  }
+	      }
+	    
+	    for (wmesh_int_t j=0;j<=degree_;++j)
+	      {
+		status = bms_jacobip(0,
+				      0,
+				      j,		
+				      n,
+				      cs,
+				      c_inc,
+				      tmpj,
+				      1,
+				      rw_n_,
+				      rw_);
+	        WMESH_STATUS_CHECK(status);
+		
+		if (b_storage_ == WMESH_STORAGE_INTERLEAVE)
+		  {
+		    for (wmesh_int_t l =0;l<n;++l)
+		      {
+			b_[ b_ld_*l + idx] = tmpi[l] * tmpj[l];
+		      }
+		  }
+		else
+		  {
+
+		    for (wmesh_int_t l =0;l<n;++l)
+		      {
+			b_[ b_ld_*idx + l] = tmpi[l] * tmpj[l];
+		      }
+		  }
+		
+		++idx;
+	      }
+	  }
+
+
+      }
+    else if (diff_[0] == 0 && diff_[1] == 1)
+      {
+	// fprintf(stdout,"EVSL S\n");
+	wmesh_int_t idx = 0;
+	for (wmesh_int_t i=0;i<=degree_;++i)
+	  {
+
+	    status = bms_jacobip(0,
+				 0,
+				 i,		
+				 n,
+				 cr,
+				 c_inc,
+				 tmpi,
+				 1,
+				 rw_n_,
+				 rw_);
+	    WMESH_STATUS_CHECK(status);
+	    
+	    for (wmesh_int_t j=0;j<=degree_;++j)
+	      {
+		status = bms_jacobip(1,
+				     1,
+				     j-1,		
+				     n,
+				     cs,
+				     c_inc,
+				     tmpj,
+				     1,
+				     rw_n_,
+				     rw_);
+		
+		for (wmesh_int_t l =0;l<n;++l)
+		  {
+		    tmpj[l]  *= static_cast<T>(j+1) / static_cast<T>(2);
+		  }
+		
+		if (b_storage_ == WMESH_STORAGE_INTERLEAVE)
+		  {
+		    for (wmesh_int_t l =0;l<n;++l)
+		      {
+			b_[ b_ld_*l + idx] = tmpi[l] * tmpj[l];
+		      }
+		  }
+		else
+		  {
+		    for (wmesh_int_t l =0;l<n;++l)
+		      {
+			b_[ b_ld_*idx + l] = tmpi[l] * tmpj[l];
+		      }
+		  }
+		++idx;
+	      }
+	  }
+
+	
+      }
+    else      
+      {
+	WMESH_STATUS_CHECK(WMESH_STATUS_SUCCESS);    
+      }
+    return WMESH_STATUS_SUCCESS;    
+  }
+};
+
+
+#endif
 
 template<typename 	T>
 struct bms_template_shape_jacobi<WMESH_ELEMENT_HEXAHEDRON,T>
@@ -1096,11 +1179,12 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_TRIANGLE,T>
     const wmesh_int_t c_inc 	= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? c_ld_ : 1;
     const T * cr 		= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? (c_ + 0) : (c_ + c_ld_ * 0);
     const T * cs 		= (c_storage_ == WMESH_STORAGE_INTERLEAVE) ? (c_ + 1) : (c_ + c_ld_ * 1);
+#if 0
     for (wmesh_int_t i=0;i<n;++i)
       {
 	std::cout << " " << cr[c_inc*i] << " " << cs[c_inc*i] << std::endl;
       }
-
+#endif
     
     const wmesh_int_t cr_inc = c_inc;
     const wmesh_int_t cs_inc = c_inc;
@@ -1213,7 +1297,7 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_TRIANGLE,T>
 		for (wmesh_int_t l =0;l<n;++l)
 		  {
 		    tmpi[l]  *= static_cast<T>(i+1);
-		    std::cout << "cono " << tmpi[l] << std::endl;
+		    //    std::cout << "cono " << tmpi[l] << std::endl;
 		  }
 		// / 2 * 2 / (r1 - cs[cs_inc*l])
 	      }
@@ -1383,10 +1467,13 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_TRIANGLE,T>
 
 		    for (wmesh_int_t l =0;l<n;++l)
 		      {
+#if 0
 			if (i<2)
 			  {
 			    std::cout << "rotrr " << dtmpi[l]  << " " << pow(r1-cs[cs_inc*l],i-2) << " " << tmpj[l] << std::endl;
+			    
 			  }
+#endif
 			b_[ b_ld_*l + idx] = dtmpi[l] * pow(r1-cs[cs_inc*l],i-2) * tmpj[l] + tmpi[l] * ( -i * pow(r1-cs[cs_inc*l],i-1) * tmpj[l] + pow(r1-cs[cs_inc*l],i) * dtmpj[l]);
 			//			if (i==1)std::cout << " " << b_[ b_ld_*l + idx] << std::endl;
 		      }
@@ -1466,6 +1553,8 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_TRIANGLE,T>
 };
 
 
+
+
 #if 0
 template<wmesh_int_t 	ELEMENT_,
 	 typename 	T>
@@ -1536,4 +1625,158 @@ struct bms_template_shape_jacobi
   }
 
 };
+#endif
+
+#if 0
+template <wmesh_int_t  ALPHA_,wmesh_int_t BETA_,wmesh_int_t N_, typename T>
+struct bms_template_jacobi_t
+{
+  static wmesh_status_t eval(double 				scal_,
+			     wmesh_int_t 			x_n_,
+			     const T * __restrict__  		x_,
+			     wmesh_int_t  			x_inc_,
+			     T *  __restrict__ 			y_,
+			     wmesh_int_t  			y_inc_,
+			     wmesh_int_t 			work_n_,			   
+			     T *  __restrict__ 			work_)
+  {
+    T * __restrict__ y1 	= work_;
+    T * __restrict__ y2 	= work_ + x_n_;
+    T * __restrict__ tmp 	= work_ + x_n_ * 2;
+    work_ 			= work_ + x_n_ * 3;
+    work_n_ 			-= x_n_ * 3;
+
+    static constexpr wmesh_int_t c	= ( 2*N_*(N_ + ALPHA_ + BETA_)*(2*N_ + ALPHA_ + BETA_ - 2) );
+    static constexpr wmesh_int_t c10 	= ( 2 * N_ + ALPHA_ + BETA_ - 1);
+    static constexpr wmesh_int_t c11	= ( 2 * N_ + ALPHA_ + BETA_)*( 2 * N_ + ALPHA_ + BETA_ - 2);
+    static constexpr wmesh_int_t c12 	= ( ALPHA_*ALPHA_-BETA_*BETA_);
+    static constexpr wmesh_int_t c2     = 2 * (N_ + ALPHA_ - 1)*(N_ + BETA_ - 1)*(2*N_ + ALPHA_ + BETA_);
+
+    static constexpr wmesh_int_t scal0  = c2 / c;
+    static constexpr wmesh_int_t scal1  = (c10 * c11) / c;
+    static constexpr wmesh_int_t scal2  = (c10 * c12) / c;
+    static constexpr wmesh_int_t n1     = 1;
+
+    for (wmesh_int_t i=0;i<x_n_;++i)
+      {
+	tmp[i] = scal2;
+      }
+    
+    T sc = scal1;
+    daxpy(&sc,x_,&x_inc_,work_,&n1);
+
+    bms_template_jacobi_t<ALPHA_,BETA_,0,T>::eval(x_n_,
+						x_,
+						x_inc_,
+						y0,
+						1,
+						work_n_,
+						work_);
+
+    bms_template_jacobi_t<ALPHA_,BETA_,1,T>::eval(x_n_,
+						x_,
+						x_inc_,
+						y1,
+						1,
+						work_n_,
+						work_);
+    
+    for (wmesh_int_t k = 2;k <= N_;++k)
+      {
+	
+	for (wmesh_int_t i = 0;i < x_n_;++i)
+	  {
+	    y_[y_inc_* i] = (a1 * ( a2 * tmp[i] + a3) * y1[i] + a4 * y0[i]) / a0;
+	  }
+        
+	BLAS_dcopy(&x_n_,y1,&n1,y0,&n1);
+	BLAS_dcopy(&x_n_,y_,&n1,y1,&n1);
+      }
+
+    bms_template_jacobi_t<ALPHA_,BETA_,N_-1,T>::eval(x_n_,
+						   x_,
+						   x_inc_,
+						   y_,
+						   y_inc_,
+						   work_n_,
+						   work_);
+    
+    dscal(&x_n_,&scal0,y0,&n1);
+    
+    WMESH_CHECK_POSITIVE(x_n_);
+    WMESH_CHECK_POINTER(x_);
+    WMESH_CHECK_POINTER(y_);
+    
+    static constexpr T
+      r1 = static_cast<T>(1);
+    
+    for (wmesh_int_t i=0;i<x_n_;++i)
+      {
+	y_[i * y_ld_] = r1;
+      }
+    return WMESH_STATUS_SUCCESS;
+  }
+
+  
+};
+
+template <wmesh_int_t  ALPHA_,wmesh_int_t BETA_,typename T>
+struct bms_template_jacobi_t<ALPHA_,BETA_,0,T>
+{
+  wmesh_status_t eval(double 				scal_,
+		      wmesh_int_t 			x_n_,
+		      const double * __restrict__  	x_,
+		      wmesh_int_t  			x_ld_,
+		      double *  __restrict__ 		y_,
+		      wmesh_int_t  			y_ld_,
+		      wmesh_int_t 			work_n_,			   
+		      double *  __restrict__ 		work_)
+  {
+    
+    WMESH_CHECK_POSITIVE(x_n_);
+    WMESH_CHECK_POINTER(x_);
+    WMESH_CHECK_POINTER(y_);
+    
+    for (wmesh_int_t i=0;i<x_n_;++i)
+      {
+	y_[i * y_ld_] = scal_;
+      }
+    return WMESH_STATUS_SUCCESS;
+  }
+
+};
+
+
+template <wmesh_int_t  ALPHA_,wmesh_int_t BETA_,typename T>
+struct bms_template_jacobi_t<ALPHA_,BETA_,1, T>
+{
+  static wmesh_status_t eval(double 				scal_,
+			     wmesh_int_t 			x_n_,
+			     const double * __restrict__  	x_,
+			     wmesh_int_t  			x_inc_,
+			     double *  __restrict__ 		y_,
+			     wmesh_int_t  			y_inc_,
+			     wmesh_int_t 			work_n_,			   
+			     double *  __restrict__ 		work_)
+  {
+    
+    WMESH_CHECK_POSITIVE(x_n_);
+    WMESH_CHECK_POINTER(x_);
+    WMESH_CHECK_POINTER(y_);
+    
+    static constexpr T
+      r1 = T(1.0);
+    static constexpr T
+      r2 = T(2.0);
+
+    for (wmesh_int_t i=0;i<x_n_;++i)
+      {
+	y_[y_inc_ * i] = scal_ * ( (ALPHA_+1) + (ALPHA_+BETA_+2) * (x_[xinc_ * i] - r1 ) / r2 );
+      }
+    
+    return WMESH_STATUS_SUCCESS;
+  }
+};
+
+
 #endif

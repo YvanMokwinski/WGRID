@@ -1,3 +1,4 @@
+#if 0
 #include <stdlib.h>
 #include <string.h>
 #include "wmesh-types.hpp"
@@ -364,3 +365,4 @@ wmesh_status_t wmesh_cubature_boundary_def<double>(wmesh_cubature_boundary_t<dou
 						   wmesh_int_t 						element_,
 						   wmesh_int_t 						cubature_family_,
 						   wmesh_int_t 						cubature_degree_);
+#endif

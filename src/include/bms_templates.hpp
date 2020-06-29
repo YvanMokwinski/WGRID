@@ -4,6 +4,14 @@
 #include "wmesh-math.hpp"
 #include <iostream>
 
+template <typename T>
+wmesh_status_t bms_element_jacobians(wmesh_int_t 					element_,
+				     wmesh_int_t 					cooelm_storage_,
+				     const wmesh_mat_t<T>&				cooelm_,
+				     wmesh_int_t 					element_shape_eval_diff_storage_,
+				     const wmesh_mat_t<T>*				element_shape_eval_diff_,
+				     wmesh_mat_t<T>&					jacobians_,
+				     wmesh_mat_t<T>&					jacobians_det_);
 
 template<typename T>
 wmesh_status_t bms_ordering_normals(wmesh_int_t 	element_,
@@ -467,12 +475,13 @@ wmesh_status_t bms_jacobip(wmesh_int_t 			alpha_,
 {
   WMESH_CHECK(alpha_ >= 0);
   WMESH_CHECK(beta_  >= 0);
-  WMESH_CHECK(N_     >= 0);
+  WMESH_CHECK(N_     >= -1);
   WMESH_CHECK_POSITIVE(x_n_);
   WMESH_CHECK(work_n_  >= 2*x_n_);
   WMESH_CHECK_POINTER(x_);
   WMESH_CHECK_POINTER(y_);
   WMESH_CHECK_POINTER(work_);
+
 #if 0
   if ( (alpha_==0)&&(beta_==0))
     {
@@ -527,15 +536,25 @@ wmesh_status_t bms_jacobip(wmesh_int_t 			alpha_,
   std::cout <<"a1 " << a1 << std::endl;
   std::cout <<"b1 " << b1 << std::endl;
 #endif
+
+  if (N_ < 0)
+    {
+      for (wmesh_int_t i=0;i<x_n_;++i)
+	{
+	  y_[i * y_ld_] = static_cast<T>(0);
+	}
+      return WMESH_STATUS_SUCCESS;
+    }
   
   // Initial values P_0(x) and P_1(x)
   const T gamma0 = Pow2<T>(ab1)*Gamma<T>(a1)*Gamma<T>(b1)/Factorial<T>(ab1);
   const T y0 = r1 / wmesh_math<T>::xsqrt(gamma0);
 
+  
 
   for (wmesh_int_t i=0;i<x_n_;++i)
     {
-      y_[i * y_ld_] = 1.0;
+      y_[i * y_ld_] = static_cast<T>(1);
     }      
   wmesh_int_t n1=1;
   T * __restrict__ pii 	= work_;

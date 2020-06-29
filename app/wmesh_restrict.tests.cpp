@@ -7,6 +7,7 @@
 #include "bms.h"
 #include "wmesh.hpp"
 #include "wmesh-enums.hpp"
+#include "wmesh_shape_restrict_t.hpp"
 
 
 template<typename T>
@@ -62,7 +63,7 @@ static void PrintBits(size_t const size, void const * const ptr)
 
 int main(int argc, char ** argv)
 {
- 
+#if 0
   wmesh_shape_info_t shape_info;
   wmesh_shape_info_def(&shape_info, WMESH_SHAPE_FAMILY_LAGRANGE, 1);
   
@@ -120,6 +121,7 @@ int main(int argc, char ** argv)
       std::cout << "nodes first order" << std::endl;
       std::cout << nodes->m_c << std::endl;
     }
+#endif
   
 #if 0
   for (wmesh_int_t i=WMESH_ELEMENT_EDGE;i<WMESH_ELEMENT_ALL;++i)
@@ -144,8 +146,9 @@ int main(int argc, char ** argv)
   auto cubature3 = wmesh_cubature_factory_t<double>::cubature_instance(WMESH_ELEMENT_TETRAHEDRON,
 								       WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE,
 								       17);
-#endif  
   exit(1);
+#endif  
+
 #if 0  
   
   for (wmesh_int_t i=0;i<8;++i)
@@ -328,7 +331,7 @@ std::cout << h << std::endl;
 
   }
 
-  
+#if 0  
   wmesh_shape_restrict_t<double> shape_restrict;
   status = wmesh_shape_restrict_def(&shape_restrict,
 				    element,
@@ -338,6 +341,30 @@ std::cout << h << std::endl;
 
   status = wmesh_shape_restrict_info(shape_restrict);
   WMESH_STATUS_CHECK(status);
+#endif
 
+
+  const wmesh_mat_t<double>* g = wmesh_calculate_shape_restrict<double>(WMESH_ELEMENT_TETRAHEDRON,
+									0,
+									0,
+									
+									WMESH_SHAPE_FAMILY_LAGRANGE,
+									2,
+									WMESH_NODES_FAMILY_LAGRANGE,
+									3);
+  std::cout << *g << std::endl;
+#if 0
+  wmesh_mat_t<double> y;
+  wmesh_mat_t<double>::alloc(&y,1,4);
+  wmesh_mat_t<double> e;
+  wmesh_mat_t<double>::alloc(&e,1,g->n);
+  y.v[0]=0;
+  y.v[1]=1;
+  y.v[2]=0;
+  y.v[3]=0;
+
+  wmesh_mat_gemm(1.0,y,*g,0.0,e);
+  std::cout << e << std::endl;
+#endif  
   return WMESH_STATUS_SUCCESS;
 }

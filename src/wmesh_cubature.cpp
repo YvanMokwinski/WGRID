@@ -9,6 +9,22 @@
 #include "wmesh-utils.hpp"
 #include "wmesh-blas.h"
 #include "bms_templates.hpp"
+#include "wmesh_cubature_t.hpp"
+#include "wmesh_cubature_info_t.hpp"
+extern "C"
+{
+
+  wmesh_status_t wmesh_cubature_info_def(wmesh_cubature_info_t*__restrict__ 	self_,
+				      wmesh_int_t 			family_,
+				      wmesh_int_t 			degree_)
+  {
+    WMESH_CHECK_POINTER(self_);
+    memset(self_,0,sizeof(wmesh_cubature_info_t));
+    self_->m_family 	= family_;
+    self_->m_degree 	= degree_;
+    return WMESH_STATUS_SUCCESS;
+  }
+}
 
 template<typename T>
 wmesh_status_t wmesh_cubature_def(wmesh_cubature_t<T>*__restrict__ self_,

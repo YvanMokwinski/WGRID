@@ -1,4 +1,6 @@
-#include "wmesh-types.hpp"
+
+#include "wmesh_shape_t.hpp"
+
 #include "bms.h"
 #include <string.h>
 
@@ -15,45 +17,45 @@ extern "C"
     self_->m_degree 	= degree_;
     return WMESH_STATUS_SUCCESS;
   }
+}
 
-  wmesh_status_t wmesh_shape_def(wmesh_shape_t*__restrict__ self_,
-				 wmesh_int_t 		element_,
-				 wmesh_int_t 		family_,
-				 wmesh_int_t 		degree_)
-  {
-    WMESH_CHECK_POINTER(self_);
-    memset(self_,0,sizeof(wmesh_shape_t));
-    self_->m_element 	= element_;
-    self_->m_family 	= family_;
-    self_->m_degree 	= degree_;
+wmesh_status_t wmesh_shape_def(wmesh_shape_t*__restrict__ self_,
+			       wmesh_int_t 		element_,
+			       wmesh_int_t 		family_,
+			       wmesh_int_t 		degree_)
+{
+  WMESH_CHECK_POINTER(self_);
+  memset(self_,0,sizeof(wmesh_shape_t));
+  self_->m_element 	= element_;
+  self_->m_family 	= family_;
+  self_->m_degree 	= degree_;
 
-    wmesh_status_t status = bms_ndofs(element_,
-				      degree_,
-				      &self_->m_ndofs);
-    WMESH_STATUS_CHECK(status);    
-    switch(family_)
+  wmesh_status_t status = bms_ndofs(element_,
+				    degree_,
+				    &self_->m_ndofs);
+  WMESH_STATUS_CHECK(status);    
+  switch(family_)
+    {
+    case WMESH_SHAPE_FAMILY_LAGRANGE:
       {
-      case WMESH_SHAPE_FAMILY_LAGRANGE:
-	{
-	  self_->m_nodes_family = WMESH_NODES_FAMILY_LAGRANGE;
-	  break;
-	}
-      case WMESH_SHAPE_FAMILY_LEGENDRE:
-	{
-	  self_->m_nodes_family = WMESH_NODES_FAMILY_GAUSSLOBATTO;
-	  break;
-	}
-      case WMESH_SHAPE_FAMILY_ORTHOGONAL:
-	{
-	  self_->m_nodes_family = WMESH_NODES_FAMILY_GAUSSLOBATTO;
-	  break;
-	}
+	self_->m_nodes_family = WMESH_NODES_FAMILY_LAGRANGE;
+	break;
       }
+    case WMESH_SHAPE_FAMILY_LEGENDRE:
+      {
+	self_->m_nodes_family = WMESH_NODES_FAMILY_GAUSSLOBATTO;
+	break;
+      }
+    case WMESH_SHAPE_FAMILY_ORTHOGONAL:
+      {
+	self_->m_nodes_family = WMESH_NODES_FAMILY_GAUSSLOBATTO;
+	break;
+      }
+    }
     
-    return WMESH_STATUS_SUCCESS;
-  }
+  return WMESH_STATUS_SUCCESS;
+}
   
-};
 
 
 #include <stdlib.h>

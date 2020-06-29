@@ -63,7 +63,8 @@ struct bms_template_shape_lagrange
       default:
 	{
 
-	  //    std::cout << "sssssssssssssssssssssss GRAAL  " <<  degree_ << std::endl;
+	  std::cout << "sssssssssssssssssssssss ELEMENT_  " <<  ELEMENT_ << std::endl;
+	  std::cout << "sssssssssssssssssssssss degree_  " <<  degree_ << std::endl;
 	  
 	  wmesh_int_t dim;
 	  wmesh_status_t status = bms_element2topodim(ELEMENT_,
@@ -165,17 +166,6 @@ struct bms_template_shape_lagrange
 	  WMESH_STATUS_CHECK( status );
 	  //	   std::cout << "yo1 " << std::endl;	   
 	  wmesh_int_t info_lapack;
-#if 0
-	  
-	  for (wmesh_int_t i=0;i<c_m_;++i)
-	    {
-	      for (wmesh_int_t j=0;j<c_n_;++j)
-		{
-		  fprintf(stdout," %e",c_[c_ld_*j+i]);
-		}
-	      fprintf(stdout,"\n");	       
-	    }
-	  
 	  fprintf(stdout,"------------------\n");	       
 	  
 	  for (wmesh_int_t i=0;i<dof_m;++i)
@@ -188,8 +178,6 @@ struct bms_template_shape_lagrange
 	    }
 	  
 	  fprintf(stdout,"------------------\n");	       
-	  
-	  
 	  for (wmesh_int_t i=0;i<v_m;++i)
 	    {
 	      for (wmesh_int_t j=0;j<v_n;++j)
@@ -200,6 +188,19 @@ struct bms_template_shape_lagrange
 	    }
 	  
 	  fprintf(stdout,"------------------\n");	       
+#if 0
+	  
+	  for (wmesh_int_t i=0;i<c_m_;++i)
+	    {
+	      for (wmesh_int_t j=0;j<c_n_;++j)
+		{
+		  fprintf(stdout," %e",c_[c_ld_*j+i]);
+		}
+	      fprintf(stdout,"\n");	       
+	    }
+	  
+	  
+	  
 	  for (wmesh_int_t i=0;i<dof_m;++i)
 	    {
 	      for (wmesh_int_t j=0;j<dof_n;++j)
@@ -243,6 +244,11 @@ struct bms_template_shape_lagrange
 	   std::cout << "b_ld_ " << b_ld_ << std::endl;
 	   wmesh_int_t perm[32];
 #endif
+
+	   std::cout << "v_m " << v_m << std::endl;
+	   std::cout << "ev_n " << ev_n << std::endl;
+	   std::cout << "v_ld " << v_ld << std::endl;
+	   std::cout << "b_ld_ " << b_ld_ << std::endl;
 	   xgesv((wmesh_int_p)&v_m,
 		 (wmesh_int_p)&ev_n,
 		 v,

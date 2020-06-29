@@ -10,7 +10,8 @@
 #include "wmesh-utils.hpp"
 #include "wmesh-blas.h"
 #include "bms_templates.hpp"
-
+#include "wmesh_cubature_t.hpp"
+#include "wmesh_shape_eval_t.hpp"
 
 template<typename T>
 static  std::ostream& operator<<(std::ostream&out_,

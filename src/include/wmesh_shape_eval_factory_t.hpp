@@ -2,7 +2,10 @@
 
 #include "wmesh-types.hpp"
 #include <map>
-
+#include "wmesh_shape_eval_t.hpp"
+#include "wmesh_nodes_t.hpp"
+#include "wmesh_cubature_t.hpp"
+#include <iostream>
 template<typename T>
 class wmesh_shape_eval_factory_t
 {

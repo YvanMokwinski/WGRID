@@ -11,39 +11,10 @@
 #include "bms_templates.hpp"
 #include "wmesh-blas.hpp"
 #include "bms.hpp"
-
-template<typename T>
-static inline T determinant1x1(const T * __restrict__ 	jacobian_,
-			       wmesh_int_t 		jacobian_ld_)
-{
-  return jacobian_[jacobian_ld_*0+0];
-}
-
-template<typename T>
-static inline T determinant2x2(const T * __restrict__ 	jacobian_,
-			       wmesh_int_t 		jacobian_ld_)
-{
-  return jacobian_[jacobian_ld_*0+0] * jacobian_[jacobian_ld_*1+1] - jacobian_[jacobian_ld_*0+1] *jacobian_[jacobian_ld_*1+0];
-}
-
-template<typename T>
-static inline T determinant3x3(const T * __restrict__ 	jacobian_,
-			       wmesh_int_t 		jacobian_ld_)
-{
-  const T a00 = jacobian_[jacobian_ld_ * 0 + 0];
-  const T a10 = jacobian_[jacobian_ld_ * 0 + 1];
-  const T a20 = jacobian_[jacobian_ld_ * 0 + 2];
-  const T a01 = jacobian_[jacobian_ld_ * 1 + 0];
-  const T a11 = jacobian_[jacobian_ld_ * 1 + 1];
-  const T a21 = jacobian_[jacobian_ld_ * 1 + 2];
-  const T a02 = jacobian_[jacobian_ld_ * 2 + 0];
-  const T a12 = jacobian_[jacobian_ld_ * 2 + 1];
-  const T a22 = jacobian_[jacobian_ld_ * 2 + 2];
-  const T det0 = a11 * a22 - a12 * a21;
-  const T det1 = a01 * a22 - a02 * a21;
-  const T det2 = a01 * a12 - a02 * a11;
-  return a00 * det0 - a10 * det1 + a20 * det2;
-}
+#include "wmesh_shape_eval_t.hpp"
+#include "wmesh_cubature_t.hpp"
+#include "wmesh_cubature_info_t.hpp"
+#include "wmesh_integral_convection_t.hpp"
 
 template <typename T>
 wmesh_status_t wmeshspace_get_dofelm(const wmeshspace_t * __restrict__	self_,
@@ -151,6 +122,8 @@ wmesh_status_t wmesh_element_flags(const wmesh_t * 	self_,
     {
       wmesh_int_t element = (topodim==3) ? (4+itype) : ( (topodim==2) ? 2+itype : 1+itype );
       const wmesh_int_t num_elements = self_->m_c2n.m_n[itype];
+      element_flags_[element] = (num_elements > 0);
+#if 0
       if (num_elements > 0)
 	{
 	  element_flags_[element] = true;
@@ -161,8 +134,9 @@ wmesh_status_t wmesh_element_flags(const wmesh_t * 	self_,
 	    {
 	      const wmesh_int_t facet = facets[ifacet];
 	      element_flags_[facet] = true;
-	    }
-	}	
+	    }	  
+	}
+#endif
     }
   return WMESH_STATUS_SUCCESS;
 }
@@ -183,208 +157,68 @@ static  std::ostream& operator<<(std::ostream&out_,
 };
 
 
-
-template <typename T>
-wmesh_status_t bms_element_jacobians(wmesh_int_t 					element_,
-				     wmesh_int_t 					cooelm_storage_,
-				     const wmesh_mat_t<T>&				cooelm_,
-				     wmesh_int_t 					element_shape_eval_diff_storage_,
-				     const wmesh_mat_t<T>*				element_shape_eval_diff_,
-				     wmesh_mat_t<T>&					jacobians_,
-				     wmesh_mat_t<T>&					jacobians_det_)
-{
-  static constexpr T r0 = static_cast<T>(0);
-  static constexpr T r1 = static_cast<T>(1);
-  wmesh_status_t 	status;
-  const wmesh_int_t 	topodim 	= (cooelm_storage_ == WMESH_STORAGE_INTERLEAVE) ? cooelm_.m : cooelm_.n;
-  const wmesh_int_t  	topodimXtopodim	= topodim*topodim;
-  const wmesh_int_t	num_eval_nodes  = (element_shape_eval_diff_storage_ == WMESH_STORAGE_INTERLEAVE) ? element_shape_eval_diff_[0].n : element_shape_eval_diff_[0].m;
-  wmesh_mat_t<T> 	dim_jacobians;
-  T B[9];
-  for (wmesh_int_t idim=0;idim<topodim;++idim)
-    {
-      wmesh_mat_t<T>::define(&dim_jacobians,
-			     topodim,
-			     num_eval_nodes,
-			     jacobians_.v + topodim*idim,
-			     topodimXtopodim);
-      
-      wmesh_mat_gemm((cooelm_storage_ == WMESH_STORAGE_INTERLEAVE) ? "N" : "T",
-		     (element_shape_eval_diff_storage_ == WMESH_STORAGE_INTERLEAVE) ? "N" : "T",
-		     r1,		     
-		     cooelm_,
-		     element_shape_eval_diff_[idim],
-		     r0,
-		     dim_jacobians);      
-    }
-  
-  for (wmesh_int_t j=0;j<num_eval_nodes;++j)
-    {
-      T*jacobian = jacobians_.v + jacobians_.ld * j;
-      T det;
-      if (topodim==2)
-	{
-	  det = determinant2x2(jacobian,
-			       topodim);
-	}
-      else if (topodim==3)
-	{
-	  det = determinant3x3(jacobian,
-			       topodim);
-	}
-      else
-	{
-	  det = determinant1x1(jacobian,
-			       topodim);
-	}
-      
-      if (det < 0.0)
-	{
-	  std::cout << "// WARNING " << "NEGATIVE DETERMINANT" << std::endl;
-	  det = -det;
-	}
-      
-      jacobians_det_.v[jacobians_det_.ld * j + 0] = det;
-      
-      //
-      // Reset identity
-      //
-      for (wmesh_int_t i=0;i<topodimXtopodim;++i)
-	{
-	  B[i] = r0;
-	}
-      
-      for (wmesh_int_t i=0;i<topodim;++i)
-	{
-	  B[i*topodim+i] = r1;
-	}
-      
-      //
-      // Inverse the jacobian.
-      //
-      {
-	wmesh_int_t info_lapack, perm[3];
-	LAPACK_dgesv((wmesh_int_p)&topodim,
-		     (wmesh_int_p)&topodim,
-		     jacobian,
-		     (wmesh_int_p)&topodim,
-		     perm,
-		     B,
-		     (wmesh_int_p)&topodim,
-		     (wmesh_int_p)&info_lapack);
-	WMESH_CHECK(info_lapack == 0);
-      }
-      
-      for (wmesh_int_t i=0;i<topodimXtopodim;++i)
-	{
-	  jacobians_.v[jacobians_.ld * j + i] = B[i];
-	}
-    }
-  return WMESH_STATUS_SUCCESS;
-}
-
-
 template <typename T>
 struct wmeshspacedg_advection_data_t
 {
+  
+  wmesh_cubature_info_t 	m_cubature_info;
+  wmesh_shape_info_t 		m_shape_info_element;
+  wmesh_shape_info_t 		m_shape_info_velocity;
+  wmesh_shape_info_t 		m_shape_info_trial;
+  wmesh_shape_info_t 		m_shape_info_test;
+
+  //
+  // One per cell type (4 in 3d, 2 in 2d and 1 in 1d.
+  //
+  wmesh_integral_convection_t<T> m_integral_convection[WMESH_ELEMENT_ALL];
+
+#if 0
   bool   		m_element_flags[WMESH_ELEMENT_ALL];
   wmesh_cubature_t<T>   m_cubatures[WMESH_ELEMENT_ALL];
   wmesh_shape_eval_t<T> m_shape_eval_element[WMESH_ELEMENT_ALL];
   wmesh_shape_eval_t<T> m_shape_eval_velocity[WMESH_ELEMENT_ALL];
   wmesh_shape_eval_t<T> m_shape_eval_dg_f[WMESH_ELEMENT_ALL];
   wmesh_shape_eval_t<T> m_shape_eval_dg_test[WMESH_ELEMENT_ALL];
+#endif
+  
 };
 
 template <typename T>
 wmesh_status_t wmeshspacedg_advection_data_def(wmeshspacedg_advection_data_t<T> * __restrict__		self_,
 					       const bool* 	 __restrict__				element_flags_,
+					       const wmesh_cubature_info_t&  __restrict__		cubature_info_,
 					       const wmesh_shape_info_t&  __restrict__			shape_info_element_,
 					       const wmesh_shape_info_t&  __restrict__			shape_info_velocity_,
-					       const wmesh_shape_info_t&  __restrict__			shape_info_dg_f_,
-					       const wmesh_shape_info_t&  __restrict__			shape_info_dg_test_,
-					       wmesh_int_t						cubature_family_,
-					       wmesh_int_t						cubature_degree_)
+					       const wmesh_shape_info_t&  __restrict__			shape_info_trial_,
+					       const wmesh_shape_info_t&  __restrict__			shape_info_test_)
 {
 #ifndef NDEBUG
-	  std::cout << "wmeshspacedg_advection_data_def: begin ... "  << std::endl;    
+  std::cout << "wmeshspacedg_advection_data_def: begin ... "  << std::endl;    
 #endif
+  
   memset(self_,0,sizeof(wmeshspacedg_advection_data_t<T>));
   
-  wmesh_status_t 		status;  
-  memcpy(self_->m_element_flags,element_flags_,sizeof(bool)*WMESH_ELEMENT_ALL);  
+  wmesh_cubature_info_def(&self_->m_cubature_info,cubature_info_.m_family,cubature_info_.m_degree);
+  wmesh_shape_info_def(&self_->m_shape_info_element,shape_info_element_.m_family,shape_info_element_.m_degree);
+  wmesh_shape_info_def(&self_->m_shape_info_velocity,shape_info_velocity_.m_family,shape_info_velocity_.m_degree);
+  wmesh_shape_info_def(&self_->m_shape_info_trial,shape_info_trial_.m_family,shape_info_trial_.m_degree);
+  wmesh_shape_info_def(&self_->m_shape_info_test,shape_info_test_.m_family,shape_info_test_.m_degree);
+  
   for (wmesh_int_t element=1;element<WMESH_ELEMENT_ALL;++element)
     {
       bool has_element = element_flags_[element];
       if (has_element)
 	{
-#ifndef NDEBUG
-	  std::cout << "wmeshspacedg_advection_data_def: - initialize cubature for element "  << element << std::endl;    
-#endif
-	  
-	  status = wmesh_cubature_def(&self_->m_cubatures[element],
-				      element,
-				      cubature_family_,
-				      cubature_degree_);
+	  wmesh_status_t status =  wmesh_integral_convection_def(&self_->m_integral_convection[element],
+								 element,
+								 cubature_info_,
+								 shape_info_element_,
+								 shape_info_velocity_,
+								 shape_info_trial_,
+								 shape_info_test_);
 	  WMESH_STATUS_CHECK(status);     
-	  
-#ifndef NDEBUG
-	  std::cout << "wmeshspacedg_advection_data_def: - initialize shape for element "  << element << std::endl;    
-#endif
-	  //
-	  // Eval element.
-	  //
-	  status = wmesh_shape_eval_def(&self_->m_shape_eval_element[element],
-					element,			
-					shape_info_element_.m_family,
-					shape_info_element_.m_degree,
-					self_->m_cubatures[element].m_c_storage,
-					&self_->m_cubatures[element].m_c);
-	  WMESH_STATUS_CHECK(status);
-	  
-#ifndef NDEBUG
-	  std::cout << "wmeshspacedg_advection_data_def: - initialize shape for velocity on element "  << element << std::endl;    
-#endif
-	  //
-	  // Eval velocity.
-	  //
-	  status = wmesh_shape_eval_def(&self_->m_shape_eval_velocity[element],
-					element,			
-					shape_info_velocity_.m_family,
-					shape_info_velocity_.m_degree,
-					self_->m_cubatures[element].m_c_storage,
-					&self_->m_cubatures[element].m_c);
-	  WMESH_STATUS_CHECK(status);
-
-#ifndef NDEBUG
-	  std::cout << "wmeshspacedg_advection_data_def: - initialize shape for trials on element "  << element << std::endl;    
-#endif
-	  //
-	  // Eval dg_f.
-	  //
-	  status = wmesh_shape_eval_def(&self_->m_shape_eval_dg_f[element],
-					element,			
-					shape_info_dg_f_.m_family,
-					shape_info_dg_f_.m_degree,
-					self_->m_cubatures[element].m_c_storage,
-					&self_->m_cubatures[element].m_c);
-	  WMESH_STATUS_CHECK(status);  
-
-	  //
-	  // Eval dg_test.
-	  //
-#ifndef NDEBUG
-	  std::cout << "wmeshspacedg_advection_data_def: - initialize shape for tests on element "  << element << std::endl;    
-#endif
-	  status = wmesh_shape_eval_def(&self_->m_shape_eval_dg_test[element],
-					element,			
-					shape_info_dg_test_.m_family,
-					shape_info_dg_test_.m_degree,
-					self_->m_cubatures[element].m_c_storage,
-					&self_->m_cubatures[element].m_c);
-	  WMESH_STATUS_CHECK(status);  
-  
 	}
-    }
+      }
   
 #ifndef NDEBUG
   std::cout << "wmeshspacedg_advection_data_def: done. "  << std::endl;    
@@ -1206,6 +1040,10 @@ wmesh_status_t wmeshspacedg_advection_global_system_zone(const wmeshspacedg_t *	
 							 wmesh_int_t 					rw_n_,
 							 T * 						rw_)
 {
+
+  
+#ifdef TOTO  
+  
   const T r0 = static_cast<T>(0);
   wmesh_status_t 	status;
   const wmesh_t * 	mesh 	= self_->m_mesh;  
@@ -1258,6 +1096,8 @@ wmesh_status_t wmeshspacedg_advection_global_system_zone(const wmeshspacedg_t *	
   wmesh_shape_eval_t<T> m_shape_eval_dg_f[WMESH_ELEMENT_ALL];
   wmesh_shape_eval_t<T> m_shape_eval_dg_test[WMESH_ELEMENT_ALL];
 #endif
+
+  
   const wmesh_cubature_t<T>&   	cubature 	= dg_data_.m_cubatures[element_];
   const wmesh_mat_t<T>& 	eval_element 	= dg_data_.m_shape_eval_element[element_].m_f;
   const wmesh_mat_t<T>& 	eval_trial 	= dg_data_.m_shape_eval_dg_f[element_].m_f;
@@ -1724,7 +1564,9 @@ wmesh_status_t wmeshspacedg_advection_global_system_zone(const wmeshspacedg_t *	
 	  
 	}
     }
-#endif  
+#endif
+#endif
+  
   return WMESH_STATUS_SUCCESS;
 }
       
@@ -1750,6 +1592,11 @@ template <typename T>
   const wmesh_int_t 	topodim	= mesh->m_topology_dimension;
   const wmesh_int_t 	ntypes 	= mesh->m_c2n.m_size;
   const wmesh_int_t 	rw_n 	= 2048;
+  
+
+
+
+  
   T rw[2048];
   for (wmesh_int_t 	itype=0;itype<ntypes;++itype)
     {
@@ -1784,27 +1631,33 @@ template <typename T>
 extern "C"
 {
   
-  wmesh_status_t wmeshspacedg_advection(const wmeshspacedg_t* __restrict__	self_,
-
-					const wmesh_shape_info_t* __restrict__	shape_info_element_,
-					const wmesh_shape_info_t* __restrict__	shape_info_u_,
-					const wmesh_shape_info_t* __restrict__	shape_info_dg_f_,
-					const wmesh_shape_info_t* __restrict__	shape_info_dg_test_,
+  wmesh_status_t wmeshspacedg_advection(const wmeshspacedg_t* __restrict__		self_,
 					
-					const wmeshspace_t *			velocity_space_,
-					wmesh_int_t 				velocity_storage_,
-					wmesh_int_t				velocity_m_,
-					wmesh_int_t				velocity_n_,
-					const double*				velocity_v_,
-					wmesh_int_t				velocity_ld_,
+					const wmesh_shape_info_t* __restrict__		shape_info_element_,
+					const wmesh_shape_info_t* __restrict__		shape_info_u_,
+					const wmesh_shape_info_t* __restrict__		shape_info_trial_,
+					const wmesh_shape_info_t* __restrict__		shape_info_test_,
 					
-					wmesh_int_t				csr_size_,
-					const_wmesh_int_p			csr_ptr_,
-					const_wmesh_int_p			csr_ind_,
-					double * 				csr_val_,
+					const wmeshspace_t *				velocity_space_,
+					wmesh_int_t 					velocity_storage_,
+					wmesh_int_t					velocity_m_,
+					wmesh_int_t					velocity_n_,
+					const double*					velocity_v_,
+					wmesh_int_t					velocity_ld_,
 					
-					double * 				rhs_)
+					wmesh_int_t					csr_size_,
+					const_wmesh_int_p				csr_ptr_,
+					const_wmesh_int_p				csr_ind_,
+					double * 					csr_val_,
+					
+					double * 					rhs_)
   {
+    wmesh_status_t 	status;
+    wmesh_cubature_info_t cubature_info;
+    static constexpr  	wmesh_int_t 	cubature_family 	= WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE;
+    const 		wmesh_int_t 	cubature_degree 	= (shape_info_u_->m_degree + (shape_info_trial_->m_degree-1) + shape_info_test_->m_degree) * 2;
+    status = wmesh_cubature_info_def(&cubature_info,cubature_family,cubature_degree);
+    WMESH_STATUS_CHECK(status);
     
     //
     // Set csr_val and rhs_ to zero.
@@ -1818,10 +1671,6 @@ extern "C"
 	rhs_[i] = r0;
     }
 
-    static constexpr  	wmesh_int_t 	cubature_family 	= WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE;
-    const 		wmesh_int_t 	cubature_degree 	= (shape_info_u_->m_degree + (shape_info_dg_f_->m_degree-1) + shape_info_dg_test_->m_degree) * 2;
-    
-    wmesh_status_t 	status;
     const wmesh_t * 	mesh 		= self_->m_mesh;  
     const wmesh_int_t 	num_zones 	= mesh->m_c2n.m_size;
     bool element_flags[WMESH_ELEMENT_ALL];
@@ -1838,15 +1687,15 @@ extern "C"
     std::cout << "wmeshspacedg_advection: - compute involved elements done."  << std::endl;
     std::cout << "wmeshspacedg_advection: - dg advection data definition ..."  << std::endl;    
 #endif
+
     wmeshspacedg_advection_data_t<double> dg_data;
     status =  wmeshspacedg_advection_data_def(&dg_data,
 					      element_flags,
-					      shape_info_element_[0],
-					      shape_info_u_[0],
-					      shape_info_dg_f_[0],
-					      shape_info_dg_test_[0],
-					      cubature_family,
-					      cubature_degree);
+					      cubature_info,
+					      *shape_info_element_,
+					      *shape_info_u_,
+					      *shape_info_trial_,
+					      *shape_info_test_);
     WMESH_STATUS_CHECK(status);
 #ifndef NDEBUG
     std::cout << "wmeshspacedg_advection: - dg advection data definition done."  << std::endl;    
@@ -1875,6 +1724,13 @@ extern "C"
 #ifndef NDEBUG
     std::cout << "wmeshspacedg_advection: - dg advection global system done."  << std::endl;    
 #endif
+
+
+
+
+
+
+
     
     
 #if 0    

@@ -1,7 +1,9 @@
 #pragma once
 
 #include "wmesh-types.hpp"
+#include "wmesh_cubature_t.hpp"
 #include <map>
+#include <iostream>
 
 
 template<typename T>
