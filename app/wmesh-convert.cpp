@@ -136,7 +136,20 @@ int main(int 		argc,
 							     ifilename);
       WMESH_STATUS_CHECK(status);      
 
+      FILE * f = fopen(ofilename,"w");
+      fprintf(f,"MeshVersionFormatted\n1\nDimension\n2\n\n");
+      fprintf(f,"HOSolutionAtQuadrilateralsQ1\n4\n1 1\n2 9" );
+      for (wmesh_int_t i=0;i<dense_m;++i)
+	{
+	  for (wmesh_int_t j=0;j<dense_n;++j)
+	    {
+	      fprintf(f, " %8.15e", dense_v[dense_ld*j+i]);
+	    }
+	  fprintf(f,"\n");
+	}
+      fclose(f);
 
+#if 0
       FILE * f = fopen(ofilename,"w");
       fprintf(f,"2 " WMESH_INT_FORMAT " " WMESH_INT_FORMAT " 2\n" , dense_n,dense_m);
       for (wmesh_int_t i=0;i<dense_m;++i)
@@ -148,7 +161,11 @@ int main(int 		argc,
 	  fprintf(f,"\n");
 	}
       fclose(f);
+#endif
       free(dense_v);
+
+
+      
       return WMESH_STATUS_SUCCESS;
     }
   

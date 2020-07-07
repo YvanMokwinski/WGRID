@@ -25,7 +25,7 @@ wmesh_status_t bms_sparse_add(wmesh_int_t 		idofs_n_,
   WMESH_CHECK_POINTER(idofs_);
   WMESH_CHECK_POINTER(jdofs_);
   WMESH_CHECK_POINTER(lmat_);
-  WMESH_CHECK_POINTER(lmat_ld_ >= idofs_n_);
+  WMESH_CHECK(idofs_n_ <= lmat_ld_);
   WMESH_CHECK_POINTER(csr_ptr_);
   WMESH_CHECK_POINTER(csr_ind_);
   WMESH_CHECK_POINTER(csr_val_);

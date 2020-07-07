@@ -6,12 +6,14 @@
 #ifndef NDEBUG
 #include <iostream>
 #endif
-#define solve_params(_type) wmesh_int_t*n,_type*jacM,_type*wr,_type*wi,_type*vl,_type*vr,_type*work,wmesh_int_t*work_n_
+
+#define solve44_params(_type) wmesh_int_t*n,_type*jacM,_type*wr,_type*wi,_type*vl,_type*vr,_type*work,wmesh_int_t*work_n_
+
 template<typename T>
-static void solve(solve_params(T));
+ void solve44(solve44_params(T));
 
 template<>
-void solve<double>(solve_params(double))
+void solve44<double>(solve44_params(double))
 {
   static constexpr const  char trN[1] = {'N'};
   static constexpr const char trV[1] = {'V'};
@@ -31,9 +33,10 @@ void solve<double>(solve_params(double))
 	work_n_,
 	&info);
 }
-#if 0
+
+
 template<>
-void solve<float>(solve_params(float))
+void solve44<float>(solve44_params(float))
 {
   static constexpr const  char trN[1] = {'N'};
   static constexpr const char trV[1] = {'V'};
@@ -55,7 +58,7 @@ void solve<float>(solve_params(float))
 }
 
 
-#endif    
+
 static wmesh_status_t bms_cubature_legendre_buffer_size(wmesh_int_t nspl_,wmesh_int_p work_n_)
 {
   work_n_[0] = (nspl_+2)*3 + 2*(nspl_+2)*(nspl_+2) + 4*(nspl_+1);
@@ -160,7 +163,7 @@ wmesh_status_t bms_cubature_legendre(wmesh_int_t 		nspl_,
   //
   // Eigen values / vectors decompositi
   //
-  solve(&n,
+  solve44(&n,
 	jacM,
 	wr,
 	wi,

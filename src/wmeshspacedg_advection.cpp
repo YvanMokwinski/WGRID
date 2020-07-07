@@ -248,6 +248,7 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
 		if (!facets_flags[i])
 		  {
 		    facets_flags[i] = true;
+		    const wmesh_int_t  facet = facets[i];
 		    wmesh_cubature_info_t 	cubature_info_facet;
 		    status = wmesh_cubature_info_def(&cubature_info_facet,
 						     this->m_cubature_info.m_family,
@@ -265,13 +266,16 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
 		      {
 			
 		      }
+
 		    
-		    this->m_integral_flux[ facets[i] ] = new wmesh_template_integral_flux_t<T>(facets[i], 
+		    //		    std::cout << facets[i] << std::endl;
+		    this->m_integral_flux[ facet  ] = new wmesh_template_integral_flux_t<T>(facet, 
 											       cubature_info_facet, 
 											       shape_info_facet, 
 											       this->m_shape_info_velocity, 
 											       this->m_shape_info_test, 
 											       this->m_shape_info_trial);
+
 		  }
 	      }
 	  }
