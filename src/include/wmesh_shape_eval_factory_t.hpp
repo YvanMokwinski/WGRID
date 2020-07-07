@@ -81,7 +81,9 @@ public:
       }
     else
       {
-	std::cerr << "already registered" << std::endl;
+#ifndef NDEBUG
+	std::cerr << "shape eval already registered" << std::endl;
+#endif
 	shape_eval = ret->second;
       }
     return shape_eval;

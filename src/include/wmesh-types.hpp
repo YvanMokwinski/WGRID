@@ -11,8 +11,6 @@ struct wmesh_mat_t
   wmesh_int_t 		n;
   wmesh_int_t 		ld;
   T * __restrict__ 	v;
-
-  
   static void define(wmesh_mat_t*self_,
 		     wmesh_int_t m_,
 		     wmesh_int_t n_,
@@ -34,6 +32,32 @@ struct wmesh_mat_t
     self_->v = (T*)malloc(sizeof(T)*m_*n_);
     self_->ld = m_;
   };
+
+  static void zero(wmesh_mat_t& self_)
+  {
+    for (wmesh_int_t j=0;j<self_.n;++j)
+      {
+	for (wmesh_int_t i=0;i<self_.m;++i)
+	  {
+	    self_.v[self_.ld * j + i] = static_cast<T>(0);
+	  }
+      }
+    
+  };
+
+  static void identity(wmesh_mat_t& self_)
+  {
+    zero(self_);
+    for (wmesh_int_t j=0;j<self_.n;++j)
+      {
+	if (j < self_.m)
+	  {
+	    self_.v[self_.ld * j + j] = static_cast<T>(1);
+	  }
+      }    
+  };
+
+  
 
 };
 

@@ -72,7 +72,7 @@ public:
       }
     else
       {
-	std::cerr << "already registered" << std::endl;
+	std::cerr << "cubature already registered" << std::endl;
 	cubature = ret->second;
       }
     return cubature;

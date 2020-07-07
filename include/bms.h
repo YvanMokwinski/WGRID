@@ -968,10 +968,10 @@ extern "C"
   wmesh_status_t bms_element2topodim	(wmesh_int_t 	element_,
 					 wmesh_int_p 	topodim_);
   wmesh_status_t bms_element2type(wmesh_int_t element_,wmesh_int_p type_);
-
+  
   wmesh_status_t
   bms_elements_num_facets(wmesh_int_t 		topodim_,
-				wmesh_int_p 		num_facets_);
+			  wmesh_int_p 		num_facets_);
 
 
   

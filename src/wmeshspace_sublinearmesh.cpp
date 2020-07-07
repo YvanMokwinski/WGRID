@@ -1149,7 +1149,7 @@ extern "C"
     static constexpr double r0 = 0.0;
     static constexpr double r1 = 1.0;
     wmesh_status_t 	status;
-    wmesh_t * 		mesh 	= self_->m_mesh;
+    const wmesh_t * 	mesh 	= self_->get_mesh();
     wmesh_int_t         topodim = mesh->m_topology_dimension;
     wmesh_int_t 	coo_m  	= mesh->m_coo_m;
     
@@ -1164,7 +1164,6 @@ extern "C"
 				  &num_types,
 				  elements);
     WMESH_STATUS_CHECK(status);        
-    
     for (wmesh_int_t l=0;l<num_types;++l)
       {
 	if (mesh->m_c2n.m_n[l]>0)
@@ -1175,8 +1174,8 @@ extern "C"
 	    status = bms_elements_num_nodes(1,&element,&element_num_nodes);
 	    WMESH_STATUS_CHECK(status);        
 	    
-	    wmesh_t* 		rmacro			= self_->m_patterns[l];
-	     double * 	rmacro_coo 		= wmesh_get_coo(rmacro);
+	    wmesh_t* 		rmacro			= self_->get_refinement_pattern(l);
+	    double * 	rmacro_coo 		= wmesh_get_coo(rmacro);
 	    wmesh_int_t 	rmacro_coo_ld 		= rmacro->m_coo_ld;
 	    wmesh_int_t 	rmacro_num_nodes 	= rmacro->m_num_nodes;
 
@@ -1188,10 +1187,10 @@ extern "C"
 	    wmesh_mat_t<double>::alloc(&eval_basis[l], element_num_nodes, rmacro_num_nodes);
 	    wmesh_shape_t shape_element;
 	    wmesh_shape_def(&shape_element,element,WMESH_SHAPE_FAMILY_LAGRANGE,1);
-	    
 	    wmesh_shape_calculate_eval(shape_element,
 				       mat_rmacro_coo_storage,
 				       mat_rmacro_coo,
+				       eval_basis_storage,
 				       eval_basis[l]);
 
 #if 0
@@ -1278,8 +1277,8 @@ extern "C"
 		//
 		// Build the shape functions.
 		//
-		double * b = (double*)malloc(sizeof(double)*self_->m_patterns[l]->m_num_nodes*5);
-		for (wmesh_int_t k=0;k<self_->m_patterns[l]->m_num_nodes;++k)
+		double * b = (double*)malloc(sizeof(double)*self_->get_refinement_pattern(l)->m_num_nodes*5);
+		for (wmesh_int_t k=0;k<self_->get_refinement_pattern(l)->m_num_nodes;++k)
 		  {
 		    double r = rmacro_coo[rmacro_coo_ld*k+0];
 		    double s = rmacro_coo[rmacro_coo_ld*k+1];
@@ -1400,12 +1399,12 @@ extern "C"
 		//
 		// Build the shape functions.
 		//
-		double * b = (double*)malloc(sizeof(double)*self_->m_patterns[l]->m_num_nodes*6);
-		for (wmesh_int_t k=0;k<self_->m_patterns[l]->m_num_nodes;++k)
+		double * b = (double*)malloc(sizeof(double)*self_->get_refinement_pattern(l)->m_num_nodes*6);
+		for (wmesh_int_t k=0;k<self_->get_refinement_pattern(l)->m_num_nodes;++k)
 		  {
-		    double r = self_->m_patterns[l]->m_coo[3*k+0];
-		    double s = self_->m_patterns[l]->m_coo[3*k+1];
-		    double t = self_->m_patterns[l]->m_coo[3*k+2];
+		    double r = self_->get_refinement_pattern(l)->m_coo[3*k+0];
+		    double s = self_->get_refinement_pattern(l)->m_coo[3*k+1];
+		    double t = self_->get_refinement_pattern(l)->m_coo[3*k+2];
 		    double one=1.0;
 		    b[k*8+0] = ( one - r - s) * ( one - t );
 		    b[k*8+1] = r * ( one - t );
@@ -1422,12 +1421,12 @@ extern "C"
 		//
 		// Build the shape functions.
 		//
-		double * b = (double*)malloc(sizeof(double)*self_->m_patterns[l]->m_num_nodes*6);
-		for (wmesh_int_t k=0;k<self_->m_patterns[l]->m_num_nodes;++k)
+		double * b = (double*)malloc(sizeof(double)*self_->get_refinement_pattern(l)->m_num_nodes*6);
+		for (wmesh_int_t k=0;k<self_->get_refinement_pattern(l)->m_num_nodes;++k)
 		  {
-		    double r = self_->m_patterns[l]->m_coo[3*k+0];
-		    double s = self_->m_patterns[l]->m_coo[3*k+1];
-		    double t = self_->m_patterns[l]->m_coo[3*k+2];
+		    double r = self_->get_refinement_pattern(l)->m_coo[3*k+0];
+		    double s = self_->get_refinement_pattern(l)->m_coo[3*k+1];
+		    double t = self_->get_refinement_pattern(l)->m_coo[3*k+2];
 		    double one=1.0;
 		    b[k*6+0] = ( one - r - s) * ( one - t );
 		    b[k*6+1] = r * ( one - t );
@@ -1443,13 +1442,13 @@ extern "C"
 		//
 		// Build the shape functions.
 		//
-		double * b = (double*)malloc(sizeof(double)*self_->m_patterns[l]->m_num_nodes*8);
+		double * b = (double*)malloc(sizeof(double)*self_->get_refinement_pattern(l)->m_num_nodes*8);
 		//		  std::cout << " " << std::endl;
-		for (wmesh_int_t k=0;k<self_->m_patterns[l]->m_num_nodes;++k)
+		for (wmesh_int_t k=0;k<self_->get_refinement_pattern(l)->m_num_nodes;++k)
 		  {
-		    double r = self_->m_patterns[l]->m_coo[3*k+0];
-		    double s = self_->m_patterns[l]->m_coo[3*k+1];
-		    double t = self_->m_patterns[l]->m_coo[3*k+2];
+		    double r = self_->get_refinement_pattern(l)->m_coo[3*k+0];
+		    double s = self_->get_refinement_pattern(l)->m_coo[3*k+1];
+		    double t = self_->get_refinement_pattern(l)->m_coo[3*k+2];
 		    //		      std::cout << "rst = " << r << " " << s << " " << t << " " << std::endl;
 		    double one=1.0;
 		    b[k*8+0] = ( one - r )* ( one - s ) * ( one - t );
@@ -1468,13 +1467,16 @@ extern "C"
 	  }
 
       }
-
+    
     wmesh_int_t rw_n = 0;
     for (wmesh_int_t l=0;l<self_->m_c2d.m_size;++l)
       {
 	wmesh_int_t k = self_->m_c2d.m_m[l]*topodim;
 	rw_n = (rw_n < k) ? k : rw_n;
       }
+
+
+
     
     double * rw = (double*)malloc(sizeof(double)*rw_n);
     
@@ -1507,9 +1509,9 @@ extern "C"
 	    for (wmesh_int_t i=0;i<c2n_m;++i)
 	      {
 		wmesh_int_t idx = c2n_v[c2n_ld * j + i] - 1;
-		for (wmesh_int_t k=0;k<self_->m_mesh->m_coo_m;++k)
+		for (wmesh_int_t k=0;k<mesh->m_coo_m;++k)
 		  {
-		    cell_xyz[cell_xyz_ld * i + k] = self_->m_mesh->m_coo[self_->m_mesh->m_coo_ld * idx + k];
+		    cell_xyz[cell_xyz_ld * i + k] = mesh->m_coo[mesh->m_coo_ld * idx + k];
 		  }
 	      }
 
@@ -1586,15 +1588,13 @@ extern "C"
 					  wmesh_t ** 		mesh__)
   {    
     wmesh_status_t 	status;
-    wmesh_t * 		mesh 	= self_->m_mesh;
+    const wmesh_t * 	mesh 	= self_->get_mesh();
     wmesh_int_t         topodim = mesh->m_topology_dimension;
     wmesh_int_t 	coo_m  	= mesh->m_coo_m;
     
     wmesh_int_t 	num_types;
     wmesh_int_t 	elements[4];
-    double * 		refevals[4] {};
-    double 		cell_xyz[32];
-    wmesh_int_t 	cell_xyz_ld = coo_m;
+
 
     status = bms_topodim2elements(topodim,
 				  &num_types,
@@ -1602,7 +1602,7 @@ extern "C"
     WMESH_STATUS_CHECK(status);    
     
     wmesh_int_t coo_dofs_m  	= coo_m;
-    wmesh_int_t coo_dofs_n  	= self_->m_ndofs;
+    wmesh_int_t coo_dofs_n  	= self_->get_ndofs();
     wmesh_int_t coo_dofs_ld 	= coo_dofs_m;
     double * 	coo_dofs 	= (double*)malloc(sizeof(double) * coo_dofs_n * coo_dofs_ld);
     
@@ -1632,16 +1632,17 @@ extern "C"
       
       for (int i=0;i<num_types;++i)
 	{
-	  if (self_->m_patterns[i]!=nullptr)
+	  const wmesh_t * pattern = self_->get_refinement_pattern(i);
+	  if (pattern!=nullptr)
 	    {
 	      if (i==1 && topodim == 3)
 		{
-		  c2n_n[0] += self_->m_mesh->m_c2n.m_n[i] * self_->m_patterns[i]->m_c2n.m_n[0];
-		  c2n_n[1] += self_->m_mesh->m_c2n.m_n[i] * self_->m_patterns[i]->m_c2n.m_n[1];
+		  c2n_n[0] += mesh->m_c2n.m_n[i] * pattern->m_c2n.m_n[0];
+		  c2n_n[1] += mesh->m_c2n.m_n[i] * pattern->m_c2n.m_n[1];
 		}
 	      else
 		{
-		  c2n_n[i] = self_->m_mesh->m_c2n.m_n[i] * self_->m_patterns[i]->m_num_cells;
+		  c2n_n[i] = mesh->m_c2n.m_n[i] * pattern->m_num_cells;
 		}
 	    }
 	}
@@ -1660,9 +1661,15 @@ extern "C"
 
       wmesh_int_t mxdofs = 0;
       for (int i=0;i<num_types;++i)
-	//	  if (c2n_n[i] > 0) mxdofs = (self_->m_patterns[i]->m_num_nodes > mxdofs) ? self_->m_patterns[i]->m_num_nodes : mxdofs;
-	if (self_->m_patterns[i])
-	  mxdofs = (self_->m_patterns[i]->m_num_nodes > mxdofs) ? self_->m_patterns[i]->m_num_nodes : mxdofs;
+	{
+	  const wmesh_t * pattern = self_->get_refinement_pattern(i);
+	  //	  if (c2n_n[i] > 0) mxdofs = (self_->m_patterns[i]->m_num_nodes > mxdofs) ? self_->m_patterns[i]->m_num_nodes : mxdofs;
+	  if (nullptr != pattern)
+	    {
+	      mxdofs = (pattern->m_num_nodes > mxdofs) ? pattern->m_num_nodes : mxdofs;
+	    }
+	}
+      
       wmesh_int_p dofs = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*mxdofs);
       wmesh_int_p lidx = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*mxdofs);
       
@@ -1670,7 +1677,7 @@ extern "C"
       wmesh_int_t idx[4]{0,0,0,0};
       for (wmesh_int_t l=0;l<num_types;++l)
 	{
-	  auto ref_c2n = &self_->m_patterns[l]->m_c2n;
+	  auto ref_c2n = &self_->get_refinement_pattern(l)->m_c2n;
 	  
 	  wmesh_int_t ncells = self_->m_c2d.m_n[l];
 	  for (wmesh_int_t j=0;j<ncells;++j)
@@ -1714,7 +1721,7 @@ extern "C"
       // Define the mesh.
       //
       status =  wmesh_def(mesh__,
-			  self_->m_mesh->m_topology_dimension,				 
+			  mesh->m_topology_dimension,				 
 			  c2n_size,
 			  c2n_ptr,
 			  c2n_m,
@@ -1730,7 +1737,8 @@ extern "C"
       // Copy the dof codes.
       // It's a bit tricky, need to be changed.
       //
-      for (wmesh_int_t i=0;i<self_->m_ndofs;++i)
+      const wmesh_int_t ndofs = self_->get_ndofs();
+      for (wmesh_int_t i=0;i<ndofs;++i)
 	{
 	  mesh__[0]->m_n_c.v[i] = self_->m_dof_codes[i];
 	}

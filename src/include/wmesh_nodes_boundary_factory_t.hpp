@@ -72,7 +72,7 @@ public:
       }
     else
       {
-	std::cerr << "already registered" << std::endl;
+	std::cerr << "nodes boundary already registered" << std::endl;
 	nodes = ret->second;
       }
     return nodes;

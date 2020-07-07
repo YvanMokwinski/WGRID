@@ -1,5 +1,4 @@
 
-
 #include "cmdline.hpp"
 #include <iostream>
 #include <math.h>
@@ -580,28 +579,44 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
   WMESH_STATUS_CHECK(status);
 
   wmesh_shape_info_t shape_info_element;
-  wmesh_shape_info_t shape_info_f;
+  wmesh_shape_info_t shape_info_trial;
   wmesh_shape_info_t shape_info_u;
   wmesh_shape_info_t shape_info_test;
   
-  const wmesh_int_t u_degree 		= 2;
-  const wmesh_int_t u_family 		= WMESH_SHAPE_FAMILY_LAGRANGE;
-  const wmesh_int_t u_nodes_family 	= WMESH_NODES_FAMILY_LAGRANGE;
 
-  const wmesh_int_t f_degree 		= degree;
-  const wmesh_int_t f_family 		= WMESH_SHAPE_FAMILY_LAGRANGE;
-  const wmesh_int_t f_nodes_family 	= WMESH_NODES_FAMILY_LAGRANGE;
-  
-  status = wmesh_shape_info_def(&shape_info_element,WMESH_SHAPE_FAMILY_LAGRANGE, 1);
+  const wmesh_int_t shape_element_degree 		= 1;
+  const wmesh_int_t shape_element_family 		= WMESH_SHAPE_FAMILY_LAGRANGE;
+  //  const wmesh_int_t shape_element_nodes_family		= WMESH_NODES_FAMILY_LAGRANGE;
+
+  const wmesh_int_t shape_u_degree 			= 2;
+  const wmesh_int_t shape_u_family 			= WMESH_SHAPE_FAMILY_LAGRANGE;
+  const wmesh_int_t shape_u_nodes_family 		= WMESH_NODES_FAMILY_LAGRANGE;
+
+  const wmesh_int_t shape_trial_degree 		= degree;
+  const wmesh_int_t shape_trial_family 		= WMESH_SHAPE_FAMILY_LAGRANGE;
+  const wmesh_int_t shape_trial_nodes_family 		= WMESH_NODES_FAMILY_LAGRANGE;
+
+  const wmesh_int_t shape_test_degree 		= degree;
+  const wmesh_int_t shape_test_family 		= WMESH_SHAPE_FAMILY_LAGRANGE;
+  //  const wmesh_int_t shape_test_nodes_family 		= WMESH_NODES_FAMILY_LAGRANGE;
+
+  const wmesh_int_t cubature_family 		= WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE;
+  const wmesh_int_t cubature_degree 		= shape_u_degree + shape_trial_degree + shape_test_degree;
+
+  status = wmesh_shape_info_def(&shape_info_element,shape_element_family, shape_element_degree);
   WMESH_STATUS_CHECK(status);
   
-  status = wmesh_shape_info_def(&shape_info_u,u_family, u_degree);
+  status = wmesh_shape_info_def(&shape_info_u,shape_u_family, shape_u_degree);
   WMESH_STATUS_CHECK(status);
   
-  status = wmesh_shape_info_def(&shape_info_f,f_family, f_degree);
+  status = wmesh_shape_info_def(&shape_info_trial,shape_trial_family, shape_trial_degree);
   WMESH_STATUS_CHECK(status);
   
-  status = wmesh_shape_info_def(&shape_info_test,f_family, f_degree);
+  status = wmesh_shape_info_def(&shape_info_test,shape_test_family, shape_test_degree);
+  WMESH_STATUS_CHECK(status);
+
+  wmesh_cubature_info_t cubature_info;
+  status = wmesh_cubature_info_def(&cubature_info,cubature_family, cubature_degree);
   WMESH_STATUS_CHECK(status);
   
   //
@@ -609,8 +624,8 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
   // 
   wmeshspace_t * velocity_space;
   status = wmeshspace_def(&velocity_space,
-			  u_nodes_family,
-			  u_degree,
+			  shape_u_nodes_family,
+			  shape_u_degree,
 			  mesh);
   WMESH_STATUS_CHECK(status);
   
@@ -685,7 +700,6 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
 	    u[i] = 0.0 * x[i];
 	  }	
 	u[0] = 1.0;
-
 	
 	if (velocity_storage == WMESH_STORAGE_INTERLEAVE)
 	  {
@@ -709,25 +723,26 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
   
   wmeshspacedg_t * spacedg;            
   status = wmeshspacedg_def(&spacedg,
-			    f_nodes_family,
-			    f_degree,
+			    shape_trial_nodes_family,
+			    shape_trial_degree,
 			    mesh);  
   WMESH_STATUS_CHECK(status);
 
+  wmesh_int_t velocity_mat_storage = velocity_storage;
+  wmesh_mat_t<double> velocity_mat;
+  wmesh_mat_t<double>::define(&velocity_mat,topodim,velocity_space->m_ndofs,velocity,topodim);
   
   status = wmeshspacedg_advection(spacedg,
+				  &cubature_info,
 				  &shape_info_element,
-				  &shape_info_u,
-				  &shape_info_f,
+				  &shape_info_trial,
 				  &shape_info_test,
+				  &shape_info_u,
 				  
 				  velocity_space,
 				  
-				  velocity_storage,
-				  velocity_m,
-				  velocity_n,
-				  velocity,
-				  velocity_ld,
+				  velocity_mat_storage,
+				  &velocity_mat,
 				  
 				  csr_size,
 				  csr_ptr,

@@ -264,7 +264,7 @@ extern "C"
     WMESH_CHECK_POINTER(s_ld_);
     if (topodim_==3)
       {
-	wmesh_int_t s_size = 4;
+	// wmesh_int_t s_size = 4;
 	wmesh_int_t s_m[4] {2,2,2,2};
 	wmesh_int_t s_n[4]{6,8,9,12};
 	wmesh_int_t s_ptr[4+1]{0,12,28,46,70};
@@ -319,7 +319,7 @@ extern "C"
       }
     else if (topodim_==2)
       {
-	wmesh_int_t s_size = 2;
+	//	wmesh_int_t s_size = 2;
 	wmesh_int_t s_m[2] 		{2,2};
 	wmesh_int_t s_ld[2] 	{2,2};
 	wmesh_int_t s_n[2]		{3,4};
@@ -333,7 +333,7 @@ extern "C"
       }
     else if (topodim_==1)
       {
-	wmesh_int_t s_size = 1;
+	// wmesh_int_t s_size = 1;
 	wmesh_int_t s_m[1] 		{2};
 	wmesh_int_t s_ld[1] 	{2};
 	wmesh_int_t s_n[1]		{1};
@@ -362,7 +362,7 @@ extern "C"
     WMESH_CHECK_POINTER(s_v_);
     WMESH_CHECK_POINTER(s_ld_);
     
-    wmesh_int_t s_size = 4;
+    //    wmesh_int_t s_size = 4;
     wmesh_int_t s_m[4]  {3,3,3,3};
     wmesh_int_t s_ld[4] {3,3,3,3};
     wmesh_int_t s_n[4]  {4,4,2,0};
@@ -403,7 +403,7 @@ extern "C"
     WMESH_CHECK_POINTER(s_v_);
     WMESH_CHECK_POINTER(s_ld_);
     
-    wmesh_int_t s_size = 4;
+    //    wmesh_int_t s_size = 4;
     wmesh_int_t s_m[4]  {4,4,4,4};
     wmesh_int_t s_ld[4] {4,4,4,4};
     wmesh_int_t s_n[4]  {0,1,3,6};

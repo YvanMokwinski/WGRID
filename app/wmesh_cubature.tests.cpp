@@ -401,7 +401,7 @@ wmesh_status_t wmesh_bsrjacobian(wmesh_int_t 	ncells_,
   int main(int argc, char ** argv)
   {
   WCOMMON::cmdline::str_t 	ofilename;
-  const char * 			ifilename 	= nullptr;
+
   bool 				verbose 	= false;
   wmesh_int_t 			degree		= 0,element = 0;
   wmesh_status_t status;

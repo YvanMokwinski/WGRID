@@ -1,4 +1,4 @@
-
+#if 0
 
 #include <iostream>
 #include <stdlib.h>
@@ -81,3 +81,4 @@ const wmesh_mat_t<float>* wmesh_calculate_shape_restrict<float>(wmesh_int_t 				
 								
 								wmesh_int_t 					target_nodes_family_,
 								wmesh_int_t 					target_nodes_degree_);
+#endif

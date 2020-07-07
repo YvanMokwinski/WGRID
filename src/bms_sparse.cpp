@@ -34,10 +34,10 @@ wmesh_status_t bms_sparse_add(wmesh_int_t 		idofs_n_,
   //
   for (wmesh_int_t i=0;i<idofs_n_;++i)
     {
-      const wmesh_int_t idof = idofs_[i * idofs_inc_];
+      const wmesh_int_t idof = idofs_[i * idofs_inc_] - 1;
       for (wmesh_int_t j=0;j<jdofs_n_;++j)
 	{
-	  const wmesh_int_t jdof = jdofs_[j * jdofs_inc_];
+	  const wmesh_int_t jdof = jdofs_[j * jdofs_inc_] - 1;
 	  bool found = false;
 	  const wmesh_int_t bound = csr_ptr_[idof+1];
 	  for (wmesh_int_t at = csr_ptr_[idof];at < bound;++at)

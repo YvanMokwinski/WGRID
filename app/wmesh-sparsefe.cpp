@@ -14,11 +14,11 @@ int main(int argc, char ** argv)
   wmesh_status_t status;
   wmesh_int_t degree;
   wmesh_int_t nodes_family;
-
+  bool old = cmd.option("--old");
   //
   // Get the output file name.
   //
-  if (false == cmd.option("-d", &degree))
+    if (false == cmd.option("-d", &degree))
     {
       fprintf(stderr,"missing output file, '-d' option.\n");
       return WMESH_STATUS_INVALID_ARGUMENT;
@@ -148,33 +148,94 @@ int main(int argc, char ** argv)
   double * csr_val 	= (double*)calloc(csr_ptr[csr_size],sizeof(double));
   double * rhs 		= (double*)calloc(csr_size,sizeof(double));
   std::cout << "compute laplace ... " << std::endl;
-  status = wmeshspace_laplace(meshspace,
-			      csr_size,
-			      csr_ptr,
-			      csr_ind,
-			      csr_val,
-			      rhs);
-  WMESH_STATUS_CHECK(status);
+
+
+  if (old)
+    {
+  status =  wmeshspace_laplace_old(meshspace,
+				   csr_size,
+				   csr_ptr,
+				   csr_ind,
+				   csr_val,
+				   rhs);
+    }
+  
+  else
+    {
+  wmesh_cubature_info_t 	cubature_info;
+  wmesh_shape_info_t		shape_info_element;	
+  wmesh_shape_info_t		shape_info_trial;	
+  wmesh_shape_info_t		shape_info_test;	
+  wmesh_shape_info_t		shape_info_a;	
+
+  wmesh_shape_info_def(&shape_info_a,WMESH_SHAPE_FAMILY_LAGRANGE,1);
+  wmesh_shape_info_def(&shape_info_element,WMESH_SHAPE_FAMILY_LAGRANGE,1);
+  wmesh_shape_info_def(&shape_info_test,WMESH_SHAPE_FAMILY_LAGRANGE, degree);
+  wmesh_shape_info_def(&shape_info_trial,WMESH_SHAPE_FAMILY_LAGRANGE, degree);
+  wmesh_cubature_info_def(&cubature_info,WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE, ( (degree-1) + (degree-1) + 1 + 1));
+  
+   status = wmeshspace_laplace(meshspace,
+			       &cubature_info,
+			       &shape_info_element,
+			       &shape_info_trial,
+			       &shape_info_test,
+			       &shape_info_a,
+			       csr_size,
+			       csr_ptr,
+			       csr_ind,
+			       csr_val,
+			       rhs);
+    }
+
+
+   WMESH_STATUS_CHECK(status);
   std::cout << "compute laplace done. " << std::endl;
 
-  std::cout << "output ... " << std::endl;
-  status =  bms_matrix_market_dense_dwrite(csr_size,
-					   1,
-					   rhs,
-					   csr_size,
-					   "%s_rhs.mtx",
-					   ofilename);
-  WMESH_STATUS_CHECK(status);
-
-  status =  bms_matrix_market_csr_dwrite(csr_size,
-					 csr_size,
-					 csr_ptr[csr_size],
-					 csr_ptr,
-					 csr_ind,
-					 csr_val,
-					 "%s.mtx",
-					 ofilename);
-  WMESH_STATUS_CHECK(status);
+  const char * extension = file_extension(ofilename);
+      if ((nullptr != extension) && !strcmp(extension,".mtx"))
+	{
+	  wmesh_str_t obasename;
+	  status = wmesh_basename(ofilename,obasename);
+	  WMESH_STATUS_CHECK(status);
+	  std::cout << "output ... " << obasename << std::endl;
+	  status =  bms_matrix_market_dense_dwrite(csr_size,
+						   1,
+						   rhs,
+						   csr_size,
+						   "%s.rhs.mtx",
+						   obasename);
+	  WMESH_STATUS_CHECK(status);
+	  
+	  status =  bms_matrix_market_csr_dwrite(csr_size,
+						 csr_size,
+						 csr_ptr[csr_size],
+						 csr_ptr,
+						 csr_ind,
+						 csr_val,
+						 "%s",
+						 ofilename);
+	}
+      else
+	{
+	  std::cout << "output ... " << std::endl;
+	status =  bms_matrix_market_dense_dwrite(csr_size,
+						 1,
+						 rhs,
+						 csr_size,
+						 "%s_rhs.mtx",
+						 ofilename);
+	WMESH_STATUS_CHECK(status);
+	
+	status =  bms_matrix_market_csr_dwrite(csr_size,
+					       csr_size,
+					       csr_ptr[csr_size],
+					       csr_ptr,
+					       csr_ind,
+					       csr_val,
+					       "%s.mtx",
+					       ofilename);
+      }
+	WMESH_STATUS_CHECK(status);
   
   
   //

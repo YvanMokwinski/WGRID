@@ -3,6 +3,8 @@
 
 #include "wmesh-functions.h"
 #include "wmesh-enums.h"
+#include "wmesh_shape_info_t.h"
+#include "wmesh_cubature_info_t.h"
 
 
 #ifdef __cplusplus
@@ -16,9 +18,9 @@ extern "C"
   struct wmeshspacedg_t;
   struct wmesh_bspline_t;
   
-  
-  
-  
+  const char * file_extension(const char * filename_);
+  wmesh_status_t wmesh_basename(const char * 	filename_,
+				wmesh_str_t 	basename_);
   wmesh_status_t 	wmeshspacedg_sublinearmesh	(wmeshspacedg_t * 			self_,
 							 wmesh_t ** 				mesh__);
   
@@ -42,13 +44,32 @@ extern "C"
 							 wmesh_int_p*__restrict__ 		csr_ptr_,
 							 wmesh_int_p*__restrict__ 		csr_ind_);
 
+  wmesh_status_t wmeshspace_laplace_old(const wmeshspace_t*__restrict__ 	self_,
+				    wmesh_int_t				csr_size_,
+				    const_wmesh_int_p			csr_ptr_,
+				    const_wmesh_int_p			csr_ind_,
+				    double * 				csr_val_,
+					double * 				rhs_);
+  
+    wmesh_status_t wmeshspace_laplace(const wmeshspace_t*__restrict__ 	self_,
+				      const wmesh_cubature_info_t* 	cubature_info_, 		
+				      const wmesh_shape_info_t* 		shape_info_element_, 		
+				      const wmesh_shape_info_t* 		shape_info_trial_,
+				    const wmesh_shape_info_t* 		shape_info_test_,
+				    const wmesh_shape_info_t* 		shape_info_a_,
+				    wmesh_int_t				csr_size_,
+				    const_wmesh_int_p			csr_ptr_,
+				    const_wmesh_int_p			csr_ind_,
+				    double * 				csr_val_,
+				      double * 				rhs_);
+#if 0
   wmesh_status_t 	wmeshspace_laplace		(const wmeshspace_t*__restrict__ 	self_,
 							 wmesh_int_t 				csr_size_,
 							 const_wmesh_int_p			csr_ptr_,
 							 const_wmesh_int_p			csr_ind_,
 							 double * 				csr_val_,
 							 double * 				rhs_);
-
+#endif
   
   
   

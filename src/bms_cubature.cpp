@@ -350,7 +350,6 @@ T*  t_v = rst_v_ + (rst_storage_ == WMESH_STORAGE_BLOCK) ? rst_ld_ * 2 : 2;
   
   static constexpr T s_one 	= static_cast<T>(1);
   static constexpr T s_two 	= static_cast<T>(2);
-  static constexpr T s_three 	= static_cast<T>(3);
   static constexpr T s_four 	= static_cast<T>(4);
 
   const bool c_is_block = c_storage_ == WMESH_STORAGE_BLOCK;

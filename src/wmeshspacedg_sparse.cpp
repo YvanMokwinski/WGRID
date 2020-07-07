@@ -14,7 +14,7 @@ extern "C"
   {
     
     wmesh_int_t csr_n 		= 0;
-    wmesh_int_t csr_m 		= 0;
+
     wmesh_int_t csr_nnz 	= 0;
     wmesh_int_p csr_ptr 	= nullptr;
     wmesh_int_p csr_ind 	= nullptr;
@@ -44,7 +44,7 @@ extern "C"
 			       &csr_n,
 			       &csr_nnz);
     WMESH_STATUS_CHECK(status);
-    csr_m = csr_n;
+
 
     csr_ptr = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*(csr_n+1));
     csr_ind = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*csr_nnz);    

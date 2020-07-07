@@ -38,7 +38,7 @@ wmesh_int_t wmesh_cubature_hash(wmesh_int_t element_,
 
 }
 #endif  
-
+#if 0
 static void PrintBits(size_t const size, void const * const ptr)
   {
     unsigned char *b = (unsigned char*) ptr;
@@ -56,7 +56,7 @@ static void PrintBits(size_t const size, void const * const ptr)
       }
     puts("");
   };
-
+#endif
 #include "wmesh_cubature_factory_t.hpp"
 #include "wmesh_nodes_factory_t.hpp"
 #include "wmesh_shape_eval_factory_t.hpp"
@@ -223,6 +223,7 @@ int main(int argc, char ** argv)
 					      WMESH_ELEMENT_TRIANGLE,
 					      WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE,
 					      4);
+  WMESH_STATUS_CHECK(status);
   } 
 
   
@@ -343,7 +344,7 @@ std::cout << h << std::endl;
   WMESH_STATUS_CHECK(status);
 #endif
 
-
+#if 0
   const wmesh_mat_t<double>* g = wmesh_calculate_shape_restrict<double>(WMESH_ELEMENT_TETRAHEDRON,
 									0,
 									0,
@@ -353,6 +354,8 @@ std::cout << h << std::endl;
 									WMESH_NODES_FAMILY_LAGRANGE,
 									3);
   std::cout << *g << std::endl;
+#endif
+  
 #if 0
   wmesh_mat_t<double> y;
   wmesh_mat_t<double>::alloc(&y,1,4);

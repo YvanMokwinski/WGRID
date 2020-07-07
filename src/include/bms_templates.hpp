@@ -511,31 +511,8 @@ wmesh_status_t bms_jacobip(wmesh_int_t 			alpha_,
 #endif
 
   
-  static constexpr T
-    r2 = T(2.0),
-    r3 = T(3.0),
-    r1 = T(1.0),
-    r0 = T(0.0);
   
-  T aold   = r0,
-    anew   = r0,
-    bnew   = r0,
-    h1     = r0,
-    gamma1 = r0;
   
-  const T
-    ab  = alpha_ + beta_,
-    ab1 = alpha_+ beta_ + 1,
-    a1  = alpha_ + 1,
-    b1  = beta_ + 1;
-#if 0
-  std::cout <<"alpha " << alpha_ << std::endl;
-  std::cout <<"beta " << beta_ << std::endl;
-  std::cout <<"N_ " << N_ << std::endl;
-  std::cout <<"ab " << ab << std::endl;
-  std::cout <<"a1 " << a1 << std::endl;
-  std::cout <<"b1 " << b1 << std::endl;
-#endif
 
   if (N_ < 0)
     {
@@ -546,9 +523,6 @@ wmesh_status_t bms_jacobip(wmesh_int_t 			alpha_,
       return WMESH_STATUS_SUCCESS;
     }
   
-  // Initial values P_0(x) and P_1(x)
-  const T gamma0 = Pow2<T>(ab1)*Gamma<T>(a1)*Gamma<T>(b1)/Factorial<T>(ab1);
-  const T y0 = r1 / wmesh_math<T>::xsqrt(gamma0);
 
   
 

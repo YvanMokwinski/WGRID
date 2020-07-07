@@ -2,38 +2,25 @@
 #include "bms.h"
 #include <iostream>
 #include <string.h>
-  
-wmesh_status_t wmeshspace_get_dofs(const wmeshspace_t * 	self_,
-				   wmesh_int_t 		element_type_,
-				   wmesh_int_t 		element_idx_,
-				   wmesh_int_p 		dofs_,
-				   wmesh_int_t 		dofs_inc_)
-{
-  const wmesh_int_t num_dofs = self_->m_c2d.m_m[element_type_];
-  const wmesh_int_t shift = self_->m_c2d.m_ptr[element_type_];
-  const wmesh_int_t ld = self_->m_c2d.m_ld[element_type_];
-  for (wmesh_int_t i=0;i<num_dofs;++i)
-    {
-      dofs_[dofs_inc_*i] = self_->m_c2d.m_data[ shift  + element_idx_ * ld + i ];
-    }
-  return WMESH_STATUS_SUCCESS;
-}
 
-wmesh_status_t wmeshspacedg_get_dofs(const wmeshspacedg_t * 	self_,
-				     wmesh_int_t 		element_type_,
-				     wmesh_int_t 		element_idx_,
-				     wmesh_int_p 		dofs_,
-				     wmesh_int_t 		dofs_inc_)
+
+
+wmesh_status_t wmeshspacedg_get_dofs_ids(const wmeshspacedg_t * 	self_,
+					 wmesh_int_t 		element_type_,
+					 wmesh_int_t 		element_idx_,
+					 wmesh_int_p 		dofs_,
+					 wmesh_int_t 		dofs_inc_)
 {
   const wmesh_int_t num_dofs = self_->m_dofs_m[element_type_];
   const wmesh_int_t shift = self_->m_dofs_ptr[element_type_];
   for (wmesh_int_t i=0;i<num_dofs;++i)
     {
-      dofs_[dofs_inc_*i] = shift  + element_idx_ * num_dofs + i;
+      dofs_[dofs_inc_*i] = 1 + shift  + element_idx_ * num_dofs + i;
     }
   return WMESH_STATUS_SUCCESS;
 }
-  
+
+
 wmesh_status_t wmeshspacedg_def(wmeshspacedg_t ** 		self__,
 				wmesh_int_t 			nodes_family_,
 				wmesh_int_t 			degree_,
@@ -71,7 +58,7 @@ wmesh_status_t wmeshspacedg_def(wmeshspacedg_t ** 		self__,
       WMESH_STATUS_CHECK(status);
     }
   WMESH_STATUS_CHECK(status);
-  self_->m_num_dofs = self_->m_dofs_ptr[mesh_->m_c2n.m_size];
+  self_->m_ndofs = self_->m_dofs_ptr[mesh_->m_c2n.m_size];
   
   return WMESH_STATUS_SUCCESS;
 }

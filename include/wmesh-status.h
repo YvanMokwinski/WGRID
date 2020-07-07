@@ -47,6 +47,20 @@ extern "C"
 
 //! @brief Checks a given status.
 //! @param _status The status.
+#define WMESH_STATUS_CHECK_FAIL(_status)					\
+  do									\
+    {									\
+      if (WMESH_STATUS_SUCCESS != _status)				\
+	{								\
+	  fprintf(stderr,"WMESH invalid status: '%s' (line=%d,file='%s')\n",wmesh_status_to_string(_status),__LINE__,__FILE__);	\
+	  exit(_status);						\
+	  								\
+	}								\
+    } while(0)
+
+
+//! @brief Checks a given status.
+//! @param _status The status.
 #define WMESH_STATUS_CHECK(_status)					\
   do									\
     {									\

@@ -63,6 +63,84 @@ wmesh_status_t wmesh_mat_gemm<double>(wmesh_int_t 			storage_a_,
 				     wmesh_mat_t<double>&		c_);
 
 
+
+wmesh_status_t wmesh_get_facet_dofs_ids(const wmesh_t * 	self_,
+					wmesh_int_t 		element_type_,
+					wmesh_int_t 		element_idx_,
+					wmesh_int_t 		facet_type_,
+					wmesh_int_t 		facet_idx_,
+					wmesh_int_p 		ndofs_,
+					wmesh_int_p 		dofs_,
+					wmesh_int_t 		dofs_inc_);
+
+#if 0
+wmesh_status_t wmesh_get_dofs_ids(const wmesh_t * 	self_,
+				  wmesh_int_t 		element_type_,
+				  wmesh_int_t 		element_idx_,
+				  wmesh_int_p 		dofs_,
+				  wmesh_int_t 		dofs_inc_)
+{
+  for (wmesh_int_t i=0;i<self_->m_c2n.m_m[element_type_];++i)
+    {
+      dofs_[dofs_inc_*i] = self_->m_c2n.m_data[self_->m_c2n.m_ptr[element_type_] + self_->m_c2n.m_ld[element_type_] * element_idx_ + i];
+    }
+  return WMESH_STATUS_SUCCESS;
+}
+#endif
+
+
+wmesh_status_t wmesh_get_facet_dofs_ids(const wmesh_t * 	self_,
+					wmesh_int_t 		element_type_,
+					wmesh_int_t 		element_idx_,
+					wmesh_int_t 		facet_type_,
+					wmesh_int_t 		facet_idx_,
+					wmesh_int_p 		ndofs_,
+					wmesh_int_p 		dofs_,
+					wmesh_int_t 		dofs_inc_)
+{
+  const wmesh_int_t topodim = self_->m_topology_dimension;
+  if (topodim==2)
+    {
+      const wmesh_int_t n = self_->m_s_e2n.m_m[element_type_];
+      ndofs_[0] = n;
+      for (wmesh_int_t i=0;i<n;++i)
+	{
+	  wmesh_int_t l = self_->m_s_e2n.m_data[self_->m_s_e2n.m_ptr[element_type_] + self_->m_s_e2n.m_ld[element_type_] * facet_idx_ + i];
+	  dofs_[dofs_inc_*i] = self_->m_c2n.m_data[self_->m_c2n.m_ptr[element_type_] + self_->m_c2n.m_ld[element_type_] * element_idx_ + l];
+	}
+    }
+  else   if (topodim==3)
+    {
+      if (facet_type_ == 0)
+	{
+	  const wmesh_int_t n = self_->m_s_t2n.m_m[element_type_];
+	  ndofs_[0] = n;
+	  for (wmesh_int_t i=0;i<n;++i)
+	    {
+	      wmesh_int_t l = self_->m_s_t2n.m_data[self_->m_s_t2n.m_ptr[element_type_] + self_->m_s_t2n.m_ld[element_type_] * facet_idx_ + i];
+	      dofs_[dofs_inc_*i] = self_->m_c2n.m_data[self_->m_c2n.m_ptr[element_type_] + self_->m_c2n.m_ld[element_type_] * element_idx_ + l];
+	    }
+	}
+      else if  (facet_type_ == 1)
+	{
+	  const wmesh_int_t n = self_->m_s_q2n.m_m[element_type_];
+	  ndofs_[0] = n;
+	  for (wmesh_int_t i=0;i<n;++i)
+	    {
+	      wmesh_int_t l = self_->m_s_q2n.m_data[self_->m_s_q2n.m_ptr[element_type_] + self_->m_s_q2n.m_ld[element_type_] * facet_idx_ + i];
+	      dofs_[dofs_inc_*i] = self_->m_c2n.m_data[self_->m_c2n.m_ptr[element_type_] + self_->m_c2n.m_ld[element_type_] * element_idx_ + l];
+	    }
+	}
+    }
+  else
+    {
+      WMESH_STATUS_CHECK(WMESH_STATUS_INVALID_CONFIG);
+    }
+  return WMESH_STATUS_SUCCESS;
+}
+
+
+
 template <typename T>
 wmesh_status_t wmesh_get_cooelm(const wmesh_t * __restrict__	self_,
 				wmesh_int_t			itype_,
@@ -538,6 +616,115 @@ extern "C"
 	return 0;
       }
   }
+
+#if 0
+  
+struct hilbert_reordering_t
+{
+  unsigned long long int cod;
+  unsigned long long int id;
+};
+
+
+int hilbert_comp_t(const void * a_,const void * b_)
+{
+  const I * a = (const I*)a_;
+  const I * b = (const I*)b_;
+  if (*a < *b)
+    {
+      return -1;
+    }
+  else if (*a > *b)
+    {
+      return 1;
+    }
+  else
+    {
+      return 0;
+    }
+}
+
+#if 0
+  coordinates2d(mesh_->nelm, 
+    bb,
+    vertices,
+    2,
+    (unsigned long long int*)tmp,
+    2);
+
+  qsort(tmp,mesh_->nelm,2*sizeof(I),hilbert_comp_t);
+  for (I ielm=0;ielm<mesh_->nelm;++ielm)
+    {
+      // perm_[tmp[2*ielm+1]] = ielm;
+      perm_[ielm] = tmp[2*ielm+1];
+    }
+#endif
+
+static void coordinates2d(long long int				N_, 
+			  double				box_[],
+			  double* 				vertex_,
+			  long long int                         vertexoff_,
+			  unsigned long long int *  		cod2_,
+			  long long int				codoff_)
+{
+  static const unsigned long long m = 1LL<<62;
+  static const int BitTab[2] 	= {1,2};
+  static const int GeoCod[4]	= {1,2,0,3};
+  static const int HilCod[4][4] = {{0,3,2,1}, {0,1,2,3}, {0,1,2,3}, {2,1,0,3}};
+  static const double len 	= 4.611686018427387904e+18;
+  double box[4],dbl;
+  unsigned long long int IntCrd[2],cod;
+  int rot[4];
+  box[0] 	= box_[0];
+  box[1] 	= box_[1];
+  box[2] 	= len / (box_[2] - box_[0]);
+  box[3] 	= len / (box_[3] - box_[1]);
+  double loc[2];
+  { int i;
+    for(i=0; i<N_; i++)
+      {
+	loc[0] = vertex_[vertexoff_*i+0];
+	loc[1] = vertex_[vertexoff_*i+1];
+	/* Convert double precision coordinates to integers */
+	dbl 	= (loc[0] - box[0]) * box[0+2];
+	IntCrd[0] = (unsigned long long int)dbl;
+	dbl 	= (loc[1] - box[1]) * box[1+2];
+	IntCrd[1] = (unsigned long long int)dbl;
+	/* Binary hilbert renumbering loop */
+	cod = 0;
+	rot[0] = GeoCod[0];
+	rot[1] = GeoCod[1];
+	rot[2] = GeoCod[2];
+	rot[3] = GeoCod[3];
+	{ int b;
+	  for(b=0;b<31;b++)
+	    {
+	      int GeoWrd = 0;
+
+	      if(IntCrd[0] & m)
+		GeoWrd |= BitTab[0];
+	      IntCrd[0] = IntCrd[0]<<1;
+
+	      if(IntCrd[1] & m)
+		GeoWrd |= BitTab[1];
+	      IntCrd[1] = IntCrd[1]<<1;
+
+	      const int NewWrd = rot[ GeoWrd ];
+	      cod = cod<<2 | NewWrd;
+	      rot[0] = HilCod[ NewWrd ][ rot[0] ];
+	      rot[1] = HilCod[ NewWrd ][ rot[1] ];
+	      rot[2] = HilCod[ NewWrd ][ rot[2] ];
+	      rot[3] = HilCod[ NewWrd ][ rot[3] ];
+	    } }
+	cod2_[codoff_*i+0] 	= cod;
+	cod2_[codoff_*i+1] 	= i;
+      } }
+
+
+  
+}
+#endif
+
   
   wmesh_status_t wmesh_reorder(wmesh_t*self_)
   {
@@ -591,12 +778,10 @@ extern "C"
 	p[2 * i + 1] = i;
       }
 
-    
     qsort(p,
 	  num_nodes,
 	  sizeof(unsigned long long int)*2,
 	  hilbert_sort_predicate);
-    
     
     for (wmesh_int_t i=0;i<num_nodes;++i)
       {

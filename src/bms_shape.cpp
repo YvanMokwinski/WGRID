@@ -1,4 +1,3 @@
-
 #include "bms.hpp"
 #include "wmesh-math.hpp"
 #include "wmesh-blas.h"
@@ -6,9 +5,6 @@
 #ifndef NDEBUG
 #include <iostream>
 #endif
-
-
-
 
 template<typename T,typename F>  
 static inline  wmesh_status_t bms_template_shape_eval(const_wmesh_int_p	diff_,

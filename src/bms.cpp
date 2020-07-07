@@ -52,7 +52,6 @@ wmesh_status_t bms_element_jacobians(wmesh_int_t 					element_,
 {
   static constexpr T r0 = static_cast<T>(0);
   static constexpr T r1 = static_cast<T>(1);
-  wmesh_status_t 	status;
   const wmesh_int_t 	topodim 	= (cooelm_storage_ == WMESH_STORAGE_INTERLEAVE) ? cooelm_.m : cooelm_.n;
   const wmesh_int_t  	topodimXtopodim	= topodim*topodim;
   const wmesh_int_t	num_eval_nodes  = (element_shape_eval_diff_storage_ == WMESH_STORAGE_INTERLEAVE) ? element_shape_eval_diff_[0].n : element_shape_eval_diff_[0].m;
@@ -121,14 +120,14 @@ wmesh_status_t bms_element_jacobians(wmesh_int_t 					element_,
       //
       {
 	wmesh_int_t info_lapack, perm[3];
-	LAPACK_dgesv((wmesh_int_p)&topodim,
-		     (wmesh_int_p)&topodim,
-		     jacobian,
-		     (wmesh_int_p)&topodim,
-		     perm,
-		     B,
-		     (wmesh_int_p)&topodim,
-		     (wmesh_int_p)&info_lapack);
+	xgesv((wmesh_int_p)&topodim,
+	      (wmesh_int_p)&topodim,
+	      jacobian,
+	      (wmesh_int_p)&topodim,
+	      perm,
+	      B,
+	      (wmesh_int_p)&topodim,
+	      (wmesh_int_p)&info_lapack);
 	WMESH_CHECK(info_lapack == 0);
       }
       

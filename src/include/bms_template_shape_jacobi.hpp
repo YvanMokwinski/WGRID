@@ -133,7 +133,7 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_QUADRILATERAL,T>
     T * tmpj = rw_+n;
     rw_ += n*2;
     rw_n_ -= n*2;
-    std::cout << "rw_n_ " << rw_n_ << std::endl;
+    //    std::cout << "rw_n_ " << rw_n_ << std::endl;
     if (diff_[0] == 0 && diff_[1] == 0)
       {
 	//	fprintf(stdout,"EVSL F\n");
@@ -506,7 +506,7 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_QUADRILATERAL,T>
     T * tmpj = rw_+n;
     rw_ += n*2;
     rw_n_ -= n*2;
-    std::cout << "rw_n_ " << rw_n_ << std::endl;
+    //    std::cout << "rw_n_ " << rw_n_ << std::endl;
     if (diff_[0] == 0 && diff_[1] == 0)
       {
 	//	fprintf(stdout,"EVSL F\n");
@@ -1202,7 +1202,7 @@ struct bms_template_shape_jacobi<WMESH_ELEMENT_TRIANGLE,T>
 
     rw_ += n*6;
     rw_n_ -= n*6;
-    std::cout << "rw_n_ " << rw_n_ << std::endl;
+    //    std::cout << "rw_n_ " << rw_n_ << std::endl;
     
     for (wmesh_int_t l = 0;l < n;++l)
       {

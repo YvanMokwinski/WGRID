@@ -330,7 +330,7 @@ bms_nodes(wmesh_int_t 		element_,
 			num_nodes_P1,
 			num_nodes_Pk);
   
-  const wmesh_int_t ref_c_storage 	= WMESH_STORAGE_INTERLEAVE;
+  //  const wmesh_int_t ref_c_storage 	= WMESH_STORAGE_INTERLEAVE;
   wmesh_mat_t<T> ref_c;
   wmesh_mat_t<T>::alloc(&ref_c,
 			topodim,

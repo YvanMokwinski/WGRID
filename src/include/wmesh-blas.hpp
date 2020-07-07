@@ -1,7 +1,7 @@
 #pragma once
 #include "wmesh-blas.h"
 #include "wmesh-types.hpp"
-
+#include <iostream>
 template <typename T>
 inline void xgemv(const char*transa,
 			 const_wmesh_int_p m,
@@ -92,10 +92,26 @@ inline void xgemm<double>(const char*transa,
 
 
 template <typename T>
-inline void xger(const_wmesh_int_p m,const_wmesh_int_p n,const T* alpha,const T* x,const_wmesh_int_p xinc,const T *y,const_wmesh_int_p yinc,T *a,const_wmesh_int_p lda);
+inline void xger(const_wmesh_int_p m,
+		 const_wmesh_int_p n,
+		 const T* alpha,
+		 const T* x,
+		 const_wmesh_int_p xinc,
+		 const T *y,
+		 const_wmesh_int_p yinc,
+		 T *a,
+		 const_wmesh_int_p lda);
 
 template <>
-inline void xger<float>(const_wmesh_int_p m,const_wmesh_int_p n,const float* alpha,const float* x,const_wmesh_int_p xinc,const float *y,const_wmesh_int_p yinc,float *a,const_wmesh_int_p lda)
+inline void xger<float>(const_wmesh_int_p m,
+			const_wmesh_int_p n,
+			const float* alpha,
+			const float* x,
+			const_wmesh_int_p xinc,
+			const float *y,
+			const_wmesh_int_p yinc,
+			float *a,
+			const_wmesh_int_p lda)
 {
   sger(m,n,alpha,x,xinc,y,yinc,a,lda);
 }
@@ -215,6 +231,9 @@ inline wmesh_status_t wmesh_mat_gemm(const char * 		transa_,
   wmesh_int_t bn = (transb_[0] == 'N') ? b_.n : b_.m;
   wmesh_int_t cm = c_.m;
   wmesh_int_t cn = c_.n;
+  //  std::cerr << "a: " << am << " x " << an << std::endl; 
+  //  std::cerr << "b: " << bm << " x " << bn << std::endl; 
+  //  std::cerr << "c: " << cm << " x " << cn << std::endl; 
   WMESH_CHECK(an == bm);
   WMESH_CHECK(am == cm);
   WMESH_CHECK(bn == cn);

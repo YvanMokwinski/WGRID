@@ -15,6 +15,7 @@
 #include <iostream>
 #include <math.h>
 #include "bms_templates.hpp"
+#include "wmesh_shape_eval_t.hpp"
 
 using namespace std::chrono;
 extern "C"
@@ -27,31 +28,56 @@ extern "C"
 					       double * 	coo_,
 					       wmesh_int_t 	coo_ld_)
   {    
-    static constexpr double r0 = 0.0;
-    static constexpr double r1 = 1.0;
+    //    static constexpr double r0 = 0.0;
+    //    static constexpr double r1 = 1.0;
     wmesh_status_t 	status;
     wmesh_t * 		mesh 	= self_->m_mesh;
-    wmesh_int_t         topodim = mesh->m_topology_dimension;
-    wmesh_int_t 	coo_m  	= mesh->m_coo_m;
+    const wmesh_int_t         topodim = mesh->m_topology_dimension;
+    const wmesh_int_t 	dim  	= mesh->m_coo_m;
     
     wmesh_int_t 	num_types;
     wmesh_int_t 	elements[4];
-    double * 		refevals[4] {};
-    double 		cell_xyz[32];
-    wmesh_int_t 	cell_xyz_ld = coo_m;
+    //    double * 		refevals[4] {};
+    const wmesh_int_t         cooelm_m = self_->m_mesh->m_coo_m;
+    //    wmesh_int_t         cooelm_n = 0;
+    const wmesh_int_t         cooelm_storage = WMESH_STORAGE_INTERLEAVE;
+    double cooelm_data[32];
+    wmesh_mat_t<double> cooelm;
 
+    wmesh_shape_eval_t<double> shape_eval[4];
+    
     status = bms_topodim2elements(topodim,
 				  &num_types,
 				  elements);
     WMESH_STATUS_CHECK(status);        
+
     for (wmesh_int_t l=0;l<num_types;++l)
       {
 	if (mesh->m_c2n.m_n[l]>0)
 	  {
 	    wmesh_t* 		rmacro			= self_->m_patterns[l];
-	    const double * 	rmacro_coo 		= wmesh_get_coo(rmacro);
+	    double * 	rmacro_coo 		= wmesh_get_coo(rmacro);
 	    wmesh_int_t 	rmacro_coo_ld 		= rmacro->m_coo_ld;
 	    wmesh_int_t 	rmacro_num_nodes 	= rmacro->m_num_nodes;
+
+	    wmesh_mat_t<double> rmacro_coo_mat;
+	    wmesh_mat_t<double>::define(&rmacro_coo_mat,
+					topodim,
+					rmacro_num_nodes,
+					rmacro_coo,
+					rmacro_coo_ld);
+	    
+	    status = wmesh_shape_eval_def(&shape_eval[l],
+					  elements[l],				
+					  WMESH_SHAPE_FAMILY_LAGRANGE,
+					  1,
+					  WMESH_STORAGE_INTERLEAVE,
+					  &rmacro_coo_mat);
+	    WMESH_STATUS_CHECK(status);	    
+
+	    
+#if 0
+	    
 	    if ((topodim==0)&&(l==0))
 	      {
 		//
@@ -320,11 +346,10 @@ extern "C"
 
 		refevals[l] = b;		  
 	      }
+#endif
 	      
 	  }
-
       }
-
     
     wmesh_int_t rw_n = 0;
     wmesh_int_t iw_n = 0;
@@ -334,22 +359,30 @@ extern "C"
 	rw_n = (rw_n < k) ? k : rw_n;
 	iw_n = (iw_n < self_->m_dofs_m[l]) ? self_->m_dofs_m[l] : iw_n;
       }
-    
-    double * rw = (double*)malloc(sizeof(double)*rw_n);
+
+
+    const wmesh_int_t   coomac_m = topodim;
+    //    wmesh_int_t         coomac_n = 0;
+    //    const wmesh_int_t   coomac_storage = WMESH_STORAGE_INTERLEAVE;
+    double* coomac_data;
+    wmesh_mat_t<double> coomac;
+
+
+
+    coomac_data = (double*)malloc(sizeof(double)*rw_n);
     
     wmesh_int_p iw = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*iw_n);
 
-
+  
     wmesh_int_t lc2d_inc 		= 1;
     wmesh_int_p lc2d 		= iw;
     for (wmesh_int_t l=0;l<self_->m_mesh->m_c2n.m_size;++l)
       {
-	double * 	refeval = refevals[l];
+
 	
 	//
 	// Local c2d.
 	//	    
-	// wmesh_int_t c2d_n	= self_->m_c2d.m_n[l];
 	wmesh_int_t lc2d_n 		= self_->m_dofs_m[l];
 	
 	//
@@ -357,56 +390,34 @@ extern "C"
 	//
 	wmesh_int_t c2n_n 		= mesh->m_c2n.m_n[l];
 	wmesh_int_t c2n_m 		= mesh->m_c2n.m_m[l];
-	//	wmesh_int_t c2n_ld		= mesh->m_c2n.m_ld[l];
-	//	wmesh_int_p c2n_v 		= mesh->m_c2n.m_data + mesh->m_c2n.m_ptr[l];
+	if (c2n_n == 0) continue;
+
+	wmesh_mat_t<double>::define(&cooelm,
+				    cooelm_m,c2n_m,cooelm_data,cooelm_m);
+	
+
+	wmesh_mat_t<double>::define(&coomac,
+				    coomac_m,
+				    self_->m_patterns[l]->m_num_nodes,
+				    coomac_data,coomac_m);
 	
 	for (wmesh_int_t j=0;j<c2n_n;++j)
 	  {
 	    //
 	    // Get the global indices of the dofs.
 	    //
-	    status = wmeshspacedg_get_dofs(self_, l, j, lc2d, lc2d_inc);
+	    status = wmeshspacedg_get_dofs_ids(self_, l, j, lc2d, lc2d_inc);
 	    WMESH_STATUS_CHECK(status);    
-#if 0
-	    //
-	    // Get the coordinates of the cell.
-	    //		
-	    for (wmesh_int_t i=0;i<c2n_m;++i)
-	      {
-		wmesh_int_t idx = c2n_v[c2n_ld * j + i] - 1;
-		for (wmesh_int_t k=0;k<self_->m_mesh->m_coo_m;++k)
-		  {
-		    cell_xyz[cell_xyz_ld * i + k] = self_->m_mesh->m_coo[self_->m_mesh->m_coo_ld * idx + k];
-		  }
-	      }
-#endif
-
-
+	    
 	    status =  wmesh_get_cooelm(mesh,
 				       l,
 				       j,
-				       WMESH_STORAGE_INTERLEAVE,
-				       self_->m_mesh->m_coo_m,
-				       c2n_m,
-				       cell_xyz,				       
-				       cell_xyz_ld);
+				       cooelm_storage,
+				       WMESH_MAT_FORWARD(cooelm));
 	    WMESH_STATUS_CHECK(status);    
-
 	    
-	    dgemm("N",
-		  "N",
-		  &coo_m ,
-		  &lc2d_n,
-		  &c2n_m ,
-		  &r1,
-		  cell_xyz,
-		  &cell_xyz_ld,
-		  refeval,
-		  &c2n_m,
-		  &r0,
-		  rw,
-		  &coo_m);
-
+	    wmesh_mat_gemm(static_cast<double>(1),cooelm, shape_eval[l].m_f, static_cast<double>(0), coomac);
+	    
 	    //
 	    // Copy.
 	    //
@@ -414,10 +425,10 @@ extern "C"
 	      {
 		for (wmesh_int_t i=0;i<lc2d_n;++i)
 		  {
-		    wmesh_int_t idx = lc2d[lc2d_inc*i];
-		    for (wmesh_int_t k = 0;k<coo_m;++k)
+		    const wmesh_int_t idx = lc2d[lc2d_inc*i] - 1;
+		    for (wmesh_int_t k = 0;k<dim;++k)
 		      {
-			coo_[coo_ld_ * idx + k] = rw[coo_m * i + k];
+			coo_[coo_ld_ * idx + k] = coomac.v[coomac.ld*i+k];
 		      }
 		  }
 	      }
@@ -425,20 +436,13 @@ extern "C"
 	      {
 		for (wmesh_int_t i=0;i<lc2d_n;++i)
 		  {
-		    wmesh_int_t idx = lc2d[lc2d_inc*i];
-		    for (wmesh_int_t k = 0;k<coo_m;++k)
+		    const wmesh_int_t idx = lc2d[lc2d_inc*i] - 1;
+		    for (wmesh_int_t k = 0;k<dim;++k)
 		      {
-			coo_[coo_ld_ * k + idx] = rw[coo_m * i + k];
+			coo_[coo_ld_ * k + idx] = coomac.v[coomac.ld*i+k];
 		      }
 		  }
 	      }	    
-	  }
-      }
-    for (wmesh_int_t l=0;l<num_types;++l)
-      {
-	if (refevals[l])
-	  {
-	    free(refevals[l]);
 	  }
       }
     return WMESH_STATUS_SUCCESS;
@@ -456,9 +460,6 @@ extern "C"
     
     wmesh_int_t 	num_types;
     wmesh_int_t 	elements[4];
-    double * 		refevals[4] {};
-    double 		cell_xyz[32];
-    wmesh_int_t 	cell_xyz_ld = coo_m;
 
     status = bms_topodim2elements(topodim,
 				  &num_types,
@@ -466,7 +467,7 @@ extern "C"
     WMESH_STATUS_CHECK(status);    
     
     wmesh_int_t coo_dofs_m  	= coo_m;
-    wmesh_int_t coo_dofs_n  	= self_->m_num_dofs;
+    wmesh_int_t coo_dofs_n  	= self_->m_ndofs;
     wmesh_int_t coo_dofs_ld 	= coo_dofs_m;
     double * 	coo_dofs 	= (double*)malloc(sizeof(double) * coo_dofs_n * coo_dofs_ld);
     
@@ -543,18 +544,8 @@ extern "C"
 	  for (wmesh_int_t j=0;j<ncells;++j)
 	    {
 	      
-	      status = wmeshspacedg_get_dofs(self_, l, j, dofs, 1);
+	      status = wmeshspacedg_get_dofs_ids(self_, l, j, dofs, 1);
 	      WMESH_STATUS_CHECK(status);
-
-#if 0
-	      //
-	      // extract dofs.
-	      //
-	      for (wmesh_int_t i=0;i<self_->m_c2d.m_m[l];++i)
-		{
-		  dofs[i] = self_->m_c2d.m_data[self_->m_c2d.m_ptr[l] + j * self_->m_c2d.m_ld[l] + i];
-		}
-#endif
 	      
 	      //
 	      // For each.
@@ -573,7 +564,7 @@ extern "C"
 			
 		      for (wmesh_int_t si=0;si<ref_c2n->m_m[ref_cell_type];++si)
 			{
-			  c2n_v[ c2n_ptr[ref_cell_type] + c2n_ld[ref_cell_type] * idx[ref_cell_type] + si] = dofs[lidx[si]] + 1;
+			  c2n_v[ c2n_ptr[ref_cell_type] + c2n_ld[ref_cell_type] * idx[ref_cell_type] + si] = dofs[lidx[si]];
 			}
 		      ++idx[ref_cell_type];
 		    }

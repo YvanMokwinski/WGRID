@@ -16,20 +16,20 @@
 #include "wmesh_shape_eval_factory_t.hpp"
 #include "wmesh_nodes_factory_t.hpp"
 
-template<typename T>
-static std::ostream& operator<<(std::ostream&out_,
-				const wmesh_mat_t<T>&that_)
-{
-  for (wmesh_int_t i=0;i<that_.m;++i)
-    {
-      for (wmesh_int_t j=0;j<that_.n;++j)
-	{
-	  out_ << " " << that_.v[that_.ld * j + i];
-	}
-      out_ << std::endl;
-    }
-  return out_;
-};
+//template<typename T>
+//static std::ostream& operator<<(std::ostream&out_,
+//				const wmesh_mat_t<T>&that_)
+//{
+//  for (wmesh_int_t i=0;i<that_.m;++i)
+//    {
+//      for (wmesh_int_t j=0;j<that_.n;++j)
+//	{
+//	  out_ << " " << that_.v[that_.ld * j + i];
+//	}
+//      out_ << std::endl;
+//    }
+//  return out_;
+//};
 
 //
 // 
@@ -62,7 +62,7 @@ wmesh_status_t wmesh_nodes_boundary_def(wmesh_nodes_boundary_t<T>*__restrict__ 	
   WMESH_STATUS_CHECK(status);
   status = bms_element_geometry(element_,ref_cooelm.v);
   WMESH_STATUS_CHECK(status);
-  std::cout << ref_cooelm << std::endl;;
+  //  std::cout << ref_cooelm << std::endl;;
 
   wmesh_int_t num_facets;
   status = bms_element_facets(element_,			 
@@ -153,7 +153,9 @@ wmesh_status_t wmesh_nodes_boundary_def(wmesh_nodes_boundary_t<T>*__restrict__ 	
 
       
       const wmesh_int_t s_f2n_m 	= s_m[facet_type];
+#if 0
       const wmesh_int_t s_f2n_n 	= s_n[facet_type];
+#endif
       const_wmesh_int_p s_f2n_v 	= &s_v[facet_type][0];
       const wmesh_int_t s_f2n_ld 	= s_ld[facet_type];
       for (wmesh_int_t i=0;i<s_f2n_m;++i)

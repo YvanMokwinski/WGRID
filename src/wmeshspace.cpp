@@ -9,6 +9,70 @@
 
 #include <chrono>
 #include <iostream>
+  
+
+wmesh_status_t wmeshspace_get_dofs_ids(const wmeshspace_t * 	self_,
+				       wmesh_int_t 		element_type_,
+				       wmesh_int_t 		element_idx_,
+				       wmesh_int_p 		dofs_,
+				       wmesh_int_t 		dofs_inc_)
+{
+  return self_->get_dofs_ids(element_type_,element_idx_,dofs_,dofs_inc_);
+}
+
+template<typename T>
+wmesh_status_t wmeshspace_get_dof_values(const wmeshspace_t& 	self_,
+					 wmesh_int_t 		element_type_,
+					 wmesh_int_t 		element_idx_,
+					 wmesh_int_t 		velocity_storage_,
+					 const wmesh_mat_t<T>& 	velocity_,
+					 wmesh_int_t 		velocity_dofs_storage_,
+					 wmesh_mat_t<T>& 	velocity_dofs_)
+{
+  const wmesh_int_t num_dofs 	= self_.m_c2d.m_m[element_type_];
+  const wmesh_int_t shift 	= self_.m_c2d.m_ptr[element_type_];
+  const wmesh_int_t ld 		= self_.m_c2d.m_ld[element_type_];
+
+  const wmesh_int_t shift0 	= (WMESH_STORAGE_INTERLEAVE == velocity_storage_) ? 1 : velocity_.ld;
+  const wmesh_int_t shift1 	= (WMESH_STORAGE_INTERLEAVE == velocity_dofs_storage_) ? 1 : velocity_dofs_.ld;
+  
+  const T*__restrict__ uvw[3] 	= {velocity_.v,velocity_.v + shift0,velocity_.v + 2 * shift0};  
+  T*__restrict__ uvwdofs[3] = {velocity_dofs_.v,velocity_dofs_.v + shift1,velocity_dofs_.v + 2 * shift1};
+  const wmesh_int_t uvw_inc 	= (WMESH_STORAGE_INTERLEAVE == velocity_storage_) ? velocity_.ld : 1;
+  const wmesh_int_t uvwdofs_inc = (WMESH_STORAGE_INTERLEAVE == velocity_dofs_storage_) ? velocity_dofs_.ld : 1;
+  const wmesh_int_t dim 	= (WMESH_STORAGE_INTERLEAVE == velocity_dofs_storage_) ? velocity_dofs_.m : velocity_dofs_.n;
+
+  for (wmesh_int_t k=0;k<dim;++k)
+    {
+      const T* __restrict__ u = uvw[k];
+       T* __restrict__ udofs = uvwdofs[k];
+      for (wmesh_int_t i=0;i<num_dofs;++i)
+	{
+	  wmesh_int_t idx = self_.m_c2d.m_data[ shift  + element_idx_ * ld + i] - 1;
+	  udofs[uvwdofs_inc * i] = u[uvw_inc * idx];
+	}
+    }
+  return WMESH_STATUS_SUCCESS;  
+};
+
+
+template
+wmesh_status_t wmeshspace_get_dof_values<float>(const wmeshspace_t& 	self_,
+						 wmesh_int_t 		element_type_,
+						 wmesh_int_t 		element_idx_,
+						 wmesh_int_t 		velocity_storage_,
+						 const wmesh_mat_t<float>& 	velocity_,
+						 wmesh_int_t 		velocity_dofs_storage_,
+						 wmesh_mat_t<float>& 	velocity_dofs_);
+template
+wmesh_status_t wmeshspace_get_dof_values<double>(const wmeshspace_t& 	self_,
+						wmesh_int_t 		element_type_,
+						wmesh_int_t 		element_idx_,
+						wmesh_int_t 		velocity_storage_,
+						const wmesh_mat_t<double>& 	velocity_,
+						wmesh_int_t 		velocity_dofs_storage_,
+						wmesh_mat_t<double>& 	velocity_dofs_);
+
 
 extern "C"
 {
@@ -235,9 +299,9 @@ extern "C"
 
   static wmesh_status_t wmeshspace_compute(wmeshspace_t * 	space_)
   {
-    wmesh_t*		self_ 	= space_->m_mesh;
-    const wmesh_int_t 	topodim = self_->m_topology_dimension;
-    wmesh_int_t		degree_ = space_->m_degree;    
+    const wmesh_t*	mesh 	= space_->get_mesh();
+    const wmesh_int_t 	topodim = mesh->m_topology_dimension;
+    wmesh_int_t		degree_ = space_->get_degree();    
     wmesh_status_t 	status;
     const wmesh_int_t num_dofs_per_node 		= (degree_ > 0) ? 1 : 0;      
     const wmesh_int_t num_dofs_per_edge 		= (degree_>0) ? degree_-1 : 0;
@@ -248,57 +312,57 @@ extern "C"
     
     if (num_dofs_per_node > 0)
       {
-	status = bms_c2d_n(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
+	status = bms_c2d_n(WMESH_INT_SPARSEMAT_FORWARD(mesh->m_c2n),
 			   WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_n),
-			   self_->m_num_nodes,
+			   mesh->m_num_nodes,
 			   num_dofs_per_node,
 			   dof_idx);
 	WMESH_STATUS_CHECK(status);
-	dof_idx += self_->m_num_nodes * num_dofs_per_node;
+	dof_idx += mesh->m_num_nodes * num_dofs_per_node;
       }
 
     if (num_dofs_per_edge > 0)
       {
-	status =  bms_c2d_e(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-			    WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2e),
+	status =  bms_c2d_e(WMESH_INT_SPARSEMAT_FORWARD(mesh->m_c2n),
+			    WMESH_INT_SPARSEMAT_FORWARD(mesh->m_c2e),
 			    WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_e),
-			    WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_e2n),
-			    self_->m_num_edges,
+			    WMESH_INT_SPARSEMAT_FORWARD(mesh->m_s_e2n),
+			    mesh->m_num_edges,
 			    num_dofs_per_edge,
 			    dof_idx);
 	
 	WMESH_STATUS_CHECK(status);
-	dof_idx += self_->m_num_edges * num_dofs_per_edge;
+	dof_idx += mesh->m_num_edges * num_dofs_per_edge;
       }
 
     if (topodim > 2)
       {
 	if (num_dofs_per_triangle > 0)
 	  {
-	    status =  bms_c2d_t(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-				WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2f_t),
+	    status =  bms_c2d_t(WMESH_INT_SPARSEMAT_FORWARD(mesh->m_c2n),
+				WMESH_INT_SPARSEMAT_FORWARD(mesh->m_c2f_t),
 				WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_t),
-				WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_t2n),
-				self_->m_num_triangles,
+				WMESH_INT_SPARSEMAT_FORWARD(mesh->m_s_t2n),
+				mesh->m_num_triangles,
 				degree_,
 				num_dofs_per_triangle,
 				dof_idx);
 	    WMESH_STATUS_CHECK(status);
-	    dof_idx += self_->m_num_triangles * num_dofs_per_triangle;
+	    dof_idx += mesh->m_num_triangles * num_dofs_per_triangle;
 	  }
 	
 	if (num_dofs_per_quadrilateral > 0)
 	  {
-	    status = bms_c2d_q(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-			       WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2f_q),
+	    status = bms_c2d_q(WMESH_INT_SPARSEMAT_FORWARD(mesh->m_c2n),
+			       WMESH_INT_SPARSEMAT_FORWARD(mesh->m_c2f_q),
 			       WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_q),
-			       WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_q2n),
-			       self_->m_num_quadrilaterals,
+			       WMESH_INT_SPARSEMAT_FORWARD(mesh->m_s_q2n),
+			       mesh->m_num_quadrilaterals,
 			       degree_,
 			       num_dofs_per_quadrilateral,
 			       dof_idx);
 	    WMESH_STATUS_CHECK(status);
-	    dof_idx += self_->m_num_quadrilaterals * num_dofs_per_quadrilateral;
+	    dof_idx += mesh->m_num_quadrilaterals * num_dofs_per_quadrilateral;
 	  }
       }
 
@@ -328,9 +392,6 @@ extern "C"
 
     return WMESH_STATUS_SUCCESS;
   }
-
-
-
 
 
   static inline wmesh_status_t wmeshspace_compute_dofs_codes_entity(wmesh_int_t 		c2n_size_,
@@ -427,7 +488,6 @@ extern "C"
     return WMESH_STATUS_SUCCESS;
 
   };
-
   
   static inline wmesh_status_t wmeshspace_compute_dofs_codes_interior(wmesh_int_t 		c2d_i_size_,
 								      const_wmesh_int_p		c2d_i_ptr_,
@@ -454,12 +514,10 @@ extern "C"
 
   };
 
-  
-  
   static wmesh_status_t wmeshspace_compute_dofs_codes(wmeshspace_t * 	space_,wmesh_int_p dof_codes_)
   {
-    wmesh_t*		self_ 	= space_->m_mesh;
-    const wmesh_int_t 	topodim = self_->m_topology_dimension;
+    const wmesh_t*	mesh 	= space_->get_mesh();
+    const wmesh_int_t 	topodim = mesh->m_topology_dimension;
     wmesh_int_t		degree_ = space_->m_degree;    
     wmesh_status_t 	status;
     const wmesh_int_t num_dofs_per_node 		= (degree_ > 0) ? 1 : 0;      
@@ -469,22 +527,22 @@ extern "C"
     
     if (num_dofs_per_node > 0)
       {
-	for (wmesh_int_t i=0;i<self_->m_num_nodes;++i)
+	for (wmesh_int_t i=0;i<mesh->m_num_nodes;++i)
 	  {
 	    for (wmesh_int_t j=0;j<num_dofs_per_node;++j)
 	      {
-		dof_codes_[num_dofs_per_node*i+j] = self_->m_n_c.v[self_->m_n_c.ld*i];
+		dof_codes_[num_dofs_per_node*i+j] = mesh->m_n_c.v[mesh->m_n_c.ld*i];
 	      }
 	  }
       }
 
     if (num_dofs_per_edge > 0)
       {	
-	status =  wmeshspace_compute_dofs_codes_entity(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-						       self_->m_n_c.v,
-						       self_->m_n_c.ld,
+	status =  wmeshspace_compute_dofs_codes_entity(WMESH_INT_SPARSEMAT_FORWARD(mesh->m_c2n),
+						       mesh->m_n_c.v,
+						       mesh->m_n_c.ld,
 						       WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_e),
-						       WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_e2n),
+						       WMESH_INT_SPARSEMAT_FORWARD(mesh->m_s_e2n),
 						       num_dofs_per_edge,
 						       dof_codes_);	
 	WMESH_STATUS_CHECK(status);
@@ -494,22 +552,22 @@ extern "C"
       {
 	if (num_dofs_per_triangle > 0)
 	  {
-	    status =  wmeshspace_compute_dofs_codes_entity(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-							   self_->m_n_c.v,
-							   self_->m_n_c.ld,
+	    status =  wmeshspace_compute_dofs_codes_entity(WMESH_INT_SPARSEMAT_FORWARD(mesh->m_c2n),
+							   mesh->m_n_c.v,
+							   mesh->m_n_c.ld,
 							   WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_t),
-							   WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_t2n),
+							   WMESH_INT_SPARSEMAT_FORWARD(mesh->m_s_t2n),
 							   num_dofs_per_triangle,
 							   dof_codes_);	
 	  }
 	
 	if (num_dofs_per_quadrilateral > 0)
 	  {
-	    status =  wmeshspace_compute_dofs_codes_entity(WMESH_INT_SPARSEMAT_FORWARD(self_->m_c2n),
-								   self_->m_n_c.v,
-								   self_->m_n_c.ld,
+	    status =  wmeshspace_compute_dofs_codes_entity(WMESH_INT_SPARSEMAT_FORWARD(mesh->m_c2n),
+								   mesh->m_n_c.v,
+								   mesh->m_n_c.ld,
 								   WMESH_INT_SPARSEMAT_FORWARD(space_->m_c2d_q),
-								   WMESH_INT_SPARSEMAT_FORWARD(self_->m_s_q2n),
+								   WMESH_INT_SPARSEMAT_FORWARD(mesh->m_s_q2n),
 								   num_dofs_per_quadrilateral,
 								   dof_codes_);	
 	    WMESH_STATUS_CHECK(status);
@@ -712,12 +770,11 @@ extern "C"
 	WMESH_STATUS_CHECK(status);
       }
 
-    std::cout << "gggggggggggggggggg   " << self_->m_ndofs << std::endl;
-    status = wmeshspace_compute(self_);
-    std::cout << "gggggggggggggggggg after   " << self_->m_ndofs << std::endl;
 
-    std::cout << "compute dofs code   " << std::endl;
+    status = wmeshspace_compute(self_);
+
     self_->m_dof_codes = (wmesh_int_p)malloc(sizeof(wmesh_int_t)*self_->m_ndofs);
+
     wmeshspace_compute_dofs_codes(self_,
 				  self_->m_dof_codes);
     WMESH_STATUS_CHECK(status);

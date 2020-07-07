@@ -1,5 +1,7 @@
 
+
 #include "wmesh_shape_t.hpp"
+
 
 #include "bms.h"
 #include <string.h>
@@ -76,15 +78,16 @@ template<typename T>
 wmesh_status_t wmesh_shape_calculate_eval(const wmesh_shape_t& 		shape_,
 					  wmesh_int_t 			nodes_storage_,
 					  const wmesh_mat_t<T>& 	nodes_,
+					  wmesh_int_t 			eval_storage_,
 					  wmesh_mat_t<T>& 		eval_)
 {
   
   wmesh_status_t status;
   
-  const wmesh_int_t
-    num_nodes 		= (nodes_storage_ == WMESH_STORAGE_INTERLEAVE) ? nodes_.n : nodes_.m;
 
 #if 0
+  const wmesh_int_t
+    num_nodes 		= (nodes_storage_ == WMESH_STORAGE_INTERLEAVE) ? nodes_.n : nodes_.m;
   wmesh_mat_t<T>::alloc(&eval_,
 			shape_.m_ndofs,
 			num_nodes);
@@ -161,13 +164,17 @@ wmesh_status_t wmesh_shape_calculate_eval(const wmesh_shape_t& 		shape_,
 }
 
 
+
+
 template
 wmesh_status_t wmesh_shape_calculate_eval<float>(const wmesh_shape_t& 		shape_,
-					  wmesh_int_t 			nodes_storage_,
-					  const wmesh_mat_t<float>& 	nodes_,
-					  wmesh_mat_t<float>& 		eval_);
+						 wmesh_int_t 			nodes_storage_,
+						 const wmesh_mat_t<float>& 	nodes_,
+						 wmesh_int_t 			eval_storage_,
+						 wmesh_mat_t<float>& 		eval_);
 template
 wmesh_status_t wmesh_shape_calculate_eval<double>(const wmesh_shape_t& 		shape_,
-					  wmesh_int_t 			nodes_storage_,
-					  const wmesh_mat_t<double>& 	nodes_,
-					  wmesh_mat_t<double>& 		eval_);
+						  wmesh_int_t 			nodes_storage_,
+						  const wmesh_mat_t<double>& 	nodes_,
+						  wmesh_int_t 			eval_storage_,
+						  wmesh_mat_t<double>& 		eval_);

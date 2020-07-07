@@ -51,6 +51,40 @@ wmesh_status_t wmesh_permutate(wmesh_int_t 		x_m_,
   return 0;
 }
 
+extern "C"
+{
+
+  wmesh_status_t wmesh_basename(const char * 	filename_,
+				 wmesh_str_t 	basename_)
+  {
+    int i = -1;
+    int len = 0;
+    for (;;)
+      {
+	if (filename_[len] == '.')
+	  {
+	    i = len;
+	  }
+	if (filename_[len++] == '\0')
+	  {
+	    break;
+	  }
+      }
+    if (i>=0)
+      {	
+	memcpy(basename_,filename_,(i+1)*sizeof(char));
+	basename_[i] = '\0';
+      }
+    else
+      {
+	memcpy(basename_,filename_,len*sizeof(char));
+      }
+    return 0;
+  }
+  
+  
+}
+
 extern "C" const char * file_extension(const char * filename_)
 {
   int i = -1;

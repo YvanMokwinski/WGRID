@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "bms.h"
+#if 0
 static const char * file_extension(const char * filename_)
 {
   int i = -1;
@@ -20,7 +21,7 @@ static const char * file_extension(const char * filename_)
     }
   return (i>=0) ? &filename_[i] : nullptr;
 }
-
+#endif
 
 void usage(const char * appname_)
 {

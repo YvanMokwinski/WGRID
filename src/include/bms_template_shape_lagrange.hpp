@@ -62,10 +62,10 @@ struct bms_template_shape_lagrange
 	}
       default:
 	{
-
+#if 0
 	  std::cout << "sssssssssssssssssssssss ELEMENT_  " <<  ELEMENT_ << std::endl;
 	  std::cout << "sssssssssssssssssssssss degree_  " <<  degree_ << std::endl;
-	  
+#endif	  
 	  wmesh_int_t dim;
 	  wmesh_status_t status = bms_element2topodim(ELEMENT_,
 				       &dim);
@@ -108,6 +108,7 @@ struct bms_template_shape_lagrange
 	  wmesh_int_t rwork_n;
 	  wmesh_int_t iwork_n;
 
+	  
 	  
 	  status = bms_nodes_buffer_sizes(ELEMENT_,
 					  WMESH_NODES_FAMILY_LAGRANGE,
@@ -166,6 +167,7 @@ struct bms_template_shape_lagrange
 	  WMESH_STATUS_CHECK( status );
 	  //	   std::cout << "yo1 " << std::endl;	   
 	  wmesh_int_t info_lapack;
+#if 0
 	  fprintf(stdout,"------------------\n");	       
 	  
 	  for (wmesh_int_t i=0;i<dof_m;++i)
@@ -187,7 +189,10 @@ struct bms_template_shape_lagrange
 	      fprintf(stdout,"\n");	       
 	    }
 	  
-	  fprintf(stdout,"------------------\n");	       
+	  fprintf(stdout,"------------------\n");
+#endif
+
+	  
 #if 0
 	  
 	  for (wmesh_int_t i=0;i<c_m_;++i)
@@ -245,10 +250,12 @@ struct bms_template_shape_lagrange
 	   wmesh_int_t perm[32];
 #endif
 
+#if 0
 	   std::cout << "v_m " << v_m << std::endl;
 	   std::cout << "ev_n " << ev_n << std::endl;
 	   std::cout << "v_ld " << v_ld << std::endl;
 	   std::cout << "b_ld_ " << b_ld_ << std::endl;
+#endif
 	   xgesv((wmesh_int_p)&v_m,
 		 (wmesh_int_p)&ev_n,
 		 v,
