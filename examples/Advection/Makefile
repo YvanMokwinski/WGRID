@@ -3,14 +3,14 @@ help:
 
 run: example.mesh example.mtx example.sol.mtx
 
-viz: example_viz.mesh example_viz.sol
+viz: example_viz.mesh example_viz.bb
 
 #example.mesh:
 #	../../bin/wmesh-build --nteta 13 --nradius 17 -o $@ --dim 2
 
 example_viz.mesh:example.mesh
-	../../bin/wmesh-refine $< -o $@ -d 1 -n lagrange -o $@ --dg
-example_viz.sol:example.sol.mtx
+	../../bin/wmesh-refine $< -o $@ -d 2 -n lagrange -o $@ --dg
+example_viz.bb:example.sol.mtx
 	../../bin/wmesh-convert $< -o $@
 
 %.mtx:%.mesh

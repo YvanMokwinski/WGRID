@@ -1,7 +1,7 @@
 #include <limits>
 #include <iostream>
 #include <array>
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 
 static inline wmesh_status_t bms_c2d_i_calculate(wmesh_int_t 			c2d_i_ptr_,
 						 wmesh_int_t 			c2d_i_m_,

@@ -1,4 +1,4 @@
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include "bms.hpp"
 extern "C"
 {

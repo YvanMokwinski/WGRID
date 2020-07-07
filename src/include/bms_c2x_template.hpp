@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <array>
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include "GenericEncoding.hpp"
 #include "bms_compare.hpp"
 

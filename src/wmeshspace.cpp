@@ -1,15 +1,14 @@
-
+#include "wmeshspace_t.hpp"
 #include <stdlib.h>
 #include <string.h>
-#include "wmesh-types.hpp"
-#include "wmesh-status.h"
-#include "wmesh.hpp"
+
 #include "wmesh_utils.hpp"
 #include "bms.h"
 
 #include <chrono>
 #include <iostream>
-  
+
+
 
 wmesh_status_t wmeshspace_get_dofs_ids(const wmeshspace_t * 	self_,
 				       wmesh_int_t 		element_type_,
@@ -76,6 +75,13 @@ wmesh_status_t wmeshspace_get_dof_values<double>(const wmeshspace_t& 	self_,
 
 extern "C"
 {
+
+  wmesh_status_t 	wmeshspace_get_ndofs(const wmeshspace_t*__restrict__ 	self_,
+					     wmesh_int_p 			ndofs_)
+  {
+    ndofs_[0] = self_->m_ndofs;
+    return WMESH_STATUS_SUCCESS;
+  }
 
   static wmesh_status_t wmesh_init_c2d(const wmesh_int_sparsemat_t*	c2n_,
 				       wmesh_int_sparsemat_t*		c2d_,

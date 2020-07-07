@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <iostream>
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include "bms.h"
 #include "wmesh_utils.hpp"
 

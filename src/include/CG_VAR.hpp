@@ -1,6 +1,6 @@
 #pragma once
 #include "VAR.hpp"
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 
 struct CG_VAR : public VAR<CG_VAR>
 {

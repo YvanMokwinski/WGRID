@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "wmesh-status.h"
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include "bms.h"
 
 extern "C"

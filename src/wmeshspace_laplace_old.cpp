@@ -3,7 +3,7 @@
 #include <string.h>
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include <chrono>
 #include <iostream>
 #include "bms.h"
@@ -12,6 +12,7 @@
 #include "bms_templates.hpp"
 #include "wmesh_cubature_t.hpp"
 #include "wmesh_shape_eval_t.hpp"
+#include "wmeshspace_t.hpp"
 
 
 

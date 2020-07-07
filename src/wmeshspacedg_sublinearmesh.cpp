@@ -6,7 +6,7 @@
 #include "wmesh-types.hpp"
 #include "wmesh-math.hpp"
 #include "wmesh-status.h"
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include "wmesh_utils.hpp"
 #include "wmesh-blas.h"
 #include "bms.h"
@@ -16,6 +16,7 @@
 #include <math.h>
 #include "bms_templates.hpp"
 #include "wmesh_shape_eval_t.hpp"
+#include "wmeshspacedg_t.hpp"
 
 using namespace std::chrono;
 extern "C"

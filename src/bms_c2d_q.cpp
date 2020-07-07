@@ -1,7 +1,7 @@
 #include <limits>
 #include <iostream>
 #include <array>
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 
 
 static inline void  orientation_quadrilateral_permutation(wmesh_int_t 	orientation_,

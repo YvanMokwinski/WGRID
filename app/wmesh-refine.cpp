@@ -1,4 +1,4 @@
-#include "wmesh.hpp"
+#include "wmeshspacedg_t.hpp"
 #include "cmdline.hpp"
 #include "app.hpp"
 

@@ -1,4 +1,4 @@
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include "wmesh_utils.hpp"
 #include <iostream>
 #include <string.h>
@@ -207,7 +207,13 @@ wmesh_status_t wmesh_get_cooelm<double>(const wmesh_t * __restrict__	self_,
 extern "C"
 {
  
-
+  wmesh_status_t 	wmesh_get_topodim(const wmesh_t* 	self_,
+					  wmesh_int_p 		topodim_)
+  {
+    topodim_[0] = self_->m_topology_dimension;
+    return WMESH_STATUS_SUCCESS;  
+  }
+  
   wmesh_status_t wmesh_kill(wmesh_t* self_)
   {
     if (self_)

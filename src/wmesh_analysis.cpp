@@ -3,7 +3,7 @@
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
 #include "bms.h"
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include <chrono>
 #include <iostream>
 

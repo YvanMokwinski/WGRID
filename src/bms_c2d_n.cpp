@@ -1,6 +1,6 @@
 #include <limits>
 #include <iostream>
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 
 static inline wmesh_status_t bms_c2d_n_calculate(wmesh_int_t 			c2n_ptr_,
 						 wmesh_int_t 			c2n_m_,

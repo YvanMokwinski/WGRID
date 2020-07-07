@@ -1,8 +1,10 @@
+#include "wmeshspacedg_t.hpp"
+
 #include <stdlib.h>
 #include <string.h>
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include <chrono>
 #include <iostream>
 #include "bms.h"
@@ -173,18 +175,20 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
   const wmeshspacedg_t * 	m_test_space;
   const wmeshspace_t *   	m_velocity_space;
   wmesh_int_t 			m_velocity_storage;
-  const wmesh_mat_t<T> *   	m_velocity;
   
   wmesh_cubature_info_t 	m_cubature_info;
   wmesh_shape_info_t 		m_shape_info_element;
   wmesh_shape_info_t 		m_shape_info_trial;
   wmesh_shape_info_t 		m_shape_info_test;
   wmesh_shape_info_t 		m_shape_info_velocity;
-  
+
+
+    wmesh_mat_t<T> 		m_velocity;
+
   wmesh_template_integral_convection_t<T> * m_integral_convection[WMESH_ELEMENT_ALL]{};
   wmesh_template_integral_flux_t<T> * m_integral_flux[WMESH_ELEMENT_ALL]{};
 
-
+  
   const wmesh_nodes_boundary_t<T>* nodes_boundary_trial[4]{};
   const wmesh_nodes_boundary_t<T>* nodes_boundary_test[4]{};
   const wmesh_nodes_boundary_t<T>* nodes_boundary_velocity[4]{};
@@ -200,7 +204,10 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
 			const wmeshspacedg_t * 		test_space_,
 			const wmeshspace_t * 		velocity_space_,
 			wmesh_int_t 			velocity_storage_,
-			const wmesh_mat_t<T> *   	velocity_,
+			wmesh_int_t 			velocity_m_,
+			wmesh_int_t 			velocity_n_,
+			double * __restrict__ 		velocity_,
+			wmesh_int_t 			velocity_ld_,
 			const wmesh_cubature_info_t& 	cubature_info_, 		
 			const wmesh_shape_info_t& 	shape_info_element_, 		
 			const wmesh_shape_info_t& 	shape_info_trial_,
@@ -211,13 +218,15 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
       m_test_space(test_space_),
       m_velocity_space(velocity_space_),
       m_velocity_storage(velocity_storage_),
-      m_velocity(velocity_),
       m_cubature_info(cubature_info_),
       m_shape_info_element(shape_info_element_),
       m_shape_info_trial(shape_info_trial_),
       m_shape_info_test(shape_info_test_),
       m_shape_info_velocity(shape_info_velocity_)
   {
+
+    wmesh_mat_t<T>::define(&this->m_velocity,velocity_m_,velocity_n_,velocity_,velocity_ld_);
+  
     const wmesh_int_t 	topodim = trial_space_->m_mesh->m_topology_dimension;      
     const wmesh_int_t 	ntypes 	= trial_space_->m_mesh->m_c2n.m_size;      
     wmesh_int_t facets_flags[WMESH_ELEMENT_ALL]{};
@@ -249,19 +258,14 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
 		  {
 		    facets_flags[i] = true;
 		    const wmesh_int_t  facet = facets[i];
-		    wmesh_cubature_info_t 	cubature_info_facet;
-		    status = wmesh_cubature_info_def(&cubature_info_facet,
-						     this->m_cubature_info.m_family,
-						     this->m_cubature_info.m_degree);
+		    wmesh_cubature_info_t 	cubature_info_facet(this->m_cubature_info);
 		    if (!status)
 		      {
 			
 		      }
 		    
-		    wmesh_shape_info_t 	shape_info_facet;
-		    status = wmesh_shape_info_def(&shape_info_facet,
-						  this->m_shape_info_element.m_family,
-						  this->m_shape_info_element.m_degree);
+		    wmesh_shape_info_t 	shape_info_facet(this->m_shape_info_element.m_family,
+							 this->m_shape_info_element.m_degree);
 		    if (!status)
 		      {
 			
@@ -581,7 +585,7 @@ csr_val_[k] = static_cast<T>(0);
 						   itype,
 						   idx_elm,
 						   this->m_velocity_storage,
-						   *this->m_velocity,
+						   this->m_velocity,
 						   data->m_dofs_velocity_storage,
 						   data->m_dofs_velocity);
 		WMESH_STATUS_CHECK(status);
@@ -1026,7 +1030,7 @@ csr_val_[k] = static_cast<T>(0);
 	  }
       }
     const wmesh_int_t dofs_velocity_storage  = WMESH_STORAGE_INTERLEAVE;
-    const wmesh_int_t dofs_velocity_m = (this->m_velocity_storage == WMESH_STORAGE_INTERLEAVE) ? this->m_velocity->m : this->m_velocity->n;
+    const wmesh_int_t dofs_velocity_m = (this->m_velocity_storage == WMESH_STORAGE_INTERLEAVE) ? this->m_velocity.m : this->m_velocity.n;
     const wmesh_int_t dofs_velocity_ld = dofs_velocity_m;
     T*__restrict__ dofs_velocity_data = (T*__restrict__)malloc(sizeof(T)*dofs_velocity_m*mx_ndofs_velocity);
     wmesh_mat_t<T> dofs_velocity;
@@ -1122,7 +1126,7 @@ csr_val_[k] = static_cast<T>(0);
 						   itype,
 						   idx_elm,
 						   this->m_velocity_storage,
-						   *this->m_velocity,
+						   this->m_velocity,
 						   dofs_velocity_storage,
 						   dofs_velocity);
 		WMESH_STATUS_CHECK(status);
@@ -1224,7 +1228,7 @@ csr_val_[k] = static_cast<T>(0);
 extern "C"
 {
 
-  wmesh_status_t wmeshspacedg_advection(const wmeshspacedg_t*__restrict__ 	self_,
+  wmesh_status_t wmeshspacedg_advection(const wmeshspacedg_t* 			self_,
 					const wmesh_cubature_info_t* 		cubature_info_, 		
 					const wmesh_shape_info_t* 		shape_info_element_, 		
 					const wmesh_shape_info_t* 		shape_info_trial_,
@@ -1232,20 +1236,29 @@ extern "C"
 					const wmesh_shape_info_t* 		shape_info_velocity_,
 					const wmeshspace_t *			velocity_space_,
 					wmesh_int_t 				velocity_storage_,
-					const wmesh_mat_t<double>* 		velocity_,
+					
+					wmesh_int_t 				velocity_m_,
+					wmesh_int_t 				velocity_n_,
+					double * __restrict__ 			velocity_,
+					wmesh_int_t 				velocity_ld_,
+					
 					wmesh_int_t				csr_size_,
 					const_wmesh_int_p			csr_ptr_,
 					const_wmesh_int_p			csr_ind_,
-					double * 				csr_val_,
-					double * 				rhs_)
+					double * __restrict__ 			csr_val_,
+					double * __restrict__ 			rhs_)
   {
     std::cout << "define pde data ..." << std::endl;
     auto start_time0 = std::chrono::high_resolution_clock::now();
+
     wmesh_pde_advection_t<double> pde_advection(self_,
 						self_,
 						velocity_space_,
 						velocity_storage_,
+						velocity_m_,
+						velocity_n_,
 						velocity_,
+						velocity_ld_,
 						*cubature_info_,
 						*shape_info_element_,
 						*shape_info_trial_,

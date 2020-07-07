@@ -5,7 +5,7 @@
 #include "wmesh-blas.hpp"
 #include <algorithm>
 #include "bms.h"
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include "wmesh_cubature_t.hpp"
 template<typename T>
 static  std::ostream& operator<<(std::ostream&out_,

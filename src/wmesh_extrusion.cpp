@@ -4,7 +4,7 @@
 #include "wmesh-status.h"
 #include <chrono>
 #include <iostream>
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include "GenericEncoding.hpp"
 #include "wmesh_utils.hpp"
 #include <math.h>

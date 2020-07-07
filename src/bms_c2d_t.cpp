@@ -1,7 +1,7 @@
 #include <limits>
 #include <iostream>
 #include <array>
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 
 //
 // (x,y) = r*(1,0) + s*(0,1)                 // 0,1,2   x=r       y=s        

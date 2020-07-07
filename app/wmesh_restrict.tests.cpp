@@ -5,7 +5,7 @@
 #include "wmesh-blas.hpp"
 #include <algorithm>
 #include "bms.h"
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include "wmesh-enums.hpp"
 #include "wmesh_shape_restrict_t.hpp"
 

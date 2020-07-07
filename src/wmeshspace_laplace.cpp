@@ -2,7 +2,7 @@
 #include <string.h>
 #include "wmesh-types.hpp"
 #include "wmesh-status.h"
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include <chrono>
 #include <iostream>
 #include "bms.h"
@@ -15,6 +15,7 @@
 #include "wmesh_shape_eval_factory_t.hpp"
 #include "wmesh_integral_diffusion_t.hpp"
 #include "bms.hpp"
+#include "wmeshspace_t.hpp"
 
 //template<typename T>
 //static  std::ostream& operator<<(std::ostream&out_,

@@ -54,7 +54,9 @@ cleandistrib:
 	rm -rf $(PLATFORM)-$(CC)
 	rm -rf $(PLATFORM)-$(CC)-debug
 	rm -f  lib/*.a
-	rm -f  lib/*~ *~ src/*~
+	rm -f  lib/*~ *~ src/*~ 
+	rm -f  src/include/*~
+	rm -f  include/*~
 	rm -f  bin/*
 
 clean:cleandistrib

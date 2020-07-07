@@ -5,7 +5,7 @@
 #include "wmesh_utils.hpp"
 
 #include <iostream>
-#include "wmesh.hpp"
+#include "wmesh_t.hpp"
 #include "GenericEncoding.hpp"
 
 

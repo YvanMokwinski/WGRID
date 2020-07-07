@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "wmesh.h"
+#include "wmeshspace.h"
 #include "cmdline.hpp"
 #include <iostream>
 #include "app.hpp"
@@ -162,11 +162,11 @@ int main(int argc, char ** argv)
   
   else
     {
-  wmesh_cubature_info_t 	cubature_info;
-  wmesh_shape_info_t		shape_info_element;	
-  wmesh_shape_info_t		shape_info_trial;	
-  wmesh_shape_info_t		shape_info_test;	
-  wmesh_shape_info_t		shape_info_a;	
+  wmesh_cubature_info_t* 	cubature_info;
+  wmesh_shape_info_t*		shape_info_element;	
+  wmesh_shape_info_t*		shape_info_trial;	
+  wmesh_shape_info_t*		shape_info_test;	
+  wmesh_shape_info_t*		shape_info_a;	
 
   wmesh_shape_info_def(&shape_info_a,WMESH_SHAPE_FAMILY_LAGRANGE,1);
   wmesh_shape_info_def(&shape_info_element,WMESH_SHAPE_FAMILY_LAGRANGE,1);
@@ -175,11 +175,11 @@ int main(int argc, char ** argv)
   wmesh_cubature_info_def(&cubature_info,WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE, ( (degree-1) + (degree-1) + 1 + 1));
   
    status = wmeshspace_laplace(meshspace,
-			       &cubature_info,
-			       &shape_info_element,
-			       &shape_info_trial,
-			       &shape_info_test,
-			       &shape_info_a,
+			       cubature_info,
+			       shape_info_element,
+			       shape_info_trial,
+			       shape_info_test,
+			       shape_info_a,
 			       csr_size,
 			       csr_ptr,
 			       csr_ind,
