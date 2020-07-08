@@ -45,7 +45,7 @@ extern "C"
     double cooelm_data[32];
     wmesh_mat_t<double> cooelm;
 
-    wmesh_shape_eval_t<double> shape_eval[4];
+    wmesh_shape_eval_t<double>* shape_eval[4];
     
     status = bms_topodim2elements(topodim,
 				  &num_types,
@@ -68,12 +68,11 @@ extern "C"
 					rmacro_coo,
 					rmacro_coo_ld);
 	    
-	    status = wmesh_shape_eval_def(&shape_eval[l],
-					  elements[l],				
-					  WMESH_SHAPE_FAMILY_LAGRANGE,
-					  1,
-					  WMESH_STORAGE_INTERLEAVE,
-					  &rmacro_coo_mat);
+	    shape_eval[l] = new wmesh_shape_eval_t<double>(elements[l],				
+							   WMESH_SHAPE_FAMILY_LAGRANGE,
+							   1,
+							   WMESH_STORAGE_INTERLEAVE,
+							   &rmacro_coo_mat);
 	    WMESH_STATUS_CHECK(status);	    
 
 	    
@@ -417,7 +416,7 @@ extern "C"
 				       WMESH_MAT_FORWARD(cooelm));
 	    WMESH_STATUS_CHECK(status);    
 	    
-	    wmesh_mat_gemm(static_cast<double>(1),cooelm, shape_eval[l].m_f, static_cast<double>(0), coomac);
+	    wmesh_mat_gemm(static_cast<double>(1),cooelm, shape_eval[l]->m_f, static_cast<double>(0), coomac);
 	    
 	    //
 	    // Copy.

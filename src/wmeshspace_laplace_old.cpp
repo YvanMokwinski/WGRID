@@ -34,11 +34,11 @@ static  std::ostream& operator<<(std::ostream&out_,
 template<typename T>
 struct wmesh_fem_laplace_t
 {
-  wmesh_cubature_t<T>  	m_cubature[WMESH_ELEMENT_ALL];
-  wmesh_shape_eval_t<T>	m_shape_eval_element[WMESH_ELEMENT_ALL];
-  wmesh_shape_eval_t<T>	m_shape_eval_f[WMESH_ELEMENT_ALL];
-  wmesh_shape_eval_t<T>	m_shape_eval_element_weighted[WMESH_ELEMENT_ALL];
-  wmesh_shape_eval_t<T>	m_shape_eval_f_weighted[WMESH_ELEMENT_ALL];
+  wmesh_cubature_t<T>*  	m_cubature[WMESH_ELEMENT_ALL];
+  wmesh_shape_eval_t<T>*	m_shape_eval_element[WMESH_ELEMENT_ALL];
+  wmesh_shape_eval_t<T>*	m_shape_eval_f[WMESH_ELEMENT_ALL];
+  wmesh_shape_eval_t<T>*	m_shape_eval_element_weighted[WMESH_ELEMENT_ALL];
+  wmesh_shape_eval_t<T>*	m_shape_eval_f_weighted[WMESH_ELEMENT_ALL];
 };
 
 template <typename T>
@@ -52,30 +52,25 @@ wmesh_status_t wmesh_fem_laplace_addelement(wmesh_fem_laplace_t<T> *	self_,
 				     wmesh_int_t 		cubature_degree_)
 {
   WMESH_CHECK_POINTER(self_);  
-  wmesh_status_t status;
-  status = wmesh_cubature_def(&self_->m_cubature[element_],
-			      element_,
-			      cubature_family_,
-			      cubature_degree_);
-  WMESH_STATUS_CHECK(status);
 
-  status = wmesh_shape_eval_def(&self_->m_shape_eval_element[element_],
-				element_,				
-				shape_element_family_,
-				shape_element_degree_,
-				self_->m_cubature[element_].m_c_storage,
-				&self_->m_cubature[element_].m_c,
-				&self_->m_cubature[element_].m_w);
-  WMESH_STATUS_CHECK(status);
+  self_->m_cubature[element_]  = new wmesh_cubature_t<T>(element_,
+							 cubature_family_,
+							 cubature_degree_);
+  
+  self_->m_shape_eval_element[element_] = new wmesh_shape_eval_t<T>(element_,				
+								    shape_element_family_,
+								    shape_element_degree_,
+								    self_->m_cubature[element_]->get_coordinates_storage(),
+								    &self_->m_cubature[element_]->get_coordinates(),
+								    &self_->m_cubature[element_]->get_weights());
 
-  status = wmesh_shape_eval_def(&self_->m_shape_eval_f[element_],
-				element_,				
-				shape_f_family_,
-				shape_f_degree_,
-				self_->m_cubature[element_].m_c_storage,
-				&self_->m_cubature[element_].m_c,
-				&self_->m_cubature[element_].m_w);
-  WMESH_STATUS_CHECK(status);
+  self_->m_shape_eval_f[element_] = new wmesh_shape_eval_t<T>(element_,				
+							      shape_f_family_,
+							      shape_f_degree_,
+							      self_->m_cubature[element_]->get_coordinates_storage(),
+							      &self_->m_cubature[element_]->get_coordinates(),
+							      &self_->m_cubature[element_]->get_weights());
+
   
   return WMESH_STATUS_SUCCESS;
 }
@@ -118,8 +113,8 @@ wmesh_status_t wmesh_fem_laplace_local_system_buffer_size(const wmesh_fem_laplac
 							  wmesh_int_t 					element_,							
 							  wmesh_int_p 					rw_n_)
 {
-  const wmesh_cubature_t<T>*__restrict__ 	cubature		= &self_->m_cubature[element_];
-  const wmesh_int_t 				q_n 			= cubature->m_w.n;
+  const wmesh_cubature_t<T>*__restrict__ 	cubature		= self_->m_cubature[element_];
+  const wmesh_int_t 				q_n 			= cubature->get_num_points();
   wmesh_status_t status;
   wmesh_int_t topodim;
   status = bms_element2topodim	(element_,
@@ -163,11 +158,12 @@ wmesh_status_t wmesh_fem_laplace_local_system(const wmesh_fem_laplace_t<T> *__re
       WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_WORKSPACE);       
     }
   
-  const wmesh_shape_eval_t<T> * __restrict__ 	shape_eval_element 	= &self_->m_shape_eval_element[element_];
-  const wmesh_shape_eval_t<T> * __restrict__	shape_eval_f 		= &self_->m_shape_eval_f[element_];
-  const wmesh_cubature_t<T>*__restrict__ 	cubature		= &self_->m_cubature[element_];
-  const wmesh_int_t 				q_n 			= cubature->m_w.n;
-  const T* __restrict__				q_w 			= cubature->m_w.v;  
+  const wmesh_shape_eval_t<T> * __restrict__ 	shape_eval_element 	= self_->m_shape_eval_element[element_];
+  const wmesh_shape_eval_t<T> * __restrict__	shape_eval_f 		= self_->m_shape_eval_f[element_];
+  const wmesh_cubature_t<T>*__restrict__ 	cubature		= self_->m_cubature[element_];
+  const wmesh_mat_t<T>& q_weights		= self_->m_cubature[element_]->get_weights();
+  const wmesh_int_t 				q_n 			= cubature->get_num_points();
+  const T* __restrict__				q_w 			= q_weights.v;  
   const wmesh_int_t 	topodim  					= cooelm_m_;
   const wmesh_int_t  	topodimXtopodim 				= topodim*topodim;;
   
@@ -727,10 +723,8 @@ extern "C"
     //
     // Initialize data.
     //
-    wmesh_fem_laplace_t<double> fem{};
+    wmesh_fem_laplace_t<double> fem;
     wmesh_status_t status;
-
-    
     wmesh_int_t ntypes;
     wmesh_int_t elements[4];
     status =  bms_topodim2elements(topodim,

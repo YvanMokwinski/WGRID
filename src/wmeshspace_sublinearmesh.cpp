@@ -18,7 +18,165 @@
 #include "wmeshspace_t.hpp"
 
 using namespace std::chrono;
+#if 0
+template<typename T>
+wmesh_status_t wmeshspace_generate_element_coodofs(const wmeshspace_t * __restrict__ 	self_,
+						   wmesh_int_t 				element_type_,
+						   wmesh_int_t 				element_idx_,
+						   wmesh_int_t 				cooelm_storage_,
+						   const wmesh_mat_t<T>& 		cooelm_,
+						   wmesh_int_t 				coodofs_storage_,
+						   wmesh_mat_t<T>& 			coodofs_)
+{
+  static constexpr T r0 = static_cast<T>(0);
+  static constexpr T r1 = static_cast<T>(1);
+  
+  wmesh_mat_gemm(shape_eval_element->m_storage,
+		 cooelm_storage_,
+		 coodofs_storage_,
+		 r1,
+		 shape_eval_element->m_f,
+		 cooelm_,
+		 r0,
+		 coodofs_);
 
+  
+  wmesh_status_t 	status;
+  const wmesh_t * 	mesh 	= self_->get_mesh();
+  wmesh_int_t         topodim = mesh->m_topology_dimension;
+  wmesh_int_t 	coo_m  	= mesh->m_coo_m;
+  
+  wmesh_int_t 	num_types;
+  wmesh_int_t 	elements[4];
+  T 		cell_xyz[32];
+  wmesh_int_t 	cell_xyz_ld = coo_m;
+  wmesh_mat_t<T> eval_basis[4];
+
+  status = bms_topodim2elements(topodim,
+				&num_types,
+				elements);
+  WMESH_STATUS_CHECK(status);        
+  for (wmesh_int_t l=0;l<num_types;++l)
+    {
+      if (mesh->m_c2n.m_n[l]>0)
+	{
+	  wmesh_int_t element = (topodim==3) ? (4+l) : ((topodim==2)? (2+l) : 1+l);
+	  wmesh_int_t element_num_nodes;
+
+	  status = bms_elements_num_nodes(1,&element,&element_num_nodes);
+	  WMESH_STATUS_CHECK(status);        
+	    
+	  const wmesh_t* 	rmacro			= self_->get_refinement_pattern(l);
+	  const T * 		rmacro_coo 		= rmacro->m_coo;
+	  wmesh_int_t 		rmacro_coo_ld 		= rmacro->m_coo_ld;
+	  wmesh_int_t 		rmacro_num_nodes 	= rmacro->m_num_nodes;
+	  const wmesh_int_t  	mat_rmacro_coo_storage = WMESH_STORAGE_INTERLEAVE;
+	  wmesh_mat_t<T> mat_rmacro_coo;
+	  wmesh_mat_t<T>::define(&mat_rmacro_coo,topodim,rmacro_num_nodes,(T*)rmacro_coo,rmacro_coo_ld);
+
+	  const wmesh_int_t  	eval_basis_storage = WMESH_STORAGE_INTERLEAVE;
+	  wmesh_mat_t<T>::alloc(&eval_basis[l], element_num_nodes, rmacro_num_nodes);
+
+	  wmesh_shape_t shape_element(element, WMESH_SHAPE_FAMILY_LAGRANGE, 1);
+	    
+	  wmesh_shape_calculate_eval(shape_element,
+				     mat_rmacro_coo_storage,
+				     mat_rmacro_coo,
+				     eval_basis_storage,
+				     eval_basis[l]);
+	}
+
+    }
+    
+  wmesh_int_t rw_n = 0;
+  for (wmesh_int_t l=0;l<self_->m_c2d.m_size;++l)
+    {
+      wmesh_int_t k = self_->m_c2d.m_m[l]*topodim;
+      rw_n = (rw_n < k) ? k : rw_n;
+    }
+  T * rw = (T*)malloc(sizeof(T)*rw_n);
+  for (wmesh_int_t l=0;l<self_->m_c2d.m_size;++l)
+    {
+      //	double * 	refeval = refevals[l];
+	
+      //
+      // Local c2d.
+      //	    
+      // wmesh_int_t c2d_n	= self_->m_c2d.m_n[l];
+      wmesh_int_t c2d_m 		= self_->m_c2d.m_m[l];
+      wmesh_int_t c2d_ld 		= self_->m_c2d.m_ld[l];
+      wmesh_int_p c2d_v 		= self_->m_c2d.m_data + self_->m_c2d.m_ptr[l];
+	
+      //
+      // Local c2n.
+      //
+      wmesh_int_t c2n_n 		= mesh->m_c2n.m_n[l];
+      wmesh_int_t c2n_m 		= mesh->m_c2n.m_m[l];
+      wmesh_int_t c2n_ld		= mesh->m_c2n.m_ld[l];
+      wmesh_int_p c2n_v 		= mesh->m_c2n.m_data + mesh->m_c2n.m_ptr[l];
+	
+      for (wmesh_int_t j=0;j<c2n_n;++j)
+	{
+	    
+	  //
+	  // Get the coordinates of the cell.
+	  //		
+	  for (wmesh_int_t i=0;i<c2n_m;++i)
+	    {
+	      wmesh_int_t idx = c2n_v[c2n_ld * j + i] - 1;
+	      for (wmesh_int_t k=0;k<mesh->m_coo_m;++k)
+		{
+		  cell_xyz[cell_xyz_ld * i + k] = mesh->m_coo[mesh->m_coo_ld * idx + k];
+		}
+	    }
+
+	  //	    wmesh_mat_gemm(static_cast<T>(1),cell_xyz,eval_basis[l],static_cast<T>(0),physical_coordinates);
+	    
+	  xgemm("N",
+		"N",
+		&coo_m ,
+		&c2d_m,
+		&c2n_m ,
+		&r1,
+		cell_xyz,
+		&cell_xyz_ld,
+		eval_basis[l].v,
+		&eval_basis[l].ld,
+		&r0,
+		rw,
+		&coo_m);
+
+	  //
+	  // Copy.
+	  //
+	  if (WMESH_STORAGE_INTERLEAVE == coo_storage_)
+	    {
+	      for (wmesh_int_t i=0;i<c2d_m;++i)
+		{
+		  wmesh_int_t idx = c2d_v[c2d_ld * j + i] - 1;
+		  for (wmesh_int_t k = 0;k<coo_m;++k)
+		    {
+		      coo_[coo_ld_ * idx + k] = rw[coo_m * i + k];
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (wmesh_int_t i=0;i<c2d_m;++i)
+		{
+		  wmesh_int_t idx = c2d_v[c2d_ld * j + i] - 1;
+		  for (wmesh_int_t k = 0;k<coo_m;++k)
+		    {
+		      coo_[coo_ld_ * k + idx] = rw[coo_m * i + k];
+		    }
+		}
+	    }	    
+	}
+    }
+  return WMESH_STATUS_SUCCESS;
+};
+
+#endif
 template<typename T>
 wmesh_status_t wmeshspace_generate_coodofs(const wmeshspace_t * __restrict__ 	self_,
 					   wmesh_int_t 				coo_storage_,
@@ -29,11 +187,11 @@ wmesh_status_t wmeshspace_generate_coodofs(const wmeshspace_t * __restrict__ 	se
 {    
   static constexpr T r0 = static_cast<T>(0);
   static constexpr T r1 = static_cast<T>(1);
-    wmesh_status_t 	status;
-    const wmesh_t * 	mesh 	= self_->get_mesh();
-    wmesh_int_t         topodim = mesh->m_topology_dimension;
-    wmesh_int_t 	coo_m  	= mesh->m_coo_m;
-    
+  wmesh_status_t 	status;
+  const wmesh_t * 	mesh 	= self_->get_mesh();
+  wmesh_int_t         topodim = mesh->m_topology_dimension;
+  wmesh_int_t 	coo_m  	= mesh->m_coo_m;
+  
     wmesh_int_t 	num_types;
     wmesh_int_t 	elements[4];
     T 		cell_xyz[32];
@@ -64,8 +222,9 @@ wmesh_status_t wmeshspace_generate_coodofs(const wmeshspace_t * __restrict__ 	se
 
 	    const wmesh_int_t  	eval_basis_storage = WMESH_STORAGE_INTERLEAVE;
 	    wmesh_mat_t<T>::alloc(&eval_basis[l], element_num_nodes, rmacro_num_nodes);
-	    wmesh_shape_t shape_element;
-	    wmesh_shape_def(&shape_element,element,WMESH_SHAPE_FAMILY_LAGRANGE,1);
+
+	    wmesh_shape_t shape_element(element, WMESH_SHAPE_FAMILY_LAGRANGE, 1);
+	    
 	    wmesh_shape_calculate_eval(shape_element,
 				       mat_rmacro_coo_storage,
 				       mat_rmacro_coo,

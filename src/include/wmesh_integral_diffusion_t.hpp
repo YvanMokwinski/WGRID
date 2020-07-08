@@ -24,6 +24,12 @@ struct wmesh_template_integral_diffusion_t
     wmesh_int_t 	m_q_jacobians_storage;
     wmesh_mat_t<T>	m_q_jacobians;
 
+    wmesh_int_t		m_test_coodofs_storage;
+    wmesh_mat_t<T> 	m_test_coodofs;
+
+    wmesh_int_t		m_bc_dirichlet_storage;
+    wmesh_mat_t<T> 	m_bc_dirichlet;
+    
     wmesh_mat_t<T>	m_q_jacobians_det;
     wmesh_mat_t<T> 	m_build_rhs;
     wmesh_mat_t<T> 	m_local_matrix;
@@ -34,7 +40,6 @@ struct wmesh_template_integral_diffusion_t
   };
 
   wmesh_int_t 			m_element;
-  wmesh_int_t 			m_topodim;
   wmesh_shape_t 		m_shape_element;
   wmesh_shape_t 		m_shape_a;
   wmesh_shape_t 		m_shape_trial;
@@ -48,6 +53,7 @@ struct wmesh_template_integral_diffusion_t
 
   wmesh_int_t 			m_build_storage;
   wmesh_mat_t<T> 		m_build;
+  wmesh_int_t 			m_topodim;
   
   wmesh_template_integral_diffusion_t(wmesh_int_t 				element_,
 				      const wmesh_cubature_info_t& 		cubature_info_,

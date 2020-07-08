@@ -53,16 +53,9 @@ public:
     wmesh_cubature_t<T>*cubature = nullptr;
     if (ret == instance().s_map.end())
       {
-	cubature = (wmesh_cubature_t<T>*)malloc(sizeof(wmesh_cubature_t<T>));
-	wmesh_status_t status = wmesh_cubature_def(cubature,
-				    cubature_element_,
-				    cubature_family_,
-				    cubature_degree_);
-	if (status != WMESH_STATUS_SUCCESS)
-	  {
-	    std::cerr << "wmesh_cubature_def error" << std::endl;
-	    exit(1);
-	  }
+	cubature = new wmesh_cubature_t<T>(cubature_element_,
+					   cubature_family_,
+					   cubature_degree_);
 	auto ret_insert = instance().s_map.insert(std::pair<wmesh_int_t,wmesh_cubature_t<T>*>(cubature_uniqueid, cubature));
 	if (ret_insert.second == false)
 	  {

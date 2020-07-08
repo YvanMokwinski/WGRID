@@ -461,18 +461,15 @@ status = app_str2element(element_name,
   }
   
   
-  wmesh_cubature_t<double> cubature;
- status =  wmesh_cubature_def(&cubature,
-					      element,
-					      WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE,
-					      degree);
- 
-  WMESH_STATUS_CHECK(status);
-    std::cout << cubature.m_w << std::endl;
+  wmesh_cubature_t<double> cubature(element,
+			       WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE,
+			       degree);
+  auto q_weights = cubature.get_weights();
+  std::cout << q_weights << std::endl;
   double fd = 0;
-  for (wmesh_int_t i=0;i<cubature.m_w.n;++i)
+  for (wmesh_int_t i=0;i<q_weights.n;++i)
     {
-      fd += cubature.m_w.v[i];
+      fd += q_weights.v[i];
     }
   std::cout << "sum weights " << fd << std::endl;
   

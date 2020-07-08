@@ -12,46 +12,18 @@
 #include "wmesh_cubature_t.hpp"
 #include "wmesh_cubature_info_t.hpp"
 
-extern "C"
-{
-
-  wmesh_status_t wmesh_cubature_info_def(wmesh_cubature_info_t**__restrict__ 			self__,
-				      wmesh_int_t 						family_,
-				      wmesh_int_t 						degree_)
-  {
-    self__[0] = new wmesh_cubature_info_t(family_, degree_);
-    return WMESH_STATUS_SUCCESS;
-  };
-  
-  wmesh_status_t wmesh_cubature_info_get_family	(const wmesh_cubature_info_t*__restrict__ 	self_,
-						 wmesh_int_p 					family_)
-  {
-    family_[0] = self_->get_family();
-    return WMESH_STATUS_SUCCESS;
-  };
-  
-  wmesh_status_t wmesh_cubature_info_get_degree	(const wmesh_cubature_info_t*__restrict__ 	self_,
-						 wmesh_int_p 					degree_)
-  {
-    degree_[0] = self_->get_degree();
-    return WMESH_STATUS_SUCCESS;
-  };
-
-}
-
 template<typename T>
-wmesh_status_t wmesh_cubature_def(wmesh_cubature_t<T>*__restrict__ self_,
-				  wmesh_int_t 		element_,
-				  wmesh_int_t 		family_,
-				  wmesh_int_t 		degree_)
+wmesh_cubature_t<T>::wmesh_cubature_t(wmesh_int_t 		element_,
+				   wmesh_int_t 		family_,
+				   wmesh_int_t 		degree_)
 {
   wmesh_int_t rw_n;
   T * __restrict__ rw;
   
-  memset(self_,0,sizeof(wmesh_cubature_t<T>));
-  self_->m_element 	= element_;
-  self_->m_family 	= family_;
-  self_->m_degree 	= degree_;
+
+  this->m_element 	= element_;
+  this->m_family 	= family_;
+  this->m_degree 	= degree_;
   wmesh_status_t status;
   
   wmesh_int_t topodim;
@@ -63,24 +35,24 @@ wmesh_status_t wmesh_cubature_def(wmesh_cubature_t<T>*__restrict__ self_,
 				  family_,
 				  degree_,
 				  &num_nodes1d);
-  WMESH_STATUS_CHECK(status);
+  WMESH_STATUS_CHECK_EXIT(status);
 
   wmesh_int_t num_nodes;    
   status = bms_cubature_num_nodes(element_,
 				  family_,
 				  degree_,
 				  &num_nodes);
-  WMESH_STATUS_CHECK(status);
+  WMESH_STATUS_CHECK_EXIT(status);
 
-  self_->m_c_storage = WMESH_STORAGE_INTERLEAVE;	      
+  this->m_c_storage = WMESH_STORAGE_INTERLEAVE;	      
   
-  wmesh_mat_t<T>::define(&self_->m_c,
+  wmesh_mat_t<T>::define(&this->m_c,
 			 topodim,
 			 num_nodes,
 			 (T*)malloc(sizeof(T) * topodim * num_nodes),
 			 topodim);
   
-  wmesh_mat_t<T>::define(&self_->m_w,
+  wmesh_mat_t<T>::define(&this->m_w,
 			 1,
 			 num_nodes,
 			 (T*)malloc(sizeof(T) * 1 * num_nodes),
@@ -90,37 +62,56 @@ wmesh_status_t wmesh_cubature_def(wmesh_cubature_t<T>*__restrict__ self_,
 				    family_,
 				    num_nodes1d,			
 				    &rw_n);
-  WMESH_STATUS_CHECK(status);
+  WMESH_STATUS_CHECK_EXIT(status);
   
   rw = (rw_n > 0) ? (T*)malloc(sizeof(T)*rw_n) : nullptr;
   if (rw_n > 0 && !rw)
     {
-      WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
+      WMESH_STATUS_CHECK_EXIT(WMESH_STATUS_ERROR_MEMORY);
     }
 
   status = bms_template_cubature(element_,
 				 family_,
 				 num_nodes1d,
 				 
-				 self_->m_c_storage,
-				 self_->m_c.m,
-				 self_->m_c.n,
-				 self_->m_c.v,
-				 self_->m_c.ld,
+				 this->m_c_storage,
+				 this->m_c.m,
+				 this->m_c.n,
+				 this->m_c.v,
+				 this->m_c.ld,
 				 
-				 self_->m_w.n,
-				 self_->m_w.v,
-				 self_->m_w.ld,
+				 this->m_w.n,
+				 this->m_w.v,
+				 this->m_w.ld,
 				 
 				 rw_n,
 				 rw);
   
-  WMESH_STATUS_CHECK(status);
+  WMESH_STATUS_CHECK_EXIT(status);
   if (rw)
     {
       free(rw);
     }
   rw = nullptr;  
+
+};
+
+template
+struct wmesh_cubature_t<double>;
+
+template
+struct wmesh_cubature_t<float>;
+
+#if 0
+template<typename T>
+wmesh_status_t wmesh_cubature_def(wmesh_cubature_t<T>**__restrict__ 	self__,
+				  wmesh_int_t 				element_,
+				  wmesh_int_t 				family_,
+				  wmesh_int_t 				degree_)
+{
+  self__[0] = new wmesh_cubature<T>(element_,
+				    family_,
+				    degree_)
   return WMESH_STATUS_SUCCESS;
 }
 
@@ -132,6 +123,7 @@ wmesh_status_t wmesh_cubature_def<float>(wmesh_cubature_t<float>*__restrict__ 	s
 
 template
 wmesh_status_t wmesh_cubature_def<double>(wmesh_cubature_t<double>*__restrict__ 	self_,
-					 wmesh_int_t 					element_,
-					 wmesh_int_t 					family_,
-					 wmesh_int_t 					degree_);
+					  wmesh_int_t 					element_,
+					  wmesh_int_t 					family_,
+					  wmesh_int_t 					degree_);
+#endif

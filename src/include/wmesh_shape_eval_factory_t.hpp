@@ -54,24 +54,25 @@ public:
 		   element_,
 		   shape_family_,
 		   shape_degree_);
+#if 0
+    std::cout << "shape_eval_instance element "  << element_ << std::endl;
+    std::cout << "shape_eval_instance family "  << shape_family_ << std::endl;
+    std::cout << "shape_eval_instance degree "  << shape_degree_ << std::endl;
+#endif
     
     auto ret = instance().s_map.find(key_t(shape_eval_uniqueid, matdescr_t(nodes_storage_,nodes_)));
     wmesh_shape_eval_t<T>*shape_eval = nullptr;
     if (ret == instance().s_map.end())
       {
-	shape_eval = (wmesh_shape_eval_t<T>*)malloc(sizeof(wmesh_shape_eval_t<T>));
-	wmesh_status_t status = wmesh_shape_eval_def(shape_eval,
-						     element_,
-						     shape_family_,
-						     shape_degree_,
-						     nodes_storage_,
-						     nodes_);
+#if 0
+	std::cout << "create shape eval"  << std::endl;
+#endif
+	shape_eval = new wmesh_shape_eval_t<T>(element_,
+					       shape_family_,
+					       shape_degree_,
+					       nodes_storage_,
+					       nodes_);
 	
-	if (status != WMESH_STATUS_SUCCESS)
-	  {
-	    std::cerr << "wmesh_shape_eval_def error" << std::endl;
-	    exit(1);
-	  }
 	auto ret_insert = instance().s_map.insert(std::pair<key_t,wmesh_shape_eval_t<T>*>( key_t(shape_eval_uniqueid, matdescr_t(nodes_storage_, nodes_)), shape_eval));
 	if (ret_insert.second == false)
 	  {
@@ -103,20 +104,20 @@ public:
 							  const wmesh_cubature_t<T> * 	cubature_)
   {
     
-    return shape_eval_instance(element_,shape_info_.m_family,shape_info_.m_degree,cubature_->m_c_storage, &cubature_->m_c);
+    return shape_eval_instance(element_,shape_info_.m_family,shape_info_.m_degree,cubature_->get_coordinates_storage(), &cubature_->get_coordinates());
   }
 
 
   static const wmesh_shape_eval_t<T>* shape_eval_instance(wmesh_shape_t& shape_,
 							  const wmesh_nodes_t<T> * 	nodes_)
   {
-    return shape_eval_instance(shape_.m_element,shape_.m_family,shape_.m_degree,nodes_->m_c_storage, &nodes_->m_c);
+    return shape_eval_instance(shape_.get_element(),shape_.get_family(),shape_.get_degree(),nodes_->m_c_storage, &nodes_->m_c);
   }
   
   static const wmesh_shape_eval_t<T>* shape_eval_instance(wmesh_shape_t&shape_,
 							  const wmesh_cubature_t<T> * 	cubature_)
   {
-    return shape_eval_instance(shape_.m_element,shape_.m_family,shape_.m_degree,cubature_->m_c_storage, &cubature_->m_c);
+    return shape_eval_instance(shape_.get_element(),shape_.get_family(),shape_.get_degree(),cubature_->get_coordinates_storage(), &cubature_->get_coordinates());
   }
 
   

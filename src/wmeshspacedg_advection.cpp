@@ -264,8 +264,8 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
 			
 		      }
 		    
-		    wmesh_shape_info_t 	shape_info_facet(this->m_shape_info_element.m_family,
-							 this->m_shape_info_element.m_degree);
+		    wmesh_shape_info_t 	shape_info_facet(this->m_shape_info_element.get_family(),
+							 this->m_shape_info_element.get_degree());
 		    if (!status)
 		      {
 			
@@ -293,20 +293,20 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
 	  {	    
 	    const wmesh_int_t element = (topodim==3) ? (4+itype) : ( (topodim==2) ? 2+itype : 1+itype );	   
 	    nodes_boundary_trial[itype] = wmesh_nodes_boundary_factory_t<T>::nodes_boundary_instance	(element,
-													 this->m_integral_convection[element]->m_shape_trial.m_nodes_family,
-													 this->m_integral_convection[element]->m_shape_trial.m_degree);
+													 this->m_integral_convection[element]->m_shape_trial.get_nodes_family(),
+													 this->m_integral_convection[element]->m_shape_trial.get_degree());
 	    
 	    nodes_boundary_test[itype] = wmesh_nodes_boundary_factory_t<T>::nodes_boundary_instance	(element,
-													 this->m_integral_convection[element]->m_shape_test.m_nodes_family,
-													 this->m_integral_convection[element]->m_shape_test.m_degree);
+													 this->m_integral_convection[element]->m_shape_test.get_nodes_family(),
+													 this->m_integral_convection[element]->m_shape_test.get_degree());
 	    
 	    nodes_boundary_velocity[itype] = wmesh_nodes_boundary_factory_t<T>::nodes_boundary_instance	(element,
-													 this->m_integral_convection[element]->m_shape_velocity.m_nodes_family,
-													 this->m_integral_convection[element]->m_shape_velocity.m_degree);
+													 this->m_integral_convection[element]->m_shape_velocity.get_nodes_family(),
+													 this->m_integral_convection[element]->m_shape_velocity.get_degree());
 	    
 	    nodes_boundary_element[itype] = wmesh_nodes_boundary_factory_t<T>::nodes_boundary_instance	(element,
-													 this->m_integral_convection[element]->m_shape_element.m_nodes_family,
-													 this->m_integral_convection[element]->m_shape_element.m_degree);
+													 this->m_integral_convection[element]->m_shape_element.get_nodes_family(),
+													 this->m_integral_convection[element]->m_shape_element.get_degree());
 	    
 	  }
       }
@@ -335,8 +335,8 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
 		for (wmesh_int_t irot=0;irot < 2*n;++irot)
 		  {
 		    shape_eval_boundary_element[ifacet][irot] = wmesh_shape_eval_factory_t<T>::shape_eval_instance(element,
-														   this->m_integral_convection[element]->m_shape_element.m_family,
-														   this->m_integral_convection[element]->m_shape_element.m_degree,
+														   this->m_integral_convection[element]->m_shape_element.get_family(),
+														   this->m_integral_convection[element]->m_shape_element.get_degree(),
 														   nodes_boundary_element[itype]->m_facets_nodes_storage,
 														   &nodes_boundary_element[itype]->m_facets_nodes[ifacet][irot]);
 		  }
@@ -344,8 +344,8 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
 		for (wmesh_int_t irot=0;irot < 2*n;++irot)
 		  {
 		    shape_eval_boundary_trial[ifacet][irot] = wmesh_shape_eval_factory_t<T>::shape_eval_instance(element,
-														 this->m_integral_convection[element]->m_shape_trial.m_family,
-														 this->m_integral_convection[element]->m_shape_trial.m_degree,
+														 this->m_integral_convection[element]->m_shape_trial.get_family(),
+														 this->m_integral_convection[element]->m_shape_trial.get_degree(),
 														 nodes_boundary_trial[itype]->m_facets_nodes_storage,
 														 &nodes_boundary_trial[itype]->m_facets_nodes[ifacet][irot]);
 		  }
@@ -353,8 +353,8 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
 		for (wmesh_int_t irot=0;irot < 2*n;++irot)
 		  {
 		    shape_eval_boundary_velocity[ifacet][irot] = wmesh_shape_eval_factory_t<T>::shape_eval_instance(element,
-														    this->m_integral_convection[element]->m_shape_velocity.m_family,
-														    this->m_integral_convection[element]->m_shape_velocity.m_degree,
+														    this->m_integral_convection[element]->m_shape_velocity.get_family(),
+														    this->m_integral_convection[element]->m_shape_velocity.get_degree(),
 														    nodes_boundary_velocity[itype]->m_facets_nodes_storage,
 														    &nodes_boundary_velocity[itype]->m_facets_nodes[ifacet][irot]);
 		  }
@@ -362,8 +362,8 @@ struct wmesh_pde_advection_t : public wmesh_pde_t< wmesh_pde_advection_t<T>, T >
 		for (wmesh_int_t irot=0;irot < 2*n;++irot)
 		  {
 		    shape_eval_boundary_test[ifacet][irot] = wmesh_shape_eval_factory_t<T>::shape_eval_instance(element,
-														 this->m_integral_convection[element]->m_shape_test.m_family,
-														 this->m_integral_convection[element]->m_shape_test.m_degree,
+														 this->m_integral_convection[element]->m_shape_test.get_family(),
+														 this->m_integral_convection[element]->m_shape_test.get_degree(),
 														 nodes_boundary_test[itype]->m_facets_nodes_storage,
 														 &nodes_boundary_test[itype]->m_facets_nodes[ifacet][irot]);
 		  }
@@ -838,8 +838,8 @@ csr_val_[k] = static_cast<T>(0);
 
 		    wmesh_int_t nei_element 	= (topodim==3) ? (4 + nei_type) : ( (topodim==2) ? (2+nei_type) : (1+nei_type) );
 		    auto * a = wmesh_shape_eval_factory_t<T>::shape_eval_instance(nei_element,
-										  this->m_integral_convection[nei_element]->m_shape_trial.m_family,
-										  this->m_integral_convection[nei_element]->m_shape_trial.m_degree,
+										  this->m_integral_convection[nei_element]->m_shape_trial.get_family(),
+										  this->m_integral_convection[nei_element]->m_shape_trial.get_degree(),
 										  nodes_boundary_trial[nei_type]->m_facets_nodes_storage,
 										  &nodes_boundary_trial[nei_type]->m_facets_nodes[nei_facet_lidx][signed_rotation]);
 		    

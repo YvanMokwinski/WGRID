@@ -16,38 +16,19 @@ wmesh_template_integral_convection_t<T>::wmesh_template_integral_convection_t(wm
 									      const wmesh_shape_info_t& 		shape_info_element_,
 									      const wmesh_shape_info_t& 		shape_info_velocity_,
 									      const wmesh_shape_info_t& 		shape_info_trial_,
-									    const wmesh_shape_info_t& 		shape_info_test_)
+									      const wmesh_shape_info_t& 		shape_info_test_)
+: m_shape_element(element_,shape_info_element_),
+  m_shape_velocity(element_,shape_info_velocity_),
+  m_shape_trial(element_,shape_info_trial_),
+  m_shape_test(element_,shape_info_test_)
+  
 {
   wmesh_status_t status;
-  
-  status = wmesh_shape_def(&this->m_shape_element,
-			   element_,
-			   shape_info_element_.m_family,
-			   shape_info_element_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
-  
-  status = wmesh_shape_def(&this->m_shape_velocity,
-			   element_,
-			   shape_info_velocity_.m_family,
-			   shape_info_velocity_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
-  
-  status = wmesh_shape_def(&this->m_shape_trial,
-			   element_,
-			   shape_info_trial_.m_family,
-			   shape_info_trial_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
-
-  status = wmesh_shape_def(&this->m_shape_test,
-			   element_,
-			   shape_info_test_.m_family,
-			   shape_info_test_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
 
   wmesh_int_t topodim;
   status = bms_element2topodim(element_,
 			       &topodim);  
-  WMESH_STATUS_CHECK_FAIL(status);
+  WMESH_STATUS_CHECK_EXIT(status);
   this->m_topodim = topodim;
 
   
@@ -68,10 +49,10 @@ wmesh_template_integral_convection_t<T>::wmesh_template_integral_convection_t(wm
 												 this->m_cubature);
   
   this->m_build_storage 		= WMESH_STORAGE_INTERLEAVE;
-  
-  const wmesh_int_t q_n 	= this->m_cubature->m_w.n;
-  const wmesh_int_t test_ndofs 	= this->m_shape_test.m_ndofs;
-  const wmesh_int_t trial_ndofs = this->m_shape_trial.m_ndofs;
+  const wmesh_mat_t<T>& q_weights 	= this->m_cubature->get_weights();	    
+  const wmesh_int_t q_n 	= q_weights.n;
+  const wmesh_int_t test_ndofs 	= this->m_shape_test.get_ndofs();
+  const wmesh_int_t trial_ndofs = this->m_shape_trial.get_ndofs();
 
   wmesh_mat_t<T>::alloc(&this->m_build,
 			test_ndofs * trial_ndofs,
@@ -88,7 +69,7 @@ wmesh_template_integral_convection_t<T>::wmesh_template_integral_convection_t(wm
 
   for (wmesh_int_t k=0;k<q_n;++k)
     {
-      const T wk = this->m_cubature->m_w.v[this->m_cubature->m_w.ld*k];
+      const T wk = q_weights.v[q_weights.ld*k];
       const T * __restrict__  test_i = this->m_shape_eval_test->m_f.v + this->m_shape_eval_test->m_f.ld * k;
       for (wmesh_int_t idim=0;idim<topodim;++idim)
 	{
@@ -113,11 +94,11 @@ wmesh_template_integral_convection_t<T>::data_t::data_t(const wmesh_template_int
 {
 
   
-  const wmesh_int_t q_n 		= parent_.m_cubature->m_w.n;
-  const wmesh_int_t ndofs_velocity 	= parent_.m_shape_velocity.m_ndofs;
-  const wmesh_int_t ndofs_element 	= parent_.m_shape_element.m_ndofs;
-  const wmesh_int_t ndofs_test 		= parent_.m_shape_test.m_ndofs;
-  const wmesh_int_t ndofs_trial 	= parent_.m_shape_trial.m_ndofs;
+  const wmesh_int_t q_n 		= parent_.m_cubature->get_num_points();
+  const wmesh_int_t ndofs_velocity 	= parent_.m_shape_velocity.get_ndofs();
+  const wmesh_int_t ndofs_element 	= parent_.m_shape_element.get_ndofs();
+  const wmesh_int_t ndofs_test 		= parent_.m_shape_test.get_ndofs();
+  const wmesh_int_t ndofs_trial 	= parent_.m_shape_trial.get_ndofs();
   const wmesh_int_t topodim 		= parent_.m_topodim;
   
   this->m_dofs_element_storage  = WMESH_STORAGE_INTERLEAVE;
@@ -188,8 +169,8 @@ wmesh_status_t wmesh_template_integral_convection_t<T>::eval(wmesh_template_inte
   const T r1 			= static_cast<T>(1);
   const T r0 			= static_cast<T>(0);
 
-  
-  const wmesh_int_t q_n 	= this->m_cubature->m_w.n;
+
+  const wmesh_int_t q_n 	= this->m_cubature->get_num_points();
   const wmesh_int_t topodim 	= this->m_topodim;
 
   //

@@ -17,20 +17,20 @@
 #include "bms.hpp"
 #include "wmeshspace_t.hpp"
 
-//template<typename T>
-//static  std::ostream& operator<<(std::ostream&out_,
-//				 const wmesh_mat_t<T>&that_)
-//{
-//  for (wmesh_int_t i=0;i<that_.m;++i)
-//    {
-//      for (wmesh_int_t j=0;j<that_.n;++j)
-//	{
-//	  out_ << " " << that_.v[that_.ld * j + i];
-//	}
-//      out_ << std::endl;
-//    }
-//  return out_;
-//};
+template<typename T>
+static  std::ostream& operator<<(std::ostream&out_,
+				 const wmesh_mat_t<T>&that_)
+{
+  for (wmesh_int_t i=0;i<that_.m;++i)
+    {
+      for (wmesh_int_t j=0;j<that_.n;++j)
+	{
+	  out_ << " " << that_.v[that_.ld * j + i];
+	}
+      out_ << std::endl;
+    }
+  return out_;
+};
 
 
 template<typename IMPL, typename T>
@@ -55,6 +55,7 @@ struct wmesh_pde_t
     return static_cast<IMPL&>(*this).residual(rhs_,
 					      rhs_inc_);
   };
+
   
 };
 
@@ -104,6 +105,8 @@ struct wmesh_pde_laplace_t : public wmesh_pde_t< wmesh_pde_laplace_t<T>, T >
 	  }
       }    
   };
+
+
   
   wmesh_status_t jacobian(wmesh_int_t			csr_size_,
 			  const_wmesh_int_p		csr_ptr_,
@@ -185,17 +188,6 @@ struct wmesh_pde_laplace_t : public wmesh_pde_t< wmesh_pde_laplace_t<T>, T >
 							 WMESH_MAT_FORWARD(data->m_dofs_element));
 		WMESH_STATUS_CHECK(status);
 		
-#if 0
-		//
-		// Extract coeffs.
-		//
-		status = wmeshspace_get_dofselm(this->m_a_space,
-						itype,
-						idx_ielm,
-						coeffs_storage,
-						WMESH_MAT_FORWARD(coeffs));
-		WMESH_STATUS_CHECK(status);
-#endif
 		
 		//
 		// Compute local matrix.
@@ -203,11 +195,6 @@ struct wmesh_pde_laplace_t : public wmesh_pde_t< wmesh_pde_laplace_t<T>, T >
 		status = this->m_integral_diffusion[element]->eval(*data,
 								   static_cast<T>(0),
 								   data->m_local_matrix);
-#if 0
-		std::cout << "local matrix" <<std::endl;
-		std::cout << data->m_local_matrix << std::endl;
-		exit(1);
-#endif
 		//
 		// Add the local matrix.
 		//
@@ -276,57 +263,64 @@ struct wmesh_pde_laplace_t : public wmesh_pde_t< wmesh_pde_laplace_t<T>, T >
   wmesh_status_t residual(T * __restrict__		rhs_,
 			  wmesh_int_t 			rhs_inc_)
   {
+    wmesh_status_t status;
+    const wmesh_t * 	mesh			= this->m_trial_space->m_mesh;
+    const wmesh_int_t 	trial_space_ndofs 	= this->m_trial_space->m_ndofs;
+    const wmesh_int_t 	topodim 		= mesh->m_topology_dimension;
+    const wmesh_int_t 	idofs_inc 		= 1;
+    
+    using data_t = typename wmesh_template_integral_diffusion_t<T>::data_t;
+    data_t * integral_diffusion_data[WMESH_ELEMENT_ALL]{};
 
-  for (wmesh_int_t i=0;i<this->m_trial_space->m_ndofs;++i)
-    {     
-      rhs_[i*rhs_inc_] = 0.0;
-    }
-
-    const wmesh_int_t 	topodim = this->m_test_space->m_mesh->m_topology_dimension;      
-
-
+    
+    //
+    // Reset rhs.
+    //
+    for (wmesh_int_t i=0;i<trial_space_ndofs;++i)
+      {     
+	rhs_[i*rhs_inc_] = static_cast<T>(0);
+      }
+    
     //
     // Loop over the trial space.
     //
-    using data_t = typename wmesh_template_integral_diffusion_t<T>::data_t;
-    data_t * integral_diffusion_data[WMESH_ELEMENT_ALL]{};
-    
-    const wmesh_int_t 	ntypes 	= this->m_test_space->m_mesh->m_c2n.m_size;      
-    for (wmesh_int_t itype=0;itype<ntypes;++itype)
-      {
-	wmesh_int_t element = (topodim==3) ? (4+itype) : ( (topodim==2) ? 2+itype : 1+itype );
-	const wmesh_int_t num_elements = this->m_test_space->m_mesh->m_c2n.m_n[itype];
-	if (num_elements > 0)
-	  {
-	    integral_diffusion_data[element] = new data_t(*this->m_integral_diffusion[element]);
-	  }
-      } 
+    {
+      const wmesh_int_sparsemat_t& 	c2n 	= this->m_test_space->m_mesh->m_c2n;
+      const wmesh_int_t 		ntypes 	= c2n.m_size;      
+      for (wmesh_int_t itype=0;itype<ntypes;++itype)
+	{
+	  wmesh_int_t element = (topodim==3) ? (4+itype) : ( (topodim==2) ? 2+itype : 1+itype );
+	  const wmesh_int_t num_elements = c2n.m_n[itype];
+	  if (num_elements > 0)
+	    {
+	      integral_diffusion_data[element] = new data_t(*this->m_integral_diffusion[element]);
+	    }
+	} 
 
-    const wmesh_int_t 	idofs_inc = 1;
+    }
 
-
-    const wmesh_int_sparsemat_t& test_c2d = this->m_test_space->m_c2d;
-    for (wmesh_int_t itype=0;itype<test_c2d.m_size;++itype)
+    {
+      const wmesh_int_sparsemat_t& 	test_c2d = this->m_test_space->m_c2d;
+      const wmesh_int_t 		ntypes 	= test_c2d.m_size;
+      for (wmesh_int_t itype=0;itype<ntypes;++itype)
       {
 	if (test_c2d.m_n[itype] > 0)
 	  {
 	    const wmesh_int_t element 	= (topodim==3) ? (4+itype) : ( (topodim==2) ? 2+itype : 1+itype );
-	    
+
 	    const wmesh_int_t test_c2d_m  	= test_c2d.m_m[itype];
 	    const wmesh_int_t test_c2d_n  	= test_c2d.m_n[itype];
 	    const wmesh_int_t test_c2d_ld 	= test_c2d.m_ld[itype];
 	    const_wmesh_int_p test_c2d_v 	= test_c2d.m_data + test_c2d.m_ptr[itype];
 
 	    const wmesh_int_t test_ndofs  	= test_c2d_m;
+	    auto * data 			= integral_diffusion_data[element];
 
-	    auto * data = integral_diffusion_data[element];
-
-
-	    const wmesh_mat_t<T>& eval_test = this->m_integral_diffusion[element]->m_shape_eval_test->m_f;
-
-	    const wmesh_int_t 		q_n 	= this->m_integral_diffusion[element]->m_cubature->m_w.n;
-	    const T * __restrict__ 	q_w 	= this->m_integral_diffusion[element]->m_cubature->m_w.v;
-	    const wmesh_int_t q_w_inc 		= this->m_integral_diffusion[element]->m_cubature->m_w.ld;
+	    const wmesh_mat_t<T>& eval_test 	= this->m_integral_diffusion[element]->m_shape_eval_test->m_f;
+	    const wmesh_mat_t<T>& q_weights 	= this->m_integral_diffusion[element]->m_cubature->get_weights();	    
+	    const wmesh_int_t 		q_n 	= q_weights.n;
+	    const T * __restrict__ 	q_w 	= q_weights.v;
+	    const wmesh_int_t q_w_inc 		= q_weights.ld;
 
 	    
 	    for (wmesh_int_t idx_elm=0;idx_elm<test_c2d_n;++idx_elm)
@@ -339,36 +333,16 @@ struct wmesh_pde_laplace_t : public wmesh_pde_t< wmesh_pde_laplace_t<T>, T >
 		//
 		// Extract coordinates.
 		//
-		wmesh_status_t status = wmesh_get_cooelm(this->m_test_space->m_mesh,
-							 itype,
-							 idx_elm,
-							 data->m_dofs_element_storage,
-							 WMESH_MAT_FORWARD(data->m_dofs_element));
+		status = wmesh_get_cooelm(this->m_test_space->m_mesh,
+					  itype,
+					  idx_elm,
+					  data->m_dofs_element_storage,
+					  WMESH_MAT_FORWARD(data->m_dofs_element));
 		WMESH_STATUS_CHECK(status);
-		
-#if 0
-		//
-		// Extract coeffs.
-		//
-		status = wmeshspace_get_dofselm(this->m_a_space,
-						itype,
-						idx_ielm,
-						coeffs_storage,
-						WMESH_MAT_FORWARD(coeffs));
-		WMESH_STATUS_CHECK(status);
-		
-#endif
 
-#if 0		
 		//
-		// Compute local matrix.
+		// Compute jacobians.
 		//
-		status = this->m_integral_diffusion[element]->eval(*data,
-								   static_cast<T>(0),
-								   data->m_local_matrix);
-#endif
-		
-
 		status =  bms_element_jacobians(this->m_integral_diffusion[element]->m_element,
 						data->m_dofs_element_storage,
 						data->m_dofs_element,
@@ -378,10 +352,6 @@ struct wmesh_pde_laplace_t : public wmesh_pde_t< wmesh_pde_laplace_t<T>, T >
 						data->m_q_jacobians_det);
 		WMESH_STATUS_CHECK(status);
 
-		//
-		// data->m_q_jacobians_det.v[data->m_q_jacobians_det.ld * k + 0]
-		//
-		
 		//
 		// Reset the local rhs.
 		//
@@ -398,6 +368,44 @@ struct wmesh_pde_laplace_t : public wmesh_pde_t< wmesh_pde_laplace_t<T>, T >
 		      }      
 		  }
 
+		    
+		//
+		// apply boundary conditions.
+		//
+#if 0
+		bool apply_bc = false;
+		for (wmesh_int_t i=0;i<test_ndofs;++i)
+		  {
+		    if (this->m_test_space->m_dof_codes[( idofs[idofs_inc * i] - 1 )] == 1)
+		      {
+			apply_bc = true;
+			break;
+		      }
+		  }
+		
+		if (apply_bc)
+		  {
+		    //
+		    // Get the coordinates of the degrees of freedom.
+		    //
+		    wmesh_mat_gemm(static_cast<T>(1),
+				   data->m_dofs_element,
+				   this->m_integral_diffusion[element]->m_shape_eval_element->m_f,
+				   static_cast<T>(0),
+				   data->m_test_coodofs);
+
+
+		    for (wmesh_int_t i=0;i<test_ndofs;++i)
+		      {
+			if (this->m_test_space->m_dof_codes[( idofs[idofs_inc * i] - 1 )] == 1)
+			  {
+			    T x = data->m_test_coodofs.v[i*data->m_test_coodofs.ld + 0];
+			    T y = data->m_test_coodofs.v[i*data->m_test_coodofs.ld + 1];
+			    data->m_local_rhs[i] = y + 0.0*x;
+			  }
+		      }
+		  }
+#endif		
 		for (wmesh_int_t i=0;i<test_ndofs;++i)
 		  {
 		    rhs_[ ( idofs[idofs_inc * i] - 1 ) ] += data->m_local_rhs[i];
@@ -406,15 +414,14 @@ struct wmesh_pde_laplace_t : public wmesh_pde_t< wmesh_pde_laplace_t<T>, T >
 	      }
 	  }
       }
+    }
 
-    //
-    // apply boundary conditions.
-    //
-    for (wmesh_int_t i=0;i<this->m_trial_space->m_ndofs;++i)
+    
+    for (wmesh_int_t i=0;i<this->m_test_space->m_ndofs;++i)
       {
-	if (this->m_trial_space->m_dof_codes[i] == 1)
-	  {	    
-	    rhs_[i] = 0.0;	    
+	if (this->m_test_space->m_dof_codes[i] == 1)
+	  {
+	    rhs_[rhs_inc_*i] = static_cast<T>(0);
 	  }
       }
     

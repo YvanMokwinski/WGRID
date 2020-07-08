@@ -24,6 +24,7 @@ static  std::ostream& operator<<(std::ostream&out_,
     }
   return out_;
 };
+
 #if 0
 template<typename T>
 wmesh_int_t wmesh_cubature_hash(wmesh_int_t element_,
@@ -38,6 +39,7 @@ wmesh_int_t wmesh_cubature_hash(wmesh_int_t element_,
 
 }
 #endif  
+
 #if 0
 static void PrintBits(size_t const size, void const * const ptr)
   {
@@ -217,14 +219,9 @@ int main(int argc, char ** argv)
 
 
   
-  wmesh_cubature_t<double> cubature;
-  {
-  wmesh_status_t status =  wmesh_cubature_def(&cubature,
-					      WMESH_ELEMENT_TRIANGLE,
-					      WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE,
-					      4);
-  WMESH_STATUS_CHECK(status);
-  } 
+  wmesh_cubature_t<double> cubature(WMESH_ELEMENT_TRIANGLE,
+				    WMESH_CUBATURE_FAMILY_GAUSSLEGENDRE,
+				    4);
 
   
 #if 0  

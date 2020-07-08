@@ -33,50 +33,32 @@ wmesh_template_integral_diffusion_t<T>::wmesh_template_integral_diffusion_t(wmes
 									    const wmesh_shape_info_t& 		shape_info_a_,
 									    const wmesh_shape_info_t& 		shape_info_trial_,
 									    const wmesh_shape_info_t& 		shape_info_test_)
+: m_element(element_),
+  m_shape_element(element_, shape_info_element_),
+  m_shape_a(element_, shape_info_a_),
+  m_shape_trial(element_, shape_info_trial_),
+  m_shape_test(element_, shape_info_test_)
 {
   wmesh_status_t status;
-  
-  status = wmesh_shape_def(&this->m_shape_element,
-			   element_,
-			   shape_info_element_.m_family,
-			   shape_info_element_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
-  
-  status = wmesh_shape_def(&this->m_shape_a,
-			   element_,
-			   shape_info_a_.m_family,
-			   shape_info_a_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
-  
-  status = wmesh_shape_def(&this->m_shape_trial,
-			   element_,
-			   shape_info_trial_.m_family,
-			   shape_info_trial_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
-
-  status = wmesh_shape_def(&this->m_shape_test,
-			   element_,
-			   shape_info_test_.m_family,
-			   shape_info_test_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
 
   wmesh_int_t topodim;
   status = bms_element2topodim(element_,
 			       &topodim);  
-  WMESH_STATUS_CHECK_FAIL(status);
+  WMESH_STATUS_CHECK_EXIT(status);
   this->m_topodim = topodim;
-
   
   this->m_cubature		= wmesh_cubature_factory_t<T>::cubature_instance	(element_,
-											 cubature_info_.m_family,
-											 cubature_info_.m_degree);
+											 cubature_info_.get_family(),
+											 cubature_info_.get_degree());
 #if 0
   this->m_shape_eval_a  	= wmesh_shape_eval_factory_t<T>::shape_eval_instance	(this->m_shape_a,
 											 this->m_cubature);
 #endif
+  
+  //  std::cout << "ffffffffffffffffffffffffffffffffffff " << this->m_shape_eval_element << std::endl;
   this->m_shape_eval_element  		= wmesh_shape_eval_factory_t<T>::shape_eval_instance	(this->m_shape_element,
 												 this->m_cubature);
-  
+  std::cout << "ffffffffffffffffffffffffffffffffffff " << this->m_shape_eval_element << std::endl;
 
   this->m_shape_eval_trial  		= wmesh_shape_eval_factory_t<T>::shape_eval_instance	(this->m_shape_trial,
 												 this->m_cubature);
@@ -86,9 +68,10 @@ wmesh_template_integral_diffusion_t<T>::wmesh_template_integral_diffusion_t(wmes
   
   this->m_build_storage 		= WMESH_STORAGE_INTERLEAVE;
   
-  const wmesh_int_t q_n 	= this->m_cubature->m_w.n;
-  const wmesh_int_t test_ndofs 	= this->m_shape_test.m_ndofs;
-  const wmesh_int_t trial_ndofs = this->m_shape_trial.m_ndofs;
+  const wmesh_mat_t<T>&  q_weights 	= this->m_cubature->get_weights();
+  const wmesh_int_t q_n 		= this->m_cubature->get_num_points();
+  const wmesh_int_t test_ndofs 		= this->m_shape_test.get_ndofs();
+  const wmesh_int_t trial_ndofs 	= this->m_shape_trial.get_ndofs();
 
   wmesh_mat_t<T>::alloc(&this->m_build,
 			test_ndofs * trial_ndofs,
@@ -118,7 +101,7 @@ wmesh_template_integral_diffusion_t<T>::wmesh_template_integral_diffusion_t(wmes
   
   for (wmesh_int_t k=0;k<q_n;++k)
     {
-      const T wk = this->m_cubature->m_w.v[this->m_cubature->m_w.ld*k]; // static_cast<T>(1);
+      const T wk = q_weights.v[q_weights.ld*k]; // static_cast<T>(1);
       for (wmesh_int_t jdim=0;jdim<topodim;++jdim)
 	{
 	  const T * __restrict__  dj = trial_nabla_j[jdim] + k * trial_nabla_ld;
@@ -136,8 +119,8 @@ wmesh_template_integral_diffusion_t<T>::wmesh_template_integral_diffusion_t(wmes
     {
       for (wmesh_int_t k=0;k<q_n;++k)
 	{
-      const T wk = this->m_cubature->m_w.v[this->m_cubature->m_w.ld*k]; // static_cast<T>(1);
-      //	  const T wk = static_cast<T>(1);//this->m_cubature->m_w.v[this->m_cubature->m_w.ld*k];
+      const T wk = q_weights.v[q_weights.ld*k]; // static_cast<T>(1);
+      //	  const T wk = static_cast<T>(1);//q_weights.v[q_weights.ld*k];
 	  const T * __restrict__  dr_j = this->m_shape_eval_trial->m_diff[0].v + this->m_shape_eval_trial->m_diff[0].ld * k;
 	  const T * __restrict__  ds_j = this->m_shape_eval_trial->m_diff[1].v + this->m_shape_eval_trial->m_diff[1].ld * k;
 	  const T * __restrict__  dr_i = this->m_shape_eval_test->m_diff[0].v + this->m_shape_eval_test->m_diff[0].ld * k;
@@ -154,7 +137,7 @@ wmesh_template_integral_diffusion_t<T>::wmesh_template_integral_diffusion_t(wmes
     {
       for (wmesh_int_t k=0;k<q_n;++k)
 	{
-	  const T wk = static_cast<T>(1);//this->m_cubature->m_w.v[this->m_cubature->m_w.ld*k];
+	  const T wk = static_cast<T>(1);//q_weights.v[q_weights.ld*k];
 
 	  const T * __restrict__  dr_j = this->m_shape_eval_trial->m_diff[0].v + this->m_shape_eval_trial->m_diff[0].ld * k;
 	  const T * __restrict__  ds_j = this->m_shape_eval_trial->m_diff[1].v + this->m_shape_eval_trial->m_diff[1].ld * k;
@@ -187,17 +170,22 @@ wmesh_template_integral_diffusion_t<T>::data_t::data_t(const wmesh_template_inte
 {
 
   
-  const wmesh_int_t q_n 		= parent_.m_cubature->m_w.n;
-  //  const wmesh_int_t ndofs_a 		= parent_.m_shape_a.m_ndofs;
-  const wmesh_int_t ndofs_element 	= parent_.m_shape_element.m_ndofs;
-  const wmesh_int_t ndofs_test 		= parent_.m_shape_test.m_ndofs;
-  const wmesh_int_t ndofs_trial 	= parent_.m_shape_trial.m_ndofs;
+  const wmesh_int_t q_n 		= parent_.m_cubature->get_num_points();
+  //  const wmesh_int_t ndofs_a 		= parent_.m_shape_a.get_ndofs();
+  const wmesh_int_t ndofs_element 	= parent_.m_shape_element.get_ndofs();
+  const wmesh_int_t ndofs_test 		= parent_.m_shape_test.get_ndofs();
+  const wmesh_int_t ndofs_trial 	= parent_.m_shape_trial.get_ndofs();
   const wmesh_int_t topodim 		= parent_.m_topodim;
 
   //  this->m_dofs_a_storage    = WMESH_STORAGE_INTERLEAVE;
   //  wmesh_mat_t<T>::alloc(&this->m_dofs_a, 1, ndofs_a);
 
+  this->m_test_coodofs_storage = WMESH_STORAGE_INTERLEAVE;
+  wmesh_mat_t<T>::alloc(&this->m_test_coodofs, topodim, ndofs_test);
 
+  this->m_bc_dirichlet_storage = WMESH_STORAGE_INTERLEAVE;
+  wmesh_mat_t<T>::alloc(&this->m_bc_dirichlet, 1, ndofs_test);
+  
   
   this->m_dofs_element_storage  = WMESH_STORAGE_INTERLEAVE;
   wmesh_mat_t<T>::alloc(&this->m_dofs_element, topodim, ndofs_element);
@@ -252,7 +240,7 @@ wmesh_status_t wmesh_template_integral_diffusion_t<T>::eval(wmesh_template_integ
   const wmesh_int_t n1 		= static_cast<wmesh_int_t>(1);
   const T r1 			= static_cast<T>(1);
   const T r0 			= static_cast<T>(0);
-  const wmesh_int_t q_n 	= this->m_cubature->m_w.n;
+  const wmesh_int_t q_n 	= this->m_cubature->get_num_points();
   const wmesh_int_t topodim 	= this->m_topodim;
   T a[9], b[9];
 

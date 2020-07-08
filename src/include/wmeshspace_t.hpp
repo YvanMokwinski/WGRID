@@ -10,9 +10,9 @@ private:
 
 public:
   wmesh_t * 			m_mesh;
-  wmesh_int_t 		m_degree;
+  wmesh_int_t 			m_degree;
   wmesh_t * 			m_patterns[4];
-  wmesh_int_t 		m_ndofs;
+  wmesh_int_t 			m_ndofs;
   wmesh_int_sparsemat_t 	m_c2d;
   wmesh_int_sparsemat_t 	m_c2d_n;
   wmesh_int_sparsemat_t 	m_c2d_e;

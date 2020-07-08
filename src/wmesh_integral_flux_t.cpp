@@ -9,6 +9,7 @@
 #include "wmesh_cubature_factory_t.hpp"
 #include "wmesh-blas.hpp"
 #include "bms_templates.hpp"
+
 template<typename T>
 static  std::ostream& operator<<(std::ostream&out_,
 				 const wmesh_mat_t<T>&that_)
@@ -31,43 +32,23 @@ wmesh_template_integral_flux_t<T>::wmesh_template_integral_flux_t(wmesh_int_t 		
 								  const wmesh_shape_info_t& 		shape_info_velocity_,
 								  const wmesh_shape_info_t& 		shape_info_trial_,
 								  const wmesh_shape_info_t& 		shape_info_test_)
+  : m_shape_element(element_,shape_info_element_),
+    m_shape_velocity(element_,shape_info_velocity_),
+    m_shape_trial(element_,shape_info_trial_),
+    m_shape_test(element_,shape_info_test_)    
 {
   wmesh_status_t status;
-  
-  status = wmesh_shape_def(&this->m_shape_element,
-			   element_,
-			   shape_info_element_.m_family,
-			   shape_info_element_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
-  
-  status = wmesh_shape_def(&this->m_shape_velocity,
-			   element_,
-			   shape_info_velocity_.m_family,
-			   shape_info_velocity_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
-  
-  status = wmesh_shape_def(&this->m_shape_trial,
-			   element_,
-			   shape_info_trial_.m_family,
-			   shape_info_trial_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
-
-  status = wmesh_shape_def(&this->m_shape_test,
-			   element_,
-			   shape_info_test_.m_family,
-			   shape_info_test_.m_degree);
-  WMESH_STATUS_CHECK_FAIL(status);
 
   wmesh_int_t topodim;
   status = bms_element2topodim(element_,
 			       &topodim);  
-  WMESH_STATUS_CHECK_FAIL(status);
+  WMESH_STATUS_CHECK_EXIT(status);
   this->m_topodim = topodim;
 
   
   this->m_cubature			= wmesh_cubature_factory_t<T>::cubature_instance	(element_,
-												 cubature_info_.m_family,
-												 cubature_info_.m_degree);
+												 cubature_info_.get_family(),
+												 cubature_info_.get_degree());
   
   this->m_shape_eval_velocity  		= wmesh_shape_eval_factory_t<T>::shape_eval_instance	(this->m_shape_velocity,
 												 this->m_cubature);
@@ -84,10 +65,11 @@ wmesh_template_integral_flux_t<T>::wmesh_template_integral_flux_t(wmesh_int_t 		
   this->m_build_storage 		= WMESH_STORAGE_INTERLEAVE;
   this->m_build_residual_storage	= WMESH_STORAGE_INTERLEAVE;
   
-  const wmesh_int_t q_n 	= this->m_cubature->m_w.n;
-  const wmesh_int_t ni 		= this->m_shape_test.m_ndofs;
-  const wmesh_int_t nj 		= this->m_shape_trial.m_ndofs;
-  const wmesh_int_t n1 		= 1;
+  const wmesh_mat_t<T>& q_weights 	= this->m_cubature->get_weights();
+  const wmesh_int_t q_n 		= this->m_cubature->get_num_points();
+  const wmesh_int_t ni 			= this->m_shape_test.get_ndofs();
+  const wmesh_int_t nj 			= this->m_shape_trial.get_ndofs();
+  const wmesh_int_t n1 			= 1;
 
   wmesh_mat_t<T>::alloc(&this->m_build_residual,
 			ni,
@@ -105,7 +87,7 @@ wmesh_template_integral_flux_t<T>::wmesh_template_integral_flux_t(wmesh_int_t 		
   const wmesh_int_t inc_j = (this->m_shape_eval_trial->m_diff_storage == WMESH_STORAGE_INTERLEAVE) ? 1 : this->m_shape_eval_trial->m_diff[0].ld;
   for (wmesh_int_t k=0;k<q_n;++k)
     {
-      const T wk = this->m_cubature->m_w.v[this->m_cubature->m_w.ld*k];
+      const T wk = q_weights.v[q_weights.ld*k];
       const T * __restrict__  test_i  = this->m_shape_eval_test->m_f.v + this->m_shape_eval_test->m_f.ld * k;
       const T * __restrict__  trial_j = this->m_shape_eval_trial->m_f.v + this->m_shape_eval_trial->m_f.ld * k;
       xger(&ni,
@@ -121,7 +103,7 @@ wmesh_template_integral_flux_t<T>::wmesh_template_integral_flux_t(wmesh_int_t 		
 
   for (wmesh_int_t k=0;k<q_n;++k)
     {
-      const T wk = this->m_cubature->m_w.v[this->m_cubature->m_w.ld*k];
+      const T wk = q_weights.v[q_weights.ld*k];
       const T * __restrict__  test_i  = this->m_shape_eval_test->m_f.v + this->m_shape_eval_test->m_f.ld * k;
       xcopy(&ni,test_i,&n1,this->m_build_residual.v + this->m_build_residual.ld * k,&n1);
       xscal(&ni,&wk,this->m_build_residual.v + this->m_build_residual.ld * k,&n1);
@@ -140,11 +122,11 @@ wmesh_template_integral_flux_t<T>::data_t::data_t(const wmesh_template_integral_
 {
 
   
-  const wmesh_int_t q_n 		= parent_.m_cubature->m_w.n;
-  const wmesh_int_t ndofs_velocity 	= parent_.m_shape_velocity.m_ndofs;
-  const wmesh_int_t ndofs_element 	= parent_.m_shape_element.m_ndofs;
-  const wmesh_int_t ndofs_test 		= parent_.m_shape_test.m_ndofs;
-  const wmesh_int_t ndofs_trial 	= parent_.m_shape_trial.m_ndofs;
+  const wmesh_int_t q_n 		= parent_.m_cubature->get_num_points();
+  const wmesh_int_t ndofs_velocity 	= parent_.m_shape_velocity.get_ndofs();
+  const wmesh_int_t ndofs_element 	= parent_.m_shape_element.get_ndofs();
+  const wmesh_int_t ndofs_test 		= parent_.m_shape_test.get_ndofs();
+  const wmesh_int_t ndofs_trial 	= parent_.m_shape_trial.get_ndofs();
   const wmesh_int_t topodim 		= parent_.m_topodim;
   
   this->m_dofs_element_storage  = WMESH_STORAGE_INTERLEAVE;
@@ -179,7 +161,7 @@ wmesh_status_t wmesh_template_integral_flux_t<T>::eval(wmesh_template_integral_f
   const wmesh_int_t n1 		= static_cast<wmesh_int_t>(1);
   const T r1 			= static_cast<T>(1);
 
-  const wmesh_int_t q_n 	= this->m_cubature->m_w.n;
+  const wmesh_int_t q_n 	= this->m_cubature->get_num_points();
   const wmesh_int_t topodim 	= this->m_topodim;
 
   //
@@ -322,7 +304,7 @@ wmesh_status_t wmesh_template_integral_flux_t<T>::eval_residual(wmesh_template_i
   const wmesh_int_t n1 		= static_cast<wmesh_int_t>(1);
   const T r1 			= static_cast<T>(1);
 
-  const wmesh_int_t q_n 	= this->m_cubature->m_w.n;
+  const wmesh_int_t q_n 	= this->m_cubature->get_num_points();
   const wmesh_int_t topodim 	= this->m_topodim;
   
   //

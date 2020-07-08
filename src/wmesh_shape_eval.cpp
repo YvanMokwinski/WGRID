@@ -13,7 +13,6 @@
 #include "wmesh_integral_convection_t.hpp"
 
 
-
 template<typename T>
 static wmesh_status_t wmesh_shape_eval_def_init(wmesh_shape_eval_t<T>*__restrict__ 	self_,
 						wmesh_int_t 				nodes_storage_,
@@ -26,9 +25,9 @@ static wmesh_status_t wmesh_shape_eval_def_init(wmesh_shape_eval_t<T>*__restrict
   wmesh_int_t iw_n,rw_n;
   wmesh_status_t status;
 
-  const wmesh_int_t element = self_->m_shape.m_element;
-  const wmesh_int_t family  = self_->m_shape.m_family;
-  const wmesh_int_t degree  = self_->m_shape.m_degree;
+  const wmesh_int_t element = self_->m_shape.get_element();
+  const wmesh_int_t family  = self_->m_shape.get_family();
+  const wmesh_int_t degree  = self_->m_shape.get_degree();
 
   wmesh_int_t topodim;
   status = bms_element2topodim(element,
@@ -36,8 +35,8 @@ static wmesh_status_t wmesh_shape_eval_def_init(wmesh_shape_eval_t<T>*__restrict
   WMESH_STATUS_CHECK(status);
 
   status = bms_shape_buffer_size(element,
-				 self_->m_shape.m_family,
-				 self_->m_shape.m_degree,
+				 self_->m_shape.get_family(),
+				 self_->m_shape.get_degree(),
 				 &iw_n,
 				 &rw_n);
   WMESH_STATUS_CHECK(status);
@@ -151,22 +150,17 @@ static wmesh_status_t wmesh_shape_eval_def_init(wmesh_shape_eval_t<T>*__restrict
 
 
 template<typename T>
-wmesh_status_t wmesh_shape_eval_def(wmesh_shape_eval_t<T>*__restrict__ 	self_,
-				    wmesh_int_t 			element_,				
-				    wmesh_int_t 			shape_family_,
-				    wmesh_int_t 			shape_degree_,				
-				    wmesh_int_t 			nodes_storage_,
-				    const wmesh_mat_t<T> * 		nodes_,
-				    const wmesh_mat_t<T> * 		weights_)
+wmesh_shape_eval_t<T>::wmesh_shape_eval_t(wmesh_int_t 				element_,				
+					  wmesh_int_t 				shape_family_,
+					  wmesh_int_t 				shape_degree_,				
+					  wmesh_int_t 				nodes_storage_,
+					  const wmesh_mat_t<T> * 		nodes_,
+					  const wmesh_mat_t<T> * 		weights_)
+  : m_shape(element_,shape_family_,shape_degree_)
 {
-  WMESH_CHECK_POINTER(self_);
-  WMESH_CHECK_POINTER(nodes_);
+  
 
   wmesh_status_t status;
-
-  memset(self_,0,sizeof(wmesh_shape_eval_t<T>));
-  wmesh_shape_def(&self_->m_shape, element_, shape_family_,shape_degree_);
-  
   const wmesh_int_t
     element 		= element_,
     degree		= shape_degree_,
@@ -177,12 +171,12 @@ wmesh_status_t wmesh_shape_eval_def(wmesh_shape_eval_t<T>*__restrict__ 	self_,
     num_dofs_per_element;
   
   status = bms_element2topodim(element,&topodim);
-  WMESH_STATUS_CHECK(status);
+  WMESH_STATUS_CHECK_EXIT(status);
 
   status = bms_ndofs(element,
 		     degree,
 		     &num_dofs_per_element);
-  WMESH_STATUS_CHECK(status);
+  WMESH_STATUS_CHECK_EXIT(status);
   
   //
   //
@@ -192,26 +186,26 @@ wmesh_status_t wmesh_shape_eval_def(wmesh_shape_eval_t<T>*__restrict__ 	self_,
   
     if (!f_ptr)
       {
-	WMESH_STATUS_CHECK(WMESH_STATUS_ERROR_MEMORY);
+	WMESH_STATUS_CHECK_EXIT(WMESH_STATUS_ERROR_MEMORY);
       }
     
-    wmesh_mat_t<T>::alloc(&self_->m_nabla,num_dofs_per_element, num_nodes * topodim);
+    wmesh_mat_t<T>::alloc(&this->m_nabla,num_dofs_per_element, num_nodes * topodim);
 
     T*__restrict__ diff_ptr[3];
     for (wmesh_int_t j=0;j<topodim;++j)
       {
-	diff_ptr[j] = self_->m_nabla.v + self_->m_nabla.ld * ( num_nodes * j );
+	diff_ptr[j] = this->m_nabla.v + this->m_nabla.ld * ( num_nodes * j );
       }
 
-    self_->m_nabla_storage = WMESH_STORAGE_INTERLEAVE;
-    self_->m_diff_storage = WMESH_STORAGE_INTERLEAVE;
+    this->m_nabla_storage = WMESH_STORAGE_INTERLEAVE;
+    this->m_diff_storage = WMESH_STORAGE_INTERLEAVE;
     if (!f_ptr)
       {
 	free(f_ptr);
 	f_ptr = nullptr;
       }
 
-    wmesh_mat_t<T>::define(&self_->m_f,
+    wmesh_mat_t<T>::define(&this->m_f,
 			   num_dofs_per_element,
 			   num_nodes,
 			   f_ptr,
@@ -219,7 +213,7 @@ wmesh_status_t wmesh_shape_eval_def(wmesh_shape_eval_t<T>*__restrict__ 	self_,
   
     for (wmesh_int_t j=0;j<topodim;++j)
       {
-	wmesh_mat_t<T>::define(&self_->m_diff[j],
+	wmesh_mat_t<T>::define(&this->m_diff[j],
 			       num_dofs_per_element,
 			       num_nodes,
 			       diff_ptr[j],
@@ -232,15 +226,24 @@ wmesh_status_t wmesh_shape_eval_def(wmesh_shape_eval_t<T>*__restrict__ 	self_,
   //
   //
 
-  status = wmesh_shape_eval_def_init(self_,
+  status = wmesh_shape_eval_def_init(this,
 				     nodes_storage_,
 				     nodes_);
-  WMESH_STATUS_CHECK(status);
+  WMESH_STATUS_CHECK_EXIT(status);
+};
 
+template struct wmesh_shape_eval_t<float>;
+template struct wmesh_shape_eval_t<double>;
 
-
-  return WMESH_STATUS_SUCCESS;
-}
+#if 0
+template<typename T>
+wmesh_status_t wmesh_shape_eval_def(wmesh_shape_eval_t<T>*__restrict__ 	self_,
+				    wmesh_int_t 			element_,				
+				    wmesh_int_t 			shape_family_,
+				    wmesh_int_t 			shape_degree_,				
+				    wmesh_int_t 			nodes_storage_,
+				    const wmesh_mat_t<T> * 		nodes_,
+				    const wmesh_mat_t<T> * 		weights_);
 
 
 template
@@ -260,3 +263,4 @@ wmesh_status_t wmesh_shape_eval_def<double>(wmesh_shape_eval_t<double>*__restric
 					   wmesh_int_t 			nodes_storage_,
 					   const wmesh_mat_t<double> * 	nodes_,
 					   const wmesh_mat_t<double> * 	weights_ = nullptr);
+#endif
